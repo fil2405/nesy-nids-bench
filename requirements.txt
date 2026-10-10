@@ -1,0 +1,15 @@
+# Versions are pinned in requirements.lock after scripts/check_env.py passes.
+# tensorflow and tf_keras must have the same minor version (e.g. 2.21.x and 2.21.x).
+# ltn 2.1 needs Keras 2: TF_USE_LEGACY_KERAS=1 is set in check_env.py and in nesybench/__init__.py.
+tensorflow[and-cuda]==2.21.*
+tf_keras==2.21.*
+ltn==2.1
+numpy
+pandas
+scikit-learn
+imbalanced-learn
+xgboost
+scipy
+pyyaml
+matplotlib
+psutil

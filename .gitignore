@@ -1,0 +1,15 @@
+# data and outputs: never committed
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+results/*
+!results/.gitkeep
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+# notebooks and editors
+.ipynb_checkpoints/
+.vscode/
+.idea/
