@@ -21,9 +21,9 @@ COLUMNS = [
 ]
 
 CLASS_TO_LABELS = {
-    "DoS": ["back", "land", "neptune", "pod", "smurf", "teardrop", "apache2", "udpstorm", "processtable", "mailbomb"],
+    "DoS": ["back", "land", "neptune", "pod", "smurf", "teardrop", "apache2", "udpstorm", "processtable", "mailbomb", "worm"],
     "Probe": ["nmap", "portsweep", "ipsweep", "satan", "mscan", "saint"],
-    "R2L": ["spy", "phf", "multihop", "ftp_write", "imap", "warezmaster", "warezclient", "guess_passwd", "sendmail", "named", "snmpget", "snmpguess", "xlock", "xsnoop", "httptunnel"],
+    "R2L": ["spy", "phf", "multihop", "ftp_write", "imap", "warezmaster", "warezclient", "guess_passwd", "sendmail", "named", "snmpgetattack", "snmpguess", "xlock", "xsnoop", "httptunnel"],
     "U2R": ["perl", "buffer_overflow", "rootkit", "loadmodule", "xterm", "ps", "sqlattack"],
     "Normal": ["normal"]
 } 
@@ -43,7 +43,7 @@ def load_nslkdd(split="train"):
     df = pd.read_csv(DATA_DIR / FILES[split], names=COLUMNS)
     df["class"] = df["label"].map(LABEL_TO_CLASS)
     unknown = sorted(df.loc[df["class"].isna(), "label"].unique())
-    
+
     if unknown:
         raise ValueError(f"Labels missing from CLASS_TO_LABELS: {unknown}")
     return df
