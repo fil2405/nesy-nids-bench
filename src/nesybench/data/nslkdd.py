@@ -1,3 +1,11 @@
+from pathlib import Path
+
+import pandas as pd
+
+DATA_DIR = Path("data/raw/nsl-kdd")
+FILES = {"train": "KDDTrain+.txt", "test": "KDDTest+.txt"}
+
+
 COLUMNS = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes",
     "land", "wrong_fragment", "urgent", "hot", "num_failed_logins", "logged_in",
@@ -26,15 +34,16 @@ LABEL_TO_CLASS = {
     for label in labels
 }
 
-import pandas as pd
+def load_nslkdd(split="train"):
+    """Load NSL-KDD..."""
 
-def load_data():
-    return pd.read_csv("data/raw/nsl-kdd/KDDTrain+.txt", names=COLUMNS)
-
-def mapping():
-    df = load_data()
-    df['class'] = df['label'].map(LABEL_TO_CLASS)
-
-    print("NaN: ", df["class"].isna().sum())
-    print(df['class'].value_counts())
+    if split not in FILES:
+        raise ValueError(f"split must be one of {list(FILES)}, got {split!r}")
+    
+    df = pd.read_csv(DATA_DIR / FILES[split], names=COLUMNS)
+    df["class"] = df["label"].map(LABEL_TO_CLASS)
+    unknown = sorted(df.loc[df["class"].isna(), "label"].unique())
+    
+    if unknown:
+        raise ValueError(f"Labels missing from CLASS_TO_LABELS: {unknown}")
     return df
