@@ -12,8 +12,29 @@ COLUMNS = [
     "dst_host_srv_rerror_rate", "label", "difficulty",
 ]
 
+CLASS_TO_LABELS = {
+    "DoS": ["back", "land", "neptune", "pod", "smurf", "teardrop", "apache2", "udpstorm", "processtable", "mailbomb"],
+    "Probe": ["nmap", "portsweep", "ipsweep", "satan", "mscan", "saint"],
+    "R2L": ["spy", "phf", "multihop", "ftp_write", "imap", "warezmaster", "warezclient", "guess_passwd", "sendmail", "named", "snmpget", "snmpguess", "xlock", "xsnoop", "httptunnel"],
+    "U2R": ["perl", "buffer_overflow", "rootkit", "loadmodule", "xterm", "ps", "sqlattack"],
+    "Normal": ["normal"]
+} 
+
+LABEL_TO_CLASS = {
+    label: cls
+    for cls, labels in CLASS_TO_LABELS.items()
+    for label in labels
+}
 
 import pandas as pd
 
 def load_data():
     return pd.read_csv("data/raw/nsl-kdd/KDDTrain+.txt", names=COLUMNS)
+
+def mapping():
+    df = load_data()
+    df['class'] = df['label'].map(LABEL_TO_CLASS)
+
+    print("NaN: ", df["class"].isna().sum())
+    print(df['class'].value_counts())
+    return df
