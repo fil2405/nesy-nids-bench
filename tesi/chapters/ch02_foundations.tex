@@ -295,8 +295,8 @@ packet-length statistics, counts of TCP flags such as SYN, ACK and PSH, the
 initial window size in bytes, and packet rates. The dataset produced with
 it, CICIDS2017, is a widely used benchmark for flow-based detection. Such a
 feature set is a clear example of the payload-free, flow-level
-representation to which the detectors of this thesis are restricted by
-\cref{sec:scope-limitations}.
+representation to which the detectors of this thesis are restricted on the
+flow datasets, as fixed in \cref{sec:scope-limitations}.
 
 \subsection{Time-window and connection-window aggregates (the NSL-KDD ``traffic'' features)}
 \label{sec:time-window-connection-aggregates}
@@ -742,8 +742,9 @@ are judged. The level of observation and the capture point decide which
 attacks are visible. Packets, flows, sessions and host aggregates offer
 different units of analysis, and sampling can hide an attack even at the
 right level. Feature families range from flow statistics to content features,
-and encryption removes the content features. The detectors compared here are
-therefore limited to flow- and header-level features.
+and encryption removes the content features. On the flow datasets the
+detectors compared here are therefore limited to flow- and header-level features, and content features are used only on
+NSL-KDD.
 
 The classical methods each rest on something explicit. A signature describes
 an attack, a specification describes normal protocol behavior, a statistic
