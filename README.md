@@ -15,7 +15,7 @@ Status: under construction.
 - `results/`  one JSON file per run (not committed)
 - `analysis/` statistical tests, tables and figures
 - `scripts/`  environment check and run helpers
-- `tesi/`     LaTeX source of the thesis
+- `thesis/`   LaTeX source of the thesis
 
 ## Principle
 One run = one configuration + one seed = one result file.

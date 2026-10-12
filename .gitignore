@@ -14,17 +14,17 @@ __pycache__/
 .vscode/
 .idea/
 *.log
-# LaTeX build files (the PDF is rebuilt from tesi/)
-tesi/**/*.aux
-tesi/**/*.bbl
-tesi/**/*.blg
-tesi/**/*.out
-tesi/**/*.toc
-tesi/**/*.lof
-tesi/**/*.lot
-tesi/**/*.fls
-tesi/**/*.fdb_latexmk
-tesi/**/*.synctex.gz
-tesi/main.pdf
+# LaTeX build files (the PDF is rebuilt from thesis/)
+thesis/**/*.aux
+thesis/**/*.bbl
+thesis/**/*.blg
+thesis/**/*.out
+thesis/**/*.toc
+thesis/**/*.lof
+thesis/**/*.lot
+thesis/**/*.fls
+thesis/**/*.fdb_latexmk
+thesis/**/*.synctex.gz
+thesis/main.pdf
 # Windows download marks
 *:Zone.Identifier
