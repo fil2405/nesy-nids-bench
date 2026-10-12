@@ -46,9 +46,9 @@ def preprocess(train_df, test_df, seed, val_fraction=0.15):
     transformer.fit(X_train)
 
     return Splits(
-        transformer.transform(X_train),
-        transformer.transform(X_val),
-        transformer.transform(X_test),
+        np.asarray(transformer.transform(X_train)),
+        np.asarray(transformer.transform(X_val)),
+        np.asarray(transformer.transform(X_test)),
         y_train,
         y_val,
         y_test,
