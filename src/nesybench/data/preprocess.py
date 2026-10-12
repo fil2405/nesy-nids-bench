@@ -2,12 +2,9 @@ from typing import NamedTuple
 
 import numpy as np
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-CLASSES = ["Normal", "DoS", "Probe", "R2L", "U2R"]
-CAT_COLS = ["protocol_type", "service", "flag"]
-DROP_COLS = ["label", "class", "difficulty"]
+from .base import DatasetSpec, class_index
 
 
 class Splits(NamedTuple):
@@ -29,26 +26,23 @@ class Splits(NamedTuple):
     class_names: list[str]
 
 
-def _split_xy(df):
-    X = df.drop(columns=DROP_COLS)
-    y = df["class"].map({c: i for i, c in enumerate(CLASSES)}).to_numpy()
-    return X, y
+def _split_xy(df, spec: DatasetSpec):
+    X = df.drop(columns=[c for c in spec.non_features if c in df.columns])
+    return X, class_index(df, spec).to_numpy()
 
 
-def preprocess(train_df, test_df, seed, val_fraction=0.15):
-    """Split train into train/validation, and fit the transformer."""
-    X, y = _split_xy(train_df)
-    X_test, y_test = _split_xy(test_df)
+def preprocess(train_df, val_df, test_df, spec: DatasetSpec):
+    """Fit the transformer on train only, then transform the three parts."""
+    X_train, y_train = _split_xy(train_df, spec)
+    X_val, y_val = _split_xy(val_df, spec)
+    X_test, y_test = _split_xy(test_df, spec)
 
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=val_fraction, stratify=y, random_state=seed
-    )
-
-    num_cols = [c for c in X.columns if c not in CAT_COLS]
+    cat_cols = list(spec.categorical)
+    num_cols = [c for c in X_train.columns if c not in cat_cols]
     transformer = ColumnTransformer(
         [
             ("num", StandardScaler(), num_cols),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), CAT_COLS),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
         ],
         sparse_threshold=0,
         verbose_feature_names_out=False,
@@ -64,5 +58,5 @@ def preprocess(train_df, test_df, seed, val_fraction=0.15):
         y_test=y_test,
         transformer=transformer,
         feature_names=list(transformer.get_feature_names_out()),
-        class_names=list(CLASSES),
+        class_names=list(spec.classes),
     )

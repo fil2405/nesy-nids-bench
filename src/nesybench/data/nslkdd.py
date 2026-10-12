@@ -1,9 +1,17 @@
-from pathlib import Path
-
 import pandas as pd
 
-DATA_DIR = Path("data/raw/nsl-kdd")
+from .base import CLASS_COL, DATA_ROOT, LABEL_COL, DatasetSpec
+
+DATA_DIR = DATA_ROOT / "nsl-kdd"
 FILES = {"train": "KDDTrain+.txt", "test": "KDDTest+.txt"}
+
+SPEC = DatasetSpec(
+    name="nslkdd",
+    classes=("Normal", "DoS", "Probe", "R2L", "U2R"),
+    categorical=("protocol_type", "service", "flag"),
+    non_features=(LABEL_COL, CLASS_COL, "difficulty"),
+    fixed_test=True,
+)
 
 
 COLUMNS = [
@@ -26,7 +34,7 @@ CLASS_TO_LABELS = {
     "R2L": ["spy", "phf", "multihop", "ftp_write", "imap", "warezmaster", "warezclient", "guess_passwd", "sendmail", "named", "snmpgetattack", "snmpguess", "xlock", "xsnoop", "httptunnel"],
     "U2R": ["perl", "buffer_overflow", "rootkit", "loadmodule", "xterm", "ps", "sqlattack"],
     "Normal": ["normal"]
-} 
+}
 
 LABEL_TO_CLASS = {
     label: cls
@@ -41,8 +49,8 @@ def load_nslkdd(split="train"):
         raise ValueError(f"split must be one of {list(FILES)}, got {split!r}")
     
     df = pd.read_csv(DATA_DIR / FILES[split], names=COLUMNS)
-    df["class"] = df["label"].map(LABEL_TO_CLASS)
-    unknown = sorted(df.loc[df["class"].isna(), "label"].unique())
+    df[CLASS_COL] = df[LABEL_COL].map(LABEL_TO_CLASS)
+    unknown = sorted(df.loc[df[CLASS_COL].isna(), LABEL_COL].unique())
 
     if unknown:
         raise ValueError(f"Labels missing from CLASS_TO_LABELS: {unknown}")

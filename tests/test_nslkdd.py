@@ -5,7 +5,7 @@ from nesybench.data.nslkdd import DATA_DIR, FILES, load_nslkdd
 
 def _require(split):
     if not (DATA_DIR / FILES[split]).exists():
-        pytest.skip("dataset not found: run pytest from the repo root")
+        pytest.skip(f"dataset not found in {DATA_DIR}")
 
 
 def test_train_shape_and_classes():

@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -7,14 +6,15 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-LABELS = [0, 1, 2, 3, 4]
 
-
-def compute_metrics(y_true, y_pred, labels=LABELS) -> dict:
+def compute_metrics(y_true, y_pred, class_names) -> dict:
+    """Detection metrics; per-class arrays follow the order of class_names."""
+    labels = list(range(len(class_names)))
     precision, recall, f1, support = precision_recall_fscore_support(
         y_true, y_pred, labels=labels, zero_division=0
     )
     return {
+        "class_names": list(class_names),
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "macro_f1": float(
             f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)

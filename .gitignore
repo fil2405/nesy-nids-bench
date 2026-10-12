@@ -1,6 +1,6 @@
 # data and outputs: never committed
 data/raw/*
-data/processed/*
+data/interim/*
 !data/**/.gitkeep
 results/*
 !results/.gitkeep
@@ -14,3 +14,17 @@ __pycache__/
 .vscode/
 .idea/
 *.log
+# LaTeX build files (the PDF is rebuilt from tesi/)
+tesi/**/*.aux
+tesi/**/*.bbl
+tesi/**/*.blg
+tesi/**/*.out
+tesi/**/*.toc
+tesi/**/*.lof
+tesi/**/*.lot
+tesi/**/*.fls
+tesi/**/*.fdb_latexmk
+tesi/**/*.synctex.gz
+tesi/main.pdf
+# Windows download marks
+*:Zone.Identifier

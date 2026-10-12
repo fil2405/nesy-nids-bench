@@ -8,23 +8,33 @@ Status: under construction.
 ## Layout
 - `configs/`  one YAML file per experiment run
 - `kb/`       versioned knowledge bases (axiom sets), one per dataset
-- `data/`     `raw/` original datasets (not committed), `processed/` splits
+- `data/`     `raw/` original datasets, `interim/` cleaned copies of large
+              datasets (both not committed). Splits are not stored: they
+              are rebuilt from the seed.
 - `src/nesybench/`  data loading, models, logic, utilities
 - `results/`  one JSON file per run (not committed)
 - `analysis/` statistical tests, tables and figures
 - `scripts/`  environment check and run helpers
+- `tesi/`     LaTeX source of the thesis
 
 ## Principle
 One run = one configuration + one seed = one result file.
 Every table is regenerated from `results/`.
 
+## Data
+Datasets go in `data/raw/<name>/` (e.g. `data/raw/nsl-kdd/KDDTrain+.txt`).
+Another location can be set with the `NESYBENCH_DATA` environment variable.
+A dataset is added by writing its loader and `DatasetSpec` in
+`src/nesybench/data/` and registering it in `src/nesybench/data/__init__.py`.
+
 ## Setup
-Linux or WSL2 (Ubuntu), Python 3.10-3.11.
+Linux or WSL2 (tested on Debian), Python 3.11.
 
     python3 -m venv .venv
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
+    pip install -e . --no-deps
     python scripts/check_env.py
     pip freeze > requirements.lock
 

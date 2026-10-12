@@ -1,23 +1,29 @@
 import numpy as np
 import pytest
 
-from nesybench.data.nslkdd import DATA_DIR, FILES, load_nslkdd
+from nesybench.data.nslkdd import DATA_DIR, FILES, SPEC, load_nslkdd
 from nesybench.data.preprocess import preprocess
+from nesybench.data.splits import split_data
 
 N_NUM = 38
+SPLIT = "official_test_with_stratified_val"
+
+
+def _run(frames, seed):
+    return preprocess(*split_data(SPLIT, *frames, SPEC, seed), SPEC)
 
 
 @pytest.fixture(scope="module")
 def frames():
     for name in FILES.values():
         if not (DATA_DIR / name).exists():
-            pytest.skip("dataset not found: run pytest from the repo root")
+            pytest.skip(f"dataset not found in {DATA_DIR}")
     return load_nslkdd("train"), load_nslkdd("test")
 
 
 @pytest.fixture(scope="module")
 def splits(frames):
-    return preprocess(*frames, seed=0)
+    return _run(frames, seed=0)
 
 
 def test_shapes(splits):
@@ -38,11 +44,11 @@ def test_scaler_fitted_on_train_only(splits):
 
 
 def test_same_seed_same_split(frames, splits):
-    again = preprocess(*frames, seed=0)
+    again = _run(frames, seed=0)
     assert np.array_equal(splits.X_val, again.X_val)
     assert np.array_equal(splits.y_val, again.y_val)
 
 
 def test_different_seed_different_split(frames, splits):
-    other = preprocess(*frames, seed=1)
+    other = _run(frames, seed=1)
     assert not np.array_equal(splits.y_val, other.y_val)
