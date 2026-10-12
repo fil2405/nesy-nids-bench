@@ -1,0 +1,365 @@
+// STRUTTURA TESI - Neurosymbolic AI - Filippo Falzone
+// Titolo: Benchmarking Neurosymbolic Approaches for Network Traffic Analysis
+
+0.2  PROBLEM STATEMENT
+     Neurosymbolic AI is repeatedly claimed to help in network security (better generalization,
+     better handling of rare attacks, explainable alerts), but the literature evaluates it with
+     heterogeneous protocols, mostly on accuracy alone, on a single dataset, without cost or
+     latency figures, and almost never under deployment constraints. There is no shared answer
+     to the practical question a SOC engineer asks: "under which conditions is a neurosymbolic
+     detector worth its extra complexity?"
+
+0.3  RESEARCH QUESTIONS
+     RQ1  Detection quality. Does injecting domain knowledge through LTN improve detection
+          over an identical purely neural model, and on which classes / attack families?
+     RQ2  Operating regime. Under which conditions does the NeSy advantage appear and
+          disappear? (amount of labelled data, class imbalance, unseen attacks, cross-dataset
+          shift, quality of the encoded knowledge)
+     RQ3  Cost. What is the computational price of the NeSy approach in training and in
+          inference, in batch and in streaming operation?
+     RQ4  Usability. What does the approach cost in engineering effort, and what does it give
+          back in terms of interpretable and auditable alerts?
+     RQ5  Methodology. What does a fair, reproducible benchmark for ML vs NeSy network traffic
+          analysis have to look like?
+
+0.4  CLAIMED CONTRIBUTIONS (state them explicitly in Chapter 1 and revisit in Chapter 11)
+     C1  A reproducible benchmark suite for ML vs NeSy network traffic analysis covering three
+         axes - detection quality, computational performance, operational usability - in both
+         batch and real-time settings.
+     C2  A systematic empirical comparison of an LTN-based detector against matched ML/DL
+         baselines across multiple datasets and multiple stress scenarios (scarce labels,
+         imbalance, unseen attacks, cross-dataset transfer, degraded knowledge).
+     C3  A characterisation of the operating regime in which neurosymbolic integration pays off,
+         including the negative results (where it does not).
+     C4  A streaming reference pipeline that runs an LTN-trained detector on live traffic, with
+         end-to-end latency and throughput measurements.
+     C5  Two evaluation metrics that the mainstream NIDS literature does not report and that are
+         natural for NeSy systems: axiom-level satisfaction as an explanation signal, and
+         domain-rule violation rate of the predictions.
+
+0.5  OUT OF SCOPE
+     - Encrypted-traffic payload inspection and TLS fingerprinting.
+     - Adversarial machine learning beyond the simple evasion perturbations of E10.
+     - Distributed / multi-node training; single-workstation setting only.
+     - Production-grade SOC integration (SIEM, ticketing, response).
+
+
+================================================================================================
+PART 1 - THESIS OUTLINE
+================================================================================================
+
+FRONT MATTER
+    Title page, Abstract (EN), Sommario (IT), Acknowledgements,
+    Table of contents, List of figures, List of tables, List of acronyms.
+
+------------------------------------------------------------------------------------------------
+1.  INTRODUCTION                                                              [~6-8 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    1.1  Context and motivation
+         1.1.1  Growth and evolution of network threats
+         1.1.2  Why classical signature-based detection is not enough
+         1.1.3  Why purely data-driven detection is not enough either
+    1.2  Problem statement
+    1.3  Research questions (RQ1-RQ5)
+    1.4  Contributions (C1-C5)
+    1.5  Methodology in brief
+    1.6  Scope and limitations
+    1.7  Structure of the thesis
+
+------------------------------------------------------------------------------------------------
+2.  NETWORK TRAFFIC ANALYSIS: FOUNDATIONS                                    [~12-15 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    2.1  Network traffic: what is observed and at which layer
+         2.1.1  Packet level, flow level, session level, host level
+         2.1.2  The TCP/IP stack from the point of view of a monitor
+    2.2  Data acquisition
+         2.2.1  Full packet capture (pcap), SPAN ports, TAPs
+         2.2.2  Flow export standards: NetFlow v5/v9, IPFIX (RFC 7011), sFlow
+         2.2.3  Sampling and its effect on detection
+    2.3  Feature engineering for traffic
+         2.3.1  Flow statistics (CICFlowMeter-style feature sets)
+         2.3.2  Time-window and connection-window aggregates (the NSL-KDD "traffic" features)
+         2.3.3  Content / host-based features
+         2.3.4  Feature drift and the encrypted-traffic problem
+    2.4  Classical approaches to traffic analysis and intrusion detection
+         2.4.1  Signature-based detection: Snort, Suricata, Zeek rule sets
+         2.4.2  Specification and protocol-anomaly detection
+         2.4.3  Statistical anomaly detection (entropy, CUSUM, EWMA, PCA-based)
+         2.4.4  Threshold and rate-limiting defences
+    2.5  Standards, taxonomies and reference architectures
+         2.5.1  NIST SP 800-94 (IDPS), ISO/IEC 27033
+         2.5.2  MITRE ATT&CK as a semantic vocabulary for attack behaviour
+         2.5.3  Alert formats and exchange: IDMEF, STIX/TAXII, CEF
+    2.6  Evaluation practice in NIDS and its recurring flaws
+         2.6.1  Base-rate fallacy and the cost of false positives
+         2.6.2  Class imbalance, temporal leakage, in-distribution bias
+         2.6.3  Discussion of "Outside the Closed World" and "Dos and Don'ts" critiques
+    2.7  Summary
+
+------------------------------------------------------------------------------------------------
+3.  ATTACKS ON NETWORKS, WITH FOCUS ON DDoS                                  [~10-12 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    3.1  Attack taxonomy used in this thesis
+         3.1.1  The classic KDD families: DoS, Probe, R2L, U2R
+         3.1.2  Mapping the families onto MITRE ATT&CK tactics
+    3.2  Denial of Service and Distributed Denial of Service
+         3.2.1  Volumetric attacks: UDP flood, ICMP flood, amplification/reflection
+                (DNS, NTP, memcached, LDAP, SSDP)
+         3.2.2  Protocol / state-exhaustion attacks: SYN flood, ACK flood, fragmentation
+                (teardrop), Slowloris and low-and-slow variants
+         3.2.3  Application-layer attacks: HTTP flood, HTTP/2 rapid reset style attacks
+         3.2.4  Botnets, booters and DDoS-as-a-service
+         3.2.5  Observable signatures at flow level (the features that actually move)
+    3.3  Reconnaissance and scanning (Probe)
+         3.3.1  Horizontal, vertical and stealth scanning; nmap/satan/ipsweep patterns
+    3.4  Remote-to-Local and User-to-Root
+         3.4.1  Credential attacks, guessed passwords, FTP/IMAP exploitation
+         3.4.2  Privilege escalation, buffer overflow, rootkits
+         3.4.3  Why these classes are the hard ones for data-driven detectors
+    3.5  Defence mechanisms and where detection sits
+         3.5.1  Scrubbing centres, anycast, rate limiting, BGP flowspec
+         3.5.2  Detection - mitigation - response loop and its timing constraints
+    3.6  Domain knowledge that can be formalised (bridge to Chapter 5 and 7)
+         3.6.1  From informal expert heuristics to first-order logic predicates
+         3.6.2  Table: attack family -> observable condition -> candidate axiom
+    3.7  Summary
+
+------------------------------------------------------------------------------------------------
+4.  LEARNING PARADIGMS: ML, DL AND NEUROSYMBOLIC AI                          [~15-18 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    4.1  Machine learning essentials
+         4.1.1  Supervised, unsupervised, semi-supervised learning
+         4.1.2  Classical models used in NIDS: decision trees, Random Forest, XGBoost, SVM, kNN
+         4.1.3  Bias-variance, generalization, regularization
+         4.1.4  Handling imbalance: resampling (SMOTE, SMOTE-NC), class weighting, focal loss
+    4.2  Deep learning
+         4.2.1  MLP, backpropagation, optimizers, dropout, early stopping
+         4.2.2  Architectures relevant to traffic: 1D-CNN, LSTM/GRU, autoencoders, transformers
+         4.2.3  Strengths (representation learning, scale) and weaknesses (data hunger,
+                opacity, brittleness under shift, no constraint guarantees)
+    4.3  Symbolic AI
+         4.3.1  Propositional and first-order logic, Horn clauses, inference
+         4.3.2  Rule-based expert systems, description logics, ontologies, knowledge graphs
+         4.3.3  Answer Set Programming and probabilistic logic programming
+         4.3.4  Strengths (interpretability, data efficiency, verifiability) and weaknesses
+                (brittleness, knowledge acquisition bottleneck, no perception)
+    4.4  Neurosymbolic AI
+         4.4.1  Motivation: the complementarity argument (System 1 / System 2)
+         4.4.2  Kautz's taxonomy of neurosymbolic architectures (Type 1 ... Type 6)
+         4.4.3  Integration families
+                4.4.3.1  Logic as a loss / differentiable logic (LTN, Semantic Loss, DL2)
+                4.4.3.2  Neural predicates inside a probabilistic logic program
+                         (DeepProbLog, DeepStochLog, NeurASP)
+                4.4.3.3  Knowledge-graph and embedding-based integration
+                4.4.3.4  Neural module networks and program synthesis
+                4.4.3.5  Post-hoc symbolic verification of neural outputs
+         4.4.4  Comparative discussion: expressiveness, scalability, training cost,
+                explainability, tooling maturity
+    4.5  Comparison table to be produced: paradigm x {data efficiency, interpretability,
+         constraint compliance, training cost, inference cost, maintenance cost, maturity}
+    4.6  Explainable AI in this context
+         4.6.1  Post-hoc methods (SHAP, LIME) vs intrinsically structured explanations
+         4.6.2  What an operator actually needs in an alert
+    4.7  Summary
+
+------------------------------------------------------------------------------------------------
+5.  LOGIC TENSOR NETWORKS                                                    [~12-15 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    5.1  Real Logic: syntax
+         5.1.1  Constants, variables, functions, predicates
+         5.1.2  Connectives and quantifiers
+    5.2  Grounding (semantics in the tensor domain)
+         5.2.1  Grounding of terms into real tensors
+         5.2.2  Grounding of predicates into neural networks with output in [0,1]
+         5.2.3  Grounding of formulas into satisfaction degrees
+    5.3  Fuzzy semantics
+         5.3.1  T-norms and t-conorms: Goedel, Lukasiewicz, Product
+         5.3.2  Fuzzy implications: Kleene-Dienes, Goguen, Lukasiewicz, Reichenbach
+         5.3.3  Aggregators for quantifiers: mean, min, generalized p-mean, pMeanError
+         5.3.4  Vanishing / exploding gradients of fuzzy operators and the choice of p
+    5.4  Learning as maximisation of satisfiability
+         5.4.1  The knowledge base as a set of axioms
+         5.4.2  Supervised axioms vs domain axioms; weighting the two groups
+         5.4.3  Optimization loop, batching and the role of the guarded quantifier
+    5.5  What LTN can and cannot do
+         5.5.1  Querying: satisfaction of a formula as a first-class output
+         5.5.2  Reasoning at training time vs reasoning at inference time
+                (relevant: an LTN-trained MLP is a plain MLP at inference unless a symbolic
+                 component is kept in the loop - this distinction drives Experiment E12)
+         5.5.3  Scalability limits with many axioms / large batches
+    5.6  Alternatives and why LTN is chosen here
+         5.6.1  LTN vs Semantic Loss vs DeepProbLog vs NeurASP: criteria and trade-offs
+    5.7  Formalising network security knowledge in Real Logic
+         5.7.1  Predicate design over flow features
+         5.7.2  Discretisation/fuzzification of continuous features (thresholds vs sigmoids)
+         5.7.3  The axiom set inherited from the internship, restated formally
+         5.7.4  Extending it: DDoS-specific axioms, mutual exclusivity, hierarchy axioms
+    5.8  Summary
+
+------------------------------------------------------------------------------------------------
+6.  STATE OF THE ART AND RELATED WORK                                        [~12-15 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    6.1  Review method
+         6.1.1  Sources, queries, inclusion/exclusion criteria, time window
+         6.1.2  Extraction grid: approach, knowledge type, dataset, baselines, metrics,
+                reproducibility, code availability
+    6.2  ML and DL for network intrusion detection
+         6.2.1  Shallow models on NSL-KDD / UNSW-NB15 / CIC-IDS
+         6.2.2  Deep models: CNN, RNN, autoencoder, transformer-based detectors
+         6.2.3  The reproducibility and dataset-quality debate
+    6.3  Neurosymbolic AI in cybersecurity
+         6.3.1  Surveys and taxonomies
+         6.3.2  Knowledge-graph based approaches
+         6.3.3  Logic-as-loss approaches, LTN applications
+         6.3.4  Probabilistic logic programming approaches
+         6.3.5  LLM + formal verification hybrids
+    6.4  Neurosymbolic AI applied specifically to NIDS
+         6.4.1  Findings of the internship literature review (restate and extend)
+         6.4.2  Critical reading: what is actually measured, what is not
+    6.5  Benchmarking methodology for learning-based security systems
+         6.5.1  Evaluation protocols: temporal splits, cross-attack, leave-one-attack-out
+         6.5.2  Metrics beyond accuracy: MCC, PR-AUC, FPR@TPR, alert budget, cost curves
+         6.5.3  Systems-benchmarking practice (MLPerf-style methodology) transplanted here
+         6.5.4  Statistical comparison of classifiers across datasets
+    6.6  Synthesis table: related work x {NeSy family, dataset, real-time?, cost reported?,
+         explainability evaluated?, code public?}
+    6.7  Research gap addressed by this thesis
+    6.8  Summary
+
+------------------------------------------------------------------------------------------------
+7.  USE CASES, REQUIREMENTS AND SYSTEM DESIGN                                [~10-12 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    7.1  Use case UC1 - Batch multi-class traffic classification
+         7.1.1  Actors, inputs, outputs, success criteria
+    7.2  Use case UC2 - DDoS detection in near real time
+         7.2.1  Latency and throughput requirements, alert semantics
+    7.3  Use case UC3 - Rare and low-footprint attack detection (R2L / U2R)
+    7.4  Use case UC4 - Detection of previously unseen attack variants
+    7.5  Use case UC5 - Explainable alert generation for a human analyst
+    7.6  Functional and non-functional requirements
+         7.6.1  Requirement table with IDs, traceable to experiments and benchmarks
+    7.7  Reference architecture
+         7.7.1  Batch pipeline: capture -> flow extraction -> preprocessing -> model -> report
+         7.7.2  Streaming pipeline: capture/replay -> flow assembly -> feature vector ->
+                broker -> inference service -> (symbolic check) -> alert sink -> dashboard
+         7.7.3  Where the symbolic component lives in each variant
+    7.8  Knowledge base design
+         7.8.1  Elicitation of rules from Chapter 3
+         7.8.2  Versioned knowledge base format, so that axiom sets are an experiment factor
+    7.9  Summary
+
+------------------------------------------------------------------------------------------------
+8.  BENCHMARKING METHODOLOGY                                                 [~12-15 pages] [CORE]
+     (methodological core of the thesis - contribution C1)
+------------------------------------------------------------------------------------------------
+    8.1  Requirements for a fair benchmark
+         8.1.1  Matched capacity: same architecture, same features, same preprocessing
+         8.1.2  Matched tuning budget: same search space and same number of trials
+         8.1.3  No test-set leakage: the validation set is never the test set
+         8.1.4  Repetition: n independent seeds, report mean and dispersion
+         8.1.5  Reproducibility: pinned environment, fixed seeds, published artefacts
+    8.2  Dimension 1 - Detection quality
+         8.2.1  Metric set and why each one is included
+         8.2.2  Threshold-free vs threshold-dependent metrics; choosing an operating point
+         8.2.3  Cost-sensitive evaluation and the alert-budget view
+         8.2.4  Rule-violation rate: definition and rationale
+    8.3  Dimension 2 - Computational performance
+         8.3.1  Training cost: wall-clock/epoch, epochs to convergence, total cost, peak RAM/VRAM
+         8.3.2  Inference cost: throughput, latency distribution, model size, memory footprint
+         8.3.3  Energy proxy measurement [EXT]
+         8.3.4  Measurement hygiene: warm-up, repetitions, isolation, reporting percentiles
+    8.4  Dimension 3 - Usability and operational fitness
+         8.4.1  Knowledge engineering effort (time and LOC to add / change a rule)
+         8.4.2  Sensitivity to knowledge quality
+         8.4.3  Explanation quality: coverage, faithfulness, conciseness
+         8.4.4  Maintainability under drift; retraining cost
+         8.4.5  Structured qualitative scorecard (define the rubric, avoid hand-waving)
+    8.5  Batch vs real-time evaluation protocols
+         8.5.1  Batch protocol
+         8.5.2  Streaming protocol: replay speed, backpressure, drop policy, detection latency
+    8.6  Statistical analysis plan
+         8.6.1  Paired tests on the same splits (Wilcoxon signed-rank)
+         8.6.2  Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)
+         8.6.3  Effect sizes and confidence intervals; multiple-comparison correction
+    8.7  Benchmark harness design
+         8.7.1  Configuration-driven runs, result schema, artefact layout
+         8.7.2  How a third party reproduces a table of the thesis in one command
+    8.8  Threats to validity (internal, external, construct, conclusion)
+    8.9  Summary
+
+------------------------------------------------------------------------------------------------
+9.  IMPLEMENTATION AND EXPERIMENTAL SETUP                                    [~12-15 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    9.1  Hardware and software environment
+    9.2  Data preparation
+         9.2.1  NSL-KDD pipeline (inherited, corrected)
+         9.2.2  CIC-IDS2017 / CIC-DDoS2019 pipeline and the corrected-label variant
+         9.2.3  Common feature schema for cross-dataset experiments
+         9.2.4  Split strategy: train / validation / test, temporal and random variants
+    9.3  Models under test
+         9.3.1  Rule-only symbolic classifier (knowledge without learning)
+         9.3.2  Classical ML: Random Forest, XGBoost
+         9.3.3  DL baselines: MLP, 1D-CNN, [EXT] LSTM
+         9.3.4  NeSy: LTN with the domain knowledge base
+         9.3.5  [EXT] Semantic-loss variant and/or post-hoc symbolic filter, as NeSy controls
+    9.4  Batch experimental harness
+    9.5  Real-time pipeline implementation
+         9.5.1  Traffic source: pcap replay with rate control
+         9.5.2  Flow assembly and feature extraction
+         9.5.3  Message broker and consumer topology
+         9.5.4  Inference service and optional symbolic post-check
+         9.5.5  Instrumentation: timestamps, metric collection, dashboard
+    9.6  Hyperparameter search protocol
+    9.7  Reproducibility package (repository structure, seeds, environment file, run scripts)
+    9.8  Summary
+
+------------------------------------------------------------------------------------------------
+10. RESULTS AND DISCUSSION                                                   [~20-25 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    10.1  Baseline replication and corrected protocol (E1)
+    10.2  Detection quality, batch (E2, E5, E6)
+          10.2.1  Aggregate and per-class results
+          10.2.2  Statistical significance
+    10.3  Where the knowledge acts: axiom ablation and semantics sensitivity (E3, E4)
+    10.4  Stress scenarios (E7-E11)
+          10.4.1  Label scarcity
+          10.4.2  Imbalance and rare classes
+          10.4.3  Unseen attacks and cross-dataset transfer
+          10.4.4  Degraded / wrong knowledge
+          10.4.5  Noise and simple evasion
+    10.5  Computational performance (E13)
+    10.6  Real-time behaviour (E14, E15)
+    10.7  Usability and explainability (E16, E17)
+    10.8  Cross-cutting discussion
+          10.8.1  Answering RQ1-RQ5
+          10.8.2  When does NeSy win, when does it not, and why
+          10.8.3  Negative results, honestly reported
+          10.8.4  Comparison with the figures claimed in related work
+    10.9  Threats to validity revisited
+    10.10 Summary
+
+------------------------------------------------------------------------------------------------
+11. CONCLUSIONS AND FUTURE WORK                                                [~5-6 pages] [CORE]
+------------------------------------------------------------------------------------------------
+    11.1  Summary of the work
+    11.2  Answers to the research questions
+    11.3  Practical guidelines: a decision checklist for "should I use NeSy here?"
+    11.4  Limitations
+    11.5  Future work
+          11.5.1  Richer logics: temporal and relational axioms over flow sequences
+          11.5.2  Learning the rules instead of writing them (ILP, rule extraction)
+          11.5.3  Other NeSy frameworks under the same benchmark
+          11.5.4  Knowledge from MITRE ATT&CK / threat-intel feeds, automatically
+          11.5.5  Adversarial robustness of knowledge-constrained detectors
+          11.5.6  Deployment at line rate: quantization, eBPF/DPDK front end
+
+
+BACK
+    Bibliography
+    Appendix A  Full axiom set in Real Logic
+    Appendix B  Complete hyperparameter grids and selected values
+    Appendix C  Complete result tables (all seeds, all metrics)
+    Appendix D  Feature dictionary per dataset and cross-dataset mapping
+    Appendix E  Repository layout and instructions to reproduce
+
+

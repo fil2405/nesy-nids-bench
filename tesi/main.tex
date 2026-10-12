@@ -1,0 +1,133 @@
+\documentclass[12pt,a4paper,openany,oneside]{book}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+\usepackage[italian,english]{babel}
+
+%geometry
+\usepackage[a4paper,
+  bindingoffset=0.2in,
+  left=3cm,
+  right=3cm,
+  top=3cm,
+  bottom=3cm,
+  footskip=.25in]{geometry}
+
+%captions and code listings
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf,tableposition=top]{caption}
+\usepackage{listings}
+\usepackage{courier}
+\lstset{
+  language=Python,
+  basicstyle=\footnotesize\ttfamily,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=5pt,
+  tabsize=5,
+  extendedchars=true,
+  breaklines=true,
+  keywordstyle=\bfseries,
+  stringstyle=\ttfamily,
+  showspaces=false,
+  showtabs=false,
+  xleftmargin=17pt,
+  framexleftmargin=17pt,
+  framexrightmargin=5pt,
+  framexbottommargin=4pt,
+  showstringspaces=false
+}
+
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+%math and tables
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{framed}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+
+%bibliography
+\usepackage[numbers,sort&compress]{natbib}
+\bibliographystyle{unsrtnat}
+
+%hyperlinks and cross-references 
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[capitalise]{cleveref}
+
+\usepackage{setspace}
+
+%long headings
+\emergencystretch=3em
+
+%title
+\newcommand{\thesistitle}{Benchmarking Neurosymbolic Approaches for Network Traffic Analysis}
+\newcommand{\thesisauthor}{Filippo Falzone}
+\newcommand{\supervisor}{Daniele Francesco Santamaria}
+\newcommand{\cosupervisor}{Mirko Giuseppe Mangano}
+\newcommand{\academicyear}{2025 - 2026}
+\hypersetup{pdftitle={\thesistitle},pdfauthor={\thesisauthor}}
+
+%  Acronyms 
+\makeatletter
+\newcommand{\acrolist}{}
+\newcommand{\newacro}[3]{%
+  \expandafter\newcommand\csname acro@#1\endcsname{#2}%
+  \g@addto@macro\acrolist{\item[#2] #3}}
+\makeatother
+\newcommand{\gls}[1]{\csname acro@#1\endcsname}
+
+%the bibliography heading is a chapter-level entry in the table of contents.
+\renewcommand{\bibsection}{%
+  \chapter*{\bibname}%
+  \phantomsection
+  \addcontentsline{toc}{chapter}{\bibname}}
+
+\begin{document}
+
+%Title page
+\input{parts/frontespizio}
+
+\newgeometry{left=4cm}
+\spacing{1.5}
+
+%  Front matter 
+\input{parts/abstract}
+\input{parts/sommario}
+\input{parts/acknowledgements}
+
+\spacing{1.0} 
+\tableofcontents
+\listoffigures
+\listoftables
+\input{parts/acronyms}
+
+\spacing{1.5}
+
+% ---------- Chapters ----------
+\include{chapters/ch01_introduction}
+\include{chapters/ch02_foundations}
+\include{chapters/ch03_attacks_ddos}
+\include{chapters/ch04_learning_paradigms}
+\include{chapters/ch05_ltn}
+\include{chapters/ch06_related_work}
+% \include{chapters/ch07_usecases_design}
+% \include{chapters/ch08_benchmarking_methodology}
+% \include{chapters/ch09_implementation}
+% \include{chapters/ch10_results}
+% \include{chapters/ch11_conclusions}
+
+% ---------- Bibliography and appendices ----------
+\bibliography{references}
+
+% \appendix
+% \include{back/appendixA_axioms}
+% \include{back/appendixB_hyperparameters}
+% \include{back/appendixC_results}
+% \include{back/appendixD_features}
+% \include{back/appendixE_repro}
+
+\end{document}

@@ -1,0 +1,682 @@
+\chapter{State of the Art and Related Work}
+\label{ch:related-work}
+
+\Cref{ch:ltn} set out the framework of the thesis and its candidate axioms. This
+chapter places them in the literature. It reviews learning-based
+detection that carries no explicit knowledge, neurosymbolic work in
+cybersecurity and in network intrusion detection, and the benchmarking
+practice of the field. It ends with the gap that the thesis addresses.
+
+% ================================================================
+% 6.1 Review method
+% ================================================================
+\section{Review method}
+\label{sec:review-method}
+
+The review of neurosymbolic detectors in this chapter is a targeted search. It
+is not a systematic review in the sense of PRISMA. The field is young, and the
+set of detectors that work on network traffic is small. A protocol with many
+screening stages would add cost and little precision. A systematic review
+already covers neurosymbolic AI in cybersecurity
+\citep{hakim2025nesycybersecurity}, and a survey covers neurosymbolic network
+intrusion detection \citep{bizzarri2025survey}. We use them as maps, and we check a paper before we
+report its figures.
+
+\subsection{Sources, queries, inclusion and exclusion criteria, time window}
+\label{sec:review-sources}
+
+The search ran in September and October 2026 and had two sources. The first is
+the literature review of the author's internship, which lists ten papers. The
+second is a set of queries to a general web search engine. The terms were
+variations of neurosymbolic intrusion detection, logic tensor networks and
+network traffic, neuro-symbolic detection with domain knowledge on NSL-KDD,
+probabilistic logic programming for intrusion detection, and knowledge graphs
+for anomaly detection in cybersecurity. No bibliographic database was queried
+directly, and the reference lists of the papers were not followed. A paper that
+this search missed is therefore missing from the corpus.
+
+A paper entered the corpus if it met four criteria. It has a neural component
+and an explicit symbolic component. It applies them to network traffic or to
+data derived from it. It evaluates the method on data. It is published in a
+peer-reviewed venue or on arXiv. Work on source code, malware or radio
+spectrum was excluded, because the data are not network traffic. Reviews and
+position papers were kept as context for \cref{sec:nesy-cybersecurity} and are
+not part of the corpus. We set no lower bound on the year, and the earliest paper
+of the corpus is from 2022. A paper was also excluded when we could not trace it
+to a primary source.
+
+\subsection{Extraction grid}
+\label{sec:review-grid}
+
+For every paper of the corpus we recorded seven fields: the approach, the type
+of knowledge, the dataset, the baselines, the metrics, the reproducibility
+information and the availability of code. The reproducibility field holds the
+number of seeds or repetitions and the statistical tests. Three more checks
+follow from the questions of the thesis. They ask whether the paper evaluates
+real-time operation, whether it reports computational cost and whether it
+evaluates its explanations. A field is marked as not stated when the paper does
+not say, which is not the same as absent. We also record whether the extraction
+rests on the full text or on the abstract alone.
+
+Every statement below that something is not reported holds for the corpus only.
+It is not a statement about the field.
+
+% ================================================================
+% 6.2 ML and DL for network intrusion detection
+% ================================================================
+\section{ML and DL for network intrusion detection}
+\label{sec:ml-dl-nids}
+
+This section covers detectors that learn from traffic and carry no explicit
+knowledge component. They are the counterpart of the neurosymbolic detectors
+of the next sections, and the datasets they use are those of the benchmark.
+The section relies on surveys and on a few primary papers. The review
+protocol is applied to the neurosymbolic detectors and not to this section.
+
+\subsection{Shallow models on NSL-KDD / UNSW-NB15 / CIC-IDS}
+\label{sec:shallow-nids}
+
+Surveys of learning-based intrusion detection cover the models that
+\cref{sec:classical-models} introduced. \citet{buczak2016survey} give a short
+tutorial on each machine learning and data mining method that they review, and
+they add recommendations on when to use a given method.
+\citet{thakkar2022survey} cover the work of 2008 to 2020. They report that the
+methods they survey were tested on datasets such as DARPA, KDD Cup 99 and
+NSL-KDD with network features, and they describe CIC-IDS-2017 in detail as a
+recent dataset.
+
+The neurosymbolic survey of \citet{bizzarri2025survey} supports the same point
+with a table. The table has 19 entries for machine learning or deep learning
+approaches that carry no knowledge, and 14 of them are evaluated on KDD99 or
+NSL-KDD. The count is ours, and the table is a selection of the authors and not
+a census of the field. The authors read it as follows. Deep detectors are
+mainly evaluated on synthetic datasets, and on the few recent datasets the
+false positive rate is not always reported.
+
+Newer datasets were built to replace the older ones.
+\citet{moustafa2015unswnb15} introduce UNSW-NB15 on the ground that KDD98,
+KDDCUP99 and NSL-KDD were generated a decade ago and do not fully reflect
+current traffic and low footprint attacks. The dataset has nine attack types,
+among them Fuzzers, Exploits and Worms.
+
+\subsection{Deep models: CNN, RNN, autoencoder, transformer-based detectors}
+\label{sec:deep-nids}
+
+\citet{ferrag2020deep} survey deep learning for intrusion detection. They
+describe 35 datasets in seven categories and compare recurrent networks, deep
+neural networks, restricted Boltzmann machines, deep belief networks,
+convolutional networks, deep Boltzmann machines and deep autoencoders. The
+comparison runs on CSE-CIC-IDS2018 and Bot-IoT, for binary and multiclass
+tasks, and it uses accuracy, false alarm rate and detection rate.
+
+Autoencoders enter the field as anomaly detectors. Kitsune is an ensemble of
+autoencoders, called KitNET, that learns online and without supervision
+\citep{mirsky2018kitsune}. Each autoencoder reconstructs a subset of the
+features of a packet, and an output autoencoder combines the reconstruction
+errors into an anomaly score. The model is trained on traffic assumed to be
+normal. Its authors contrast this with classification, which they call a
+closed-world approach, because a classifier identifies only the classes of its
+training set. The term is used here in another sense than the closed world
+assumption of \cref{sec:datadriven-not-enough}. Kitsune is evaluated on an IP camera network and on an IoT
+network infected with Mirai. The paper reports the true positive rate at fixed
+false positive rates, the area under the ROC curve and the equal error rate.
+It also reports packet processing rates on a Raspberry Pi. This is the
+detector in the case study of \citet{arp2022dosdonts}, where a simple baseline
+did better at low false positive rates.
+
+RTIDS is a transformer-based detector \citep{wu2022rtids}. A positional
+embedding associates sequential information between features, a stacked
+encoder-decoder learns low-dimensional representations, and self-attention
+classifies the traffic type. On CICIDS2017 and CIC-DDoS2019 the authors report
+F1 scores of 99.17\% and 98.48\%, in a comparison with an SVM and with RNN,
+FNN and LSTM models. The features of a flow record have no natural order, as
+\cref{sec:dl-architectures} noted for the one-dimensional convolution. A
+positional embedding assumes one. We note this as a limit of the design. The remark
+does not question the reported scores.
+
+\subsection{The reproducibility and dataset-quality debate}
+\label{sec:dataset-quality-debate}
+
+The data behind these results have a history. The KDD Cup 99 data derive from
+the 1998 DARPA evaluation \citep{kddcup1999task}, and NSL-KDD is a revision of
+them that removes redundant records \citep{cic2009nslkdd}.
+\citet{mchugh2000testing} examines the DARPA evaluations of 1998 and 1999. Some
+of the methods used are questionable and may have biased the results, and the
+evaluators published little on how they validated their test data.
+\citet{mahoney2003analysis} compare the simulated background traffic of the
+1999 data with real traffic. They find signs of simulation artifacts that could
+let an anomaly detector find some attacks with an artificially low false alarm
+rate. Their data are the 1999 data and not the 1998
+data behind KDD Cup 99. We take the finding as a warning about simulated
+traffic and not as a property of NSL-KDD.
+
+\citet{ring2019survey} survey the network-based datasets along 15 properties
+grouped in five categories, so that a dataset can be matched to an evaluation
+scenario, and they end with recommendations on the use and creation of
+datasets. A newer dataset is not a clean one. \citet{engelen2021troubleshooting}
+revisit CIC-IDS2017 and find problems in traffic generation, flow construction,
+feature extraction and labelling that severely affect it. With an improved
+processing methodology they reconstruct or relabel more than 20\% of the
+original traffic traces, and benchmarks on the result show significant
+improvements. Their study shows how problems in data collection can
+change the outcome of an evaluation, and we read this as the reproducibility
+side of the debate. The benchmark uses a corrected variant of CIC-IDS2017, and
+\cref{ch:implementation} says which one.
+% FIXME(open): \cref{ch:implementation} (Chapter 9, Sec. 9.2.2) renders as "??" until that chapter exists; the corrected variant of CIC-IDS2017 is chosen there.
+
+The thesis uses NSL-KDD all the same. We give three reasons and a limit.
+
+The first reason is the content features. R2L and U2R attacks are embedded in
+the data portion of a single connection, and the content features of NSL-KDD
+are what exposes them to a detector that reads one record
+\citep{tavallaee2009kddcup99}. The flow features of CIC-IDS2017 are statistics
+computed over each flow \citep{sharafaldin2018cicids2017}, and we note that none
+of them is a content feature of the NSL-KDD kind.
+Without NSL-KDD, the knowledge about R2L and U2R that \cref{ch:ltn} writes down
+could not be tested.
+
+The second reason is comparability. Most of the machine learning and deep
+learning entries in the table of Bizzarri et al. use KDD99 or NSL-KDD. The two
+detectors built with an \gls{ltn} that we read use KDD99 with the duplicates
+removed and CIC-IDS2017 \citep{onchis2022neurosymbolic}, and CIC-IDS2017 alone
+\citep{bizzarri2024nsaids}. A replication on NSL-KDD, experiment E1, places the
+pipeline of the thesis next to published work on the same lineage of data.
+% FIXME(open): experiment E1 is defined in Ch. 10, \cref{ch:results}, Sec. 10.1; check the wording there.
+
+The third reason is the role of the dataset. NSL-KDD serves for R2L and U2R and
+for the replication. The thesis does not draw its general conclusions from
+NSL-KDD alone, and it reads a result that rests on content features as specific
+to NSL-KDD.
+% FIXME(open): Ch. 8 (threats to validity) and Ch. 10 must keep this commitment, that the general conclusions rest on the flow datasets and not on NSL-KDD alone.
+
+The limit is the one set out above. NSL-KDD is old and synthetic, and a score
+that holds only there says nothing about current traffic. The benchmark reports
+it as such.
+
+% ================================================================
+% 6.3 Neurosymbolic AI in cybersecurity
+% ================================================================
+\section{Neurosymbolic AI in cybersecurity}
+\label{sec:nesy-cybersecurity}
+
+Neurosymbolic work in security is wider than the detection of attacks on
+traffic. This section maps it by the way knowledge and learning are joined. The
+detectors of network traffic are left to the next section.
+
+\subsection{Surveys and taxonomies}
+\label{sec:nesy-cyber-surveys}
+
+\citet{hakim2025nesycybersecurity} review 103 publications on neurosymbolic AI
+in cybersecurity, from 2019 to early 2026. They sort the papers in three tiers.
+Deep integration covers joint optimisation, as in logic tensor networks.
+Structured interaction covers systems whose neural and symbolic parts exchange
+results, for example a knowledge graph that enriches a neural encoder or a
+language model paired with a solver. The third tier holds purely statistical
+systems kept for comparison. The authors name the lack of standard frameworks
+for evaluating these systems as the most critical gap of the field, and they
+note that the datasets in use carry no symbolic knowledge. They also warn that
+the satisfiability computation of systems built on logic tensor networks may
+add an inference latency that does not fit wire speed. In our reading the warning holds for a system that evaluates the formulas at
+inference. In the design of the thesis the
+formulas act in the loss only, as \cref{sec:inference-vs-training} explains, and
+the cost at inference is a question for the experiments and not an assumption.
+
+\citet{bizzarri2025survey} survey neurosymbolic AI for network intrusion
+detection. They find that latency and throughput are not consistently reported
+and that the overhead of joining symbolic and neural processing is rarely
+quantified. Two shorter papers state a programme. \citet{grov2024neurosymbolic}
+argue for neurosymbolic cyber defence and give use cases with proof-of-concept
+experiments. \citet{piplai2023knowledge} present knowledge graphs as the
+symbolic side of neurosymbolic AI for security and privacy, with explainability
+and safety as the aim. We read both as position papers, and we use them for
+framing and not as evidence.
+
+\subsection{Knowledge-graph based approaches}
+\label{sec:nesy-kg}
+
+A knowledge graph holds the context of a detection, such as assets, services and
+the relations between them. \citet{tailhardat2025anomaly} survey anomaly
+detection with knowledge graphs for network management and cybersecurity. Their
+text is a preprint at the time of writing.
+\citet{garrido2021knowledge} apply relational learning to a knowledge graph of
+an industrial automation setting, where network traffic analysed with Zeek is
+one of the data sources, to put alerts in context. The model is a probabilistic
+tensor factorisation and not a neural network, so the work sits at the edge of
+the field.
+
+In both, knowledge enters beside or after the detector and not in its training.
+This is closest to the post-hoc family of \cref{sec:post-hoc-verification}, where
+the model is left as it is. A detector of this kind appears in the next section.
+
+\subsection{Logic-as-loss approaches, LTN applications}
+\label{sec:nesy-logic-loss}
+
+The thesis belongs to the family that puts formulas in the loss. In the corpus
+of this chapter, two detectors are of this family. Both are built with logic
+tensor networks and both work on network traffic, so they are read in
+\cref{sec:nesy-nids}. No detector of the corpus uses a semantic loss or DL2. The
+general literature on constraints in the loss does not concern security in
+particular and is covered in \cref{sec:logic-as-loss}.
+
+\subsection{Probabilistic logic programming approaches}
+\label{sec:nesy-plp}
+
+The preprint of Bizzarri et al. presents DeepProbLog, DeepStochLog and NeurASP
+as methods, and it reports no application of them to intrusion detection on
+benchmark data \citep{bizzarri2024synergistic}. We found no detector built with
+them either.
+
+The probabilistic logic of the corpus is Markov logic. KnowGraph writes domain
+knowledge as weighted first-order formulas of three kinds, attribute rules,
+hierarchy rules and exclusion rules, and reasons over them on graph data with
+variational inference \citep{zhou2024knowgraph}. The data are authentication
+events of the LANL set, 1.6 billion over 58 days, and a marketplace set. It is
+not a classifier of traffic. In our view its three kinds of rule correspond to
+the groups of axioms of \cref{sec:ddos-axioms}, which gives the thesis a point
+of comparison in another logic. KnowGraph reports the area under the ROC curve, the average
+precision and the true positive rate at fixed false positive rates. We found no
+latency or cost figures in it.
+
+\subsection{LLM and formal verification hybrids}
+\label{sec:nesy-llm-formal}
+
+Hybrids of language models and formal verification have been reviewed for
+software vulnerabilities \citep{tihanyi2025vulnerability}. In our simplified
+description, a model proposes and a verifier checks. The artefacts are code and specifications, which are discrete
+and well formed, and a flow record is neither. Hakim et al. place such pairings
+in the structured interaction tier. We found no use of the scheme on network
+traffic. It is outside the scope of the thesis, whose detectors contain no
+language model.
+
+% ================================================================
+% 6.4 Neurosymbolic AI applied specifically to NIDS
+% ================================================================
+\section{Neurosymbolic AI applied specifically to NIDS}
+\label{sec:nesy-nids}
+
+\subsection{Findings of the internship literature review}
+\label{sec:internship-findings}
+
+The internship of the author produced a review of ten papers. We used it as a
+map and checked every paper against its primary source. Three papers are
+detectors that we could confirm: \citet{onchis2022neurosymbolic},
+\citet{bizzarri2024nsaids} and \citet{kalutharage2025neurosymbolic}. Three are
+reviews, of which \citet{hakim2025nesycybersecurity} is the one on
+cybersecurity. One concerns radio spectrum management, which is not network
+traffic classification. For three we could not find a primary source. The
+bibliography of the review also gave wrong venues for the papers that we did
+confirm. We corrected the venues and dropped the papers that we could not trace.
+
+The search of \cref{sec:review-sources} added five works. The corpus then has
+eight detectors, listed in \cref{tab:nesy-nids-grid}. They are
+\citet{tran2025odxu}, \citet{tran2025transfer}, \citet{aresrobledo2025hyperparameter},
+\citet{zhou2024knowgraph} and \citet{alemayehu2026deployment}, in addition to the
+three above.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{The corpus of neurosymbolic detectors. The first column gives the
+reference and the other four are the fields of the extraction grid. An
+asterisk marks an extraction based on the abstract alone.}
+\label{tab:nesy-nids-grid}
+\begin{tabular}{@{}p{2.3cm}p{3.2cm}p{2.6cm}p{1.9cm}p{2.0cm}@{}}
+\toprule
+Work & Symbolic part & Data & Baselines & Metrics \\
+\midrule
+\citet{onchis2022neurosymbolic}
+  & Class and exclusivity axioms in an LTN
+  & KDD99 deduplicated, one afternoon of CIC-IDS2017
+  & DNN
+  & Accuracy, KB satisfaction \\
+\citet{bizzarri2024nsaids}
+  & Benign against attack axiom in an LTN, dropped at test
+  & CIC-IDS2017 packets
+  & 1D-CNN, two LTN variants
+  & Accuracy, F1 \\
+\citet{tran2025odxu}
+  & Decision-path rules of XGBoost on learned embeddings
+  & CIC-IDS2017, ACI-IoT-2023
+  & DNN, 1D-CNN
+  & Accuracy, false omission rate, AUROC, training time \\
+\citet{tran2025transfer}
+  & Same, with transfer learning
+  & ACI-IoT-2023, CIC-IDS2017
+  & DNN, 1D-CNN
+  & Same \\
+\citet{kalutharage2025neurosymbolic}
+  & Knowledge graph that validates alerts
+  & USB-IDS, own IoT capture
+  & DT, RF, DNN from prior work
+  & Accuracy \\
+\citet{zhou2024knowgraph}
+  & Weighted first-order rules, Markov logic
+  & LANL, marketplace
+  & Euler, EncG, GCN, DGI
+  & AUC, AP, TPR at fixed FPR \\
+\citet{aresrobledo2025hyperparameter}$^{*}$
+  & Symbolic reasoning in a graph pipeline
+  & IoTID20, UNSW-NB15
+  & not stated
+  & MCC \\
+\citet{alemayehu2026deployment}
+  & Shallow decision tree with a GRU
+  & CIC-DDoS2019, Edge-IIoTset, CICIoT23
+  & GRU and tree alone, five classical models
+  & Accuracy, MCC, FPR, FNR, latency, memory \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The label neurosymbolic covers different things in these papers. In the two
+\gls{ltn} detectors, formulas enter the loss. In KnowGraph, weighted rules form
+a reasoning layer over a graph. In the work of Kalutharage et al. a knowledge
+graph checks the alerts of an autoencoder after the detection. In the two papers
+of Tran et al. and in the paper of Alemayehu et al. the symbolic part is a tree
+model learned from data. Ares-Robledo et al. add symbolic reasoning to an
+unsupervised graph pipeline. Only in the first group is the network that
+classifies the traffic trained directly to satisfy the formulas. KnowGraph and
+the work of Kalutharage et al. also use knowledge written by people. In
+KnowGraph the detection models are trained without the rules. The weighted rules
+then define a Markov logic network, and a separate reasoning network is trained
+to approximate it. The rules therefore act on training through this second
+network, which is kept at prediction time \citep{zhou2024knowgraph}. In the work
+of Kalutharage et al. the
+experts set thresholds in a graph that acts only after the detection.
+This classification is ours. It means that the benchmark of the thesis matches the
+first group, and it does not match the others.
+
+\subsection{Critical reading: what is actually measured, what is not}
+\label{sec:critical-reading}
+
+We start with the two detectors that put formulas in the loss.
+
+\citet{onchis2022neurosymbolic} train on KDD99 after the removal of duplicates,
+which cuts it from 494{,}020 to 145{,}585 records, and on one afternoon of
+CIC-IDS2017. On KDD99 the paper has two classifiers. The first predicts the
+protocol type and the connection status and serves to show queries. The
+knowledge base of the intrusion classifier states that each class holds for its
+examples and that the classes exclude each other. The CIC-IDS2017 classifier has
+the three class axioms only. No axiom of the two intrusion classifiers mentions a
+property of the traffic. The axioms constrain labels. The satisfaction of such a
+base follows the quality of the classifier, as the authors say themselves when
+they note that a wrong prediction lowers the truth values. It is reported on
+training and test data. In our reading it differs from accuracy because it also
+depends on the confidence of the outputs. On KDD99 the accuracy reaches 0.995 on training and 0.995 on test data
+against 0.989 and 0.987 for a dense network, while the satisfaction on test data
+stays near 0.86, as we read the figure. On CIC-IDS2017 the authors report an
+accuracy of 0.95 and a satisfaction of about 0.85.
+
+The comparison with the dense network is not matched. The authors keep the
+number of hidden layers and of neurons, but the LTN uses a sigmoid output and
+elu units and the baseline a softmax and relu units. The paper reports no
+repetitions, seeds or statistical tests. On
+CIC-IDS2017 the figures, as we read them, show a validation accuracy of the
+dense network above that of the LTN late in training, with larger swings. The
+argument of the paper is about the stability of the curve and not about the
+level. No precision, recall or per-class result is reported, although U2R has a
+few dozen records in the data, as a figure of the paper shows. The conclusions say that the symbolic part speeds
+up training and reduces overfitting. The paper gives no training times, and the
+overfitting argument rests on one training curve per model. The authors also present
+CIC-IDS2017 as a dataset that aims to solve the faults of the earlier ones, while
+\citet{engelen2021troubleshooting} find faults of its own. The article links the datasets and
+not the code.
+
+\citet{bizzarri2024nsaids} work on CIC-IDS2017 packets, with the first 1500
+payload bytes as features and a 1D-CNN as the network. The knowledge base has one
+pair of axioms, benign examples are benign and attacks are not. Attack classes
+are held out of training to stand for unknown attacks. The text speaks of five
+such classes, while the table and the results of the paper list six. After 50
+epochs, on the nine known classes the LTN reaches 81.08\% accuracy against
+80.99\% for the same CNN. On the
+unknown attacks, seen as a binary problem, it reaches 60.47\% against 48.34\%,
+and an F1 score of 75.37\% against 65.18\%. Two points matter for this thesis.
+The baseline is the same network trained without the logic term, which is the
+matched capacity that \cref{sec:bias-variance-generalization} requires. And the model
+used at test time is the bare CNN, as in our own design. The extraction found
+no seeds, no test of significance, no cost figure and no satisfaction
+measurement. The absolute accuracy on unknown attacks is low, and the gain
+rests on one split.
+
+The other detectors measure other things. Both papers of
+\citet{tran2025odxu,tran2025transfer} report accuracy, false omission rate and
+uncertainty measures against a dense network and a 1D-CNN. Both give
+training times and the hardware. The two papers report the same transfer
+experiments, with the same baseline scores and training times, so we do not
+count them as independent evidence. Neither gives seeds or tests, and the
+symbolic part carries no prior knowledge. \citet{kalutharage2025neurosymbolic}
+compare a knowledge graph built from data with one enhanced by experts, and the
+overall accuracy is 0.91 against 0.97. This is the only comparison of the
+quality of the knowledge in the corpus. The mapping to MITRE ATT\&CK is said to
+be 100\% accurate and was confirmed by manual validation, with no count of
+instances. The detector runs on a Raspberry Pi in the description, and no latency
+or memory is given. KnowGraph reports the true positive rate at fixed false
+positive rates, which ties its results to the number of false alarms. By their abstract,
+\citet{aresrobledo2025hyperparameter} report an MCC of 0.97 on IoTID20 and 0.91 on
+UNSW-NB15. \citet{alemayehu2026deployment} measure the cost in most detail. Model
+inference takes 0.58 to 0.79 milliseconds per sample on a workstation CPU, and
+the authors also report latency, memory and energy for a deployment on an
+industrial gateway and on a Raspberry Pi. They retrain the neural part over ten seeds and give
+confidence intervals. On Edge-IIoTset the decision tree alone reaches 100\%
+accuracy, and the authors themselves call that dataset linearly separable and
+treat it as a sanity check.
+
+Across the corpus, four of the eight detectors use CIC-IDS2017, one uses KDD99
+and none uses NSL-KDD. Accuracy is the headline metric of the two detectors with
+logic in the loss. Seven extractions rest on the full text. Of these, only the
+paper of Alemayehu et al. repeats runs over seeds, and only it mentions a
+released repository, without giving a link. None tests the difference between
+two detectors, and none reports the violation of rules by the predictions. Only
+Onchis et al. report the satisfaction of a knowledge base on test data. Cost
+appears as training time in the two papers of Tran et al. and as latency,
+memory and energy in the paper of Alemayehu et al. Explanations are evaluated by
+manual validation in one paper, and qualitatively or not at all in the rest. These statements hold for
+the eight papers. The corpus supports the claim that logic in the loss can work,
+and it does not tell when it pays.
+% FIXME(open): how the metrics of C5 are positioned against the satisfaction reported by Onchis et al. is to be decided with the advisor; Secs. 6.6 and 6.7 and Ch. 1 follow that decision.
+
+% ================================================================
+% 6.5 Benchmarking methodology for learning-based security systems
+% ================================================================
+\section{Benchmarking methodology for learning-based security systems}
+\label{sec:benchmarking-practice}
+
+The studies above differ in protocol, in metric and in rigour. This section
+collects the practice that a fair comparison can draw on. It comes from
+security, from the evaluation of classifiers and from the benchmarking of
+machine learning systems. The thesis fixes its own choices in
+\cref{ch:benchmarking-methodology}.
+% FIXME(open): \cref{ch:benchmarking-methodology} renders as "??" until Chapter 8 exists and is \include-d in main.tex.
+
+\subsection{Evaluation protocols: temporal splits, cross-attack, leave-one-attack-out}
+\label{sec:evaluation-protocols}
+
+\citet{pendlebury2019tesseract} show how a split inflates results. They name
+two flaws in malware classification. Spatial bias arises when training and test
+data do not reflect the distribution met in deployment. Temporal bias arises
+when the split ignores time and produces impossible configurations. They
+evaluate under space and time constraints, and on 129{,}000 Android
+applications spanning three years they find that three published classifiers had
+been evaluated with bias. The data are malware and not traffic, but the
+argument that a random split mixes earlier and later samples carries over.
+
+For traffic, \citet{layeghy2022generalisability} train models on one of four
+benchmark datasets and test them on the other three. Scores are near perfect on
+the dataset of training and fall sharply elsewhere. No model generalises over
+all four, and the result changes when source and target are swapped.
+In F1 score, unsupervised models lose 28.33\% on average and supervised ones
+56.28\%.
+\citet{sarhan2021zeroshot} leave out one attack class at a time to simulate a
+zero-day attack, and they measure how often the held-out class is detected.
+The detector of \citet{bizzarri2024nsaids} holds out several classes at once. The
+stress scenarios of the thesis for unseen attacks and for transfer between
+datasets follow these protocols.
+% FIXME(open): the split strategy, temporal and random variants, is defined in Ch. 9, Sec. 9.2.4; check that it matches this section.
+
+\subsection{Metrics beyond accuracy: MCC, PR-AUC, FPR@TPR, alert budget, cost curves}
+\label{sec:metrics-beyond-accuracy}
+
+\citet{chicco2020mcc} argue that the Matthews correlation coefficient is high
+only if the prediction is good in all four categories of the confusion matrix,
+while accuracy and the F1 score can be inflated on imbalanced data.
+\citet{saito2015precision} show that the precision-recall curve changes with the
+class ratio and the ROC curve does not, which makes the first more informative
+when the classes are imbalanced.
+
+Security papers often report the true positive rate at a fixed false positive
+rate. Kitsune does so \citep{mirsky2018kitsune}, and so does KnowGraph
+\citep{zhou2024knowgraph}. A fixed rate speaks to the base-rate problem of
+\cref{sec:base-rate-false-positives}, because it ties the comparison to the
+number of false alarms. We call the alert budget
+the number of alerts per period that analysts can handle. With the volume of
+traffic it fixes the largest false positive rate that a deployment accepts, and
+the true positive rate at that rate is the figure to compare. The definition
+is ours. \citet{drummond2006cost} give a third view. Cost curves show the
+expected cost of a classifier over class distributions and misclassification
+costs, and the authors argue that they suit several uses better than ROC
+curves, among them confidence intervals and the comparison of classifiers.
+Prevalence in traffic is not fixed, and a cost curve shows how a ranking of
+detectors changes with it. We propose this use for the benchmark.
+
+\subsection{Systems-benchmarking practice (MLPerf-style methodology) transplanted here}
+\label{sec:mlperf-practice}
+
+\citet{reddi2020mlperf} present MLPerf Inference as a set of rules and best
+practices that make results comparable across systems of very different
+architecture. Its first round gave more than 600 reproducible measurements from
+14 organisations. \citet{mattson2020mlperf} measure training as the time to
+reach a target quality and not as throughput. They give two reasons. An
+optimisation that raises throughput can raise the time to solution, and
+training is stochastic, so the time to solution varies a lot. They add that
+the diversity of systems makes a comparison with one binary and fixed
+hyperparameters difficult.
+
+Three habits carry over to a detector benchmark. The quality target is fixed
+before the measurement. Runs are repeated and the spread is reported. The rules
+on what may be tuned are written down. The suites themselves do not carry over.
+They target deep learning workloads on accelerators, and neither covers a
+tabular detector or a logic term. The thesis takes the discipline and not the
+suites.
+
+\subsection{Statistical comparison of classifiers across datasets}
+\label{sec:statistical-comparison}
+
+\citet{demsar2006statistical} recommends the Wilcoxon signed-ranks test for two
+classifiers on several datasets, and the Friedman test with post-hoc tests for
+more, with critical difference diagrams to show the result. The benchmark has
+three datasets. With three datasets the smallest two-sided p-value of the
+signed-ranks test is 0.25, so no difference can be called significant at the
+5\% level. This follows from the exact distribution of the test, and we did the
+calculation ourselves. A comparison across the datasets can then be descriptive
+only, and the tests belong to repeated splits within each dataset.
+\citet{bouthillier2021variance} name three sources of variance, data sampling,
+parameter initialisation and hyperparameter choice. They show that an estimator
+that varies several of them at once comes close to the ideal one at a lower
+cost. Repeated runs on one dataset are not independent samples of datasets, so
+a test on them supports a statement about that dataset. In the corpus of the
+previous section, one paper repeats its runs over seeds and none tests a
+difference between detectors.
+
+% ================================================================
+% 6.6 Synthesis table
+% ================================================================
+\section{Synthesis of the related work}
+\label{sec:synthesis}
+
+\Cref{tab:synthesis} puts the corpus on the axes of the thesis. A dash marks a
+field that the extraction did not find, and n.s. marks a field that the source
+does not state. An asterisk marks an extraction based on the abstract.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Related work against the questions of the thesis. The classification
+of the family is ours.}
+\label{tab:synthesis}
+\begin{tabular}{@{}p{2.2cm}p{2.2cm}p{2.3cm}p{1.5cm}p{1.5cm}p{1.9cm}@{}}
+\toprule
+Work & Family & Data & Real time & Cost & Explanation \\
+\midrule
+\citet{onchis2022neurosymbolic}
+  & Logic in the loss, LTN & KDD99, CIC-IDS2017 & --  & -- & Queries, qualitative \\
+\citet{bizzarri2024nsaids}
+  & Logic in the loss, LTN & CIC-IDS2017 & -- & -- & -- \\
+\citet{tran2025odxu}
+  & Rules from trees & CIC-IDS2017, ACI-IoT-2023 & -- & Training time, hardware & -- \\
+\citet{tran2025transfer}
+  & Rules from trees & ACI-IoT-2023, CIC-IDS2017 & -- & Training time, hardware & -- \\
+\citet{kalutharage2025neurosymbolic}
+  & Graph after detection & USB-IDS, IoT capture & Claimed, not measured & -- & Manual validation \\
+\citet{zhou2024knowgraph}
+  & Markov logic on graphs & LANL, marketplace & -- & -- & -- \\
+\citet{aresrobledo2025hyperparameter}$^{*}$
+  & Symbolic graph pipeline & IoTID20, UNSW-NB15 & n.s. & n.s. & n.s. \\
+\citet{alemayehu2026deployment}
+  & Tree with a GRU & CIC-DDoS2019 and two more & Latency on edge devices & Latency, memory, energy & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Only one source mentions a released repository, and it gives no link, so the
+column on code is left out. Three papers measure a cost, two as training time
+and one as latency, memory and energy. The paper that reports latency is the
+only one that uses CIC-DDoS2019. The two detectors with logic in the loss report neither cost nor
+real-time behaviour. The table does not say that the missing figures were not
+measured, only that the papers do not show them.
+
+% ================================================================
+% 6.7 Research gap
+% ================================================================
+\section{Research gap addressed by this thesis}
+\label{sec:research-gap}
+
+The literature shows that logic can be put in the loss of a traffic classifier,
+and in the best case it gives a gain on attacks never seen in training. It
+does not show when that pays, and six gaps follow from the reading above.
+
+The first concerns the knowledge. In the two detectors with logic in the loss,
+the axioms constrain labels and say nothing about the traffic. The thesis
+encodes conditions on flows, windows and sources, and tests whether they help.
+The second concerns the comparison. Among the detectors with logic in the
+loss, only one trains the same network without the logic term. The thesis
+matches architecture, features and tuning budget for every pair. The third
+concerns the data. The two detectors with logic in the loss use one or two
+datasets each, and neither tests a fixed model on a dataset it was not trained
+on. The thesis uses three datasets, with stress scenarios for scarce
+labels, imbalance, unseen attacks, transfer and degraded knowledge.
+
+The fourth is reproducibility. One source of the corpus repeats runs over seeds,
+none tests the difference between two detectors, and none links its code. The
+survey of Hakim et al. calls for standard evaluation frameworks. The thesis
+publishes its pipeline and reports repeated runs with paired tests. The fifth is
+cost. Training time appears in two papers, and latency, memory and energy in
+one, which has no logic in the loss.
+The thesis measures training and inference cost in batch and in streaming
+operation. The sixth is usability. No paper reports the effort of writing the
+knowledge or evaluates the explanations beyond a manual check. The thesis
+measures both.
+% FIXME(open): the sentence on the metrics of C5 is missing here; add it after the decision with the advisor on how C5 is positioned against Onchis et al.
+
+These gaps map to the research questions. The first two concern RQ1 and RQ2,
+the third and fourth RQ5, the fifth RQ3 and the sixth RQ4. Every statement
+holds for the corpus of \cref{sec:review-method}, and a paper that the search
+missed could narrow a gap.
+
+% ================================================================
+% 6.8 Summary
+% ================================================================
+\section{Summary}
+\label{sec:ch6-summary}
+
+Detectors without knowledge are evaluated mostly on old and synthetic data or on
+data with known flaws, and the literature on datasets explains why the results
+cannot be taken at face value. Neurosymbolic work in cybersecurity is varied. In
+network traffic it comes to eight detectors, of which two put formulas in the
+loss. They report accuracy and rarely report cost. Only one repeats its runs
+over seeds, and none tests a difference between detectors or links its code. The practice of benchmarking offers protocols, metrics and
+statistical care that the thesis adopts. What the literature leaves open is
+when logic in the loss pays, under a matched comparison, on several datasets and
+with its cost measured. The next chapter turns from the
+literature to the use cases and the design of the system.

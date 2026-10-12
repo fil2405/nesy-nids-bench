@@ -1,0 +1,770 @@
+\chapter{Logic Tensor Networks}
+\label{ch:ltn}
+
+\Cref{ch:attacks-ddos} ended with candidate axioms written as implications
+over predicates. The predicates have no thresholds, so as they stand they are
+neither true nor false. \Cref{ch:learning-paradigms} placed the thesis in the
+family that puts logic in the loss. This chapter presents the framework of
+that family that gives the axioms a meaning and lets a network learn under
+them. The framework is Logic Tensor
+Networks \citep{badreddine2022ltn}. The chapter describes its language and its
+semantics, the way learning is posed as an optimisation problem, what the
+framework can and cannot do, and why the thesis chose it. It ends by writing
+that knowledge in the language of the framework.
+
+% ================================================================
+% 5.1 Real Logic: syntax
+% ================================================================
+\section{Real Logic: syntax}
+\label{sec:real-logic-syntax}
+
+Real Logic is the many-valued first-order language of Logic Tensor Networks.
+Its syntax is the usual one for first-order logic, with domains added as
+types \citep{badreddine2022ltn}. This section covers the symbols and the
+formulas. Their meaning comes from the grounding of the next section.
+
+\subsection{Constants, variables, functions, predicates}
+\label{sec:rl-symbols}
+
+The language has five kinds of symbol: constants, variables, function symbols,
+predicate symbols and domain symbols \citep{badreddine2022ltn}. Domains are
+the types of the language. Every variable ranges over a domain. Every function
+and every predicate has input domains, and a function has an output domain as
+well. Terms are built from constants, variables and function symbols in the
+usual way. An atomic formula is an equality between terms or a predicate
+applied to terms of the right domains.
+
+The axioms of \cref{ch:attacks-ddos} speak of three objects, a flow $f$, a
+window of flows $w$ and a source $s$. The knowledge base of the thesis has a
+single domain instead, the units that the classifier labels. The classes and
+the conditions of the axioms are predicates over that domain.
+\Cref{tab:rl-symbols} sets these objects against the symbols of the
+language.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Objects of \cref{ch:attacks-ddos} as symbols of Real Logic. The
+mapping is ours.}
+\label{tab:rl-symbols}
+\begin{tabular}{@{}p{2.6cm}p{4.9cm}p{4.8cm}@{}}
+\toprule
+Object & Symbol & Grounding \\
+\midrule
+Flow, window, source
+  & One domain of classified units, with variable $x$, see \cref{sec:predicate-design}
+  & Sets of real feature vectors \\
+Classes
+  & Predicates $\mathrm{Normal}$, $\mathrm{DoS}$, $\mathrm{Probe}$, $\mathrm{R2L}$, $\mathrm{U2R}$
+  & Learned, a network with output in $[0,1]$ \\
+Conditions of the axioms
+  & Predicates such as $\mathrm{HighRate}$ or $\mathrm{ManySrc}$
+  & Computed from the features, with output in $[0,1]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We expect to need no function symbols. The features of a flow, a window or a
+source are computed before the logic is applied, so the individuals are
+already vectors.
+
+Typing needs care. In \cref{tab:candidate-axioms} the class $\mathrm{DoS}$
+takes a window in most axioms and a flow in the slow DoS axiom, while
+$\mathrm{Probe}$ and $\mathrm{R2L}$ take a source. A predicate of Real Logic
+has fixed input domains. The thesis moves all of them to one domain, the unit
+that the classifier labels, and \cref{sec:predicate-design} gives the reason.
+
+\subsection{Connectives and quantifiers}
+\label{sec:rl-connectives}
+
+Formulas are built with negation, conjunction, disjunction, implication and
+biconditional, and with the universal and the existential quantifier
+\citep{badreddine2022ltn}. The chapter writes them as $\neg$, $\wedge$,
+$\vee$, $\rightarrow$, $\leftrightarrow$, $\forall$ and $\exists$. A
+quantifier binds a variable, and a formula that still has free variables is
+open.
+
+The axioms of \cref{tab:candidate-axioms} leave the quantifier implicit. Read
+as formulas of Real Logic they are universal. Over the domain of units, the
+SYN flood axiom becomes
+\[
+\forall x\,\bigl(\mathrm{SynExcess}(x)\wedge\mathrm{Incomplete}(x)\rightarrow
+\mathrm{DoS}(x)\bigr),
+\]
+where the two conditions read the statistics of the window of $x$.
+At this point the formula says nothing about truth. That is the work of the
+grounding.
+
+% ================================================================
+% 5.2 Grounding
+% ================================================================
+\section{Grounding (semantics in the tensor domain)}
+\label{sec:grounding}
+
+A grounding maps every symbol of the language to a real tensor or to an
+operation on tensors \citep{badreddine2022ltn}. It starts by assigning to each
+domain a set of tensors. The three subsections follow the three kinds of
+expression: terms, predicates and formulas.
+
+\subsection{Grounding of terms into real tensors}
+\label{sec:grounding-terms}
+
+A constant is grounded as one tensor. The tensor can be fixed, when the object
+has known features, or it can be a learnable embedding
+\citep{badreddine2022ltn}. A function symbol is grounded as a map between the
+tensors of its domains. A variable is grounded as a sequence of individuals of
+its domain, and a term with free variables is grounded as a tensor with one
+axis for each variable. A term $g(x,y)$ then returns one result for each
+combination of an individual of $x$ and one of $y$ \citep{badreddine2022ltn}.
+
+In training, the sequence of a variable is a minibatch. A variable over
+units is grounded as a batch of feature vectors, and the size of the batch
+is the number of individuals over which a quantifier will range. The batch
+size is therefore a design choice and not a detail of the implementation.
+
+\subsection{Grounding of predicates into neural networks with output in [0,1]}
+\label{sec:grounding-predicates}
+
+A predicate is grounded as a function from the tensors of its input domains to
+the interval $[0,1]$ \citep{badreddine2022ltn}. The value is a degree of
+truth. This answers the question left open in \cref{ch:attacks-ddos}.
+$\mathrm{HighRate}(x)$ no longer has to be true or false. For illustration, it
+may return $0.9$ for a unit whose window has a very high rate and $0.2$ for a
+modest one, and every axiom that contains it inherits the degree.
+
+In practice a predicate is a neural network or another tensor operation whose
+output lies in $[0,1]$. Badreddine et al. put a sigmoid on top of a multilayer
+perceptron for a binary predicate. For a classifier with mutually exclusive
+classes they use a softmax, so that the degrees of the classes sum to one
+\citep{badreddine2022ltn}. Both forms are open to the thesis, because the
+classes of the KDD families are exclusive for a record.
+
+The thesis has two groups of predicates, as \cref{tab:rl-symbols} shows. The
+class predicates are learned. The condition predicates are computed from the
+features, either as fixed functions or as small learned ones. In our design the
+network that grounds the class predicates has the architecture of the
+multilayer perceptron baseline. Only the training objective differs, which is
+the matched capacity requirement of \cref{sec:bias-variance-generalization}.
+
+\subsection{Grounding of formulas into satisfaction degrees}
+\label{sec:grounding-formulas}
+
+Connectives and quantifiers are grounded with operators of fuzzy logic. A
+connective is applied element by element to the tensors of its arguments. A
+quantifier reduces the axis of the variable it binds with an aggregation
+operator \citep{badreddine2022ltn}. Every formula therefore grounds to a
+tensor with one axis for each free variable that remains, and a formula
+without free variables grounds to a single number in $[0,1]$. This number is
+its satisfaction degree. The operators are the subject of
+\cref{sec:fuzzy-semantics}.
+
+Take the SYN flood axiom and a batch of $B$ units. The three predicates
+return three vectors of $B$ degrees. The conjunction and the implication
+combine them position by position and give one vector of $B$ degrees. The
+universal quantifier aggregates this vector into one number, the degree to
+which the axiom holds on the batch. Learning, described in
+\cref{sec:learning-satisfiability}, pushes this number up.
+
+The same number, computed for one axiom on test data, is the raw material of
+the axiom-level satisfaction of contribution C5 in \cref{sec:contributions}.
+Its definition belongs to the benchmark, see
+\cref{sec:detection-quality-dimension}.
+% FIXME(open): \cref{sec:detection-quality-dimension} (Chapter 8, Sec. 8.2) renders as "??" until that chapter exists; C5 is defined formally there.
+
+Variables of different domains can be quantified together. By default every
+individual of one variable is paired with every individual of the others.
+Diagonal quantification pairs instead the $i$-th individual of each variable
+\citep{badreddine2022ltn}. This is the form that supervised axioms need, to
+match an example with its own label. The observation is ours.
+
+
+% ================================================================
+% 5.3 Fuzzy semantics
+% ================================================================
+\section{Fuzzy semantics}
+\label{sec:fuzzy-semantics}
+
+The grounding of \cref{sec:grounding} leaves open which operators interpret
+the connectives and the quantifiers. The choice matters for training.
+\citet{vankrieken2021analyzing} show that many fuzzy operators, including
+well-known ones, are unsuitable for gradient-based learning. Badreddine et al.
+take up their results and recommend one configuration
+\citep{badreddine2022ltn}. This section presents the operators, then the
+gradient problems that decide between them. The configuration that the thesis
+adopts is a design choice, and it can change the learning dynamics.
+
+\subsection{T-norms and t-conorms: G\"odel, {\L}ukasiewicz, Product}
+\label{sec:t-norms}
+
+A fuzzy conjunction maps two degrees to one degree. It agrees with the Boolean
+conjunction when both degrees are $0$ or $1$, and it does not decrease when an
+argument grows. A t-norm is a conjunction that also satisfies $T(x,1)=x$ and
+is commutative and associative \citep{badreddine2022ltn}. A t-conorm is the
+same for disjunction, with $S(x,0)=x$. Given a negation $N$, the dual t-conorm
+of $T$ is $S(x,y)=N(T(N(x),N(y)))$. A t-norm, its dual t-conorm and the
+standard negation $N_S(a)=1-a$ form a symmetric configuration. There are three
+common ones, shown in \cref{tab:t-norms}.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The three common t-norms and their dual t-conorms
+\citep{badreddine2022ltn}.}
+\label{tab:t-norms}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Configuration & Conjunction $a\wedge b$ & Disjunction $a\vee b$ \\
+\midrule
+G\"odel & $\min(a,b)$ & $\max(a,b)$ \\
+Product & $ab$ & $a+b-ab$ \\
+{\L}ukasiewicz & $\max(a+b-1,0)$ & $\min(a+b,1)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three differ in the laws they keep. Only the pair of G\"odel operators is
+distributive \citep{badreddine2022ltn}. For degrees in $\{0,1\}$ all three
+return the Boolean value, so they differ only on graded degrees. This remark
+is ours, and it matters because some conditions of our axioms may be crisp.
+
+\subsection{Fuzzy implications: Kleene-Dienes, Goguen, {\L}ukasiewicz, Reichenbach}
+\label{sec:fuzzy-implications}
+
+Two classes of implication are built from the operators above
+\citep{badreddine2022ltn}. An S-implication is defined as $\neg a\vee b$. An
+R-implication is the largest $z$ with $a\wedge z\leq b$, which generalises
+modus ponens. \Cref{tab:implications} lists the common ones, with the class and
+the t-norm or t-conorm behind each.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Common fuzzy implications \citep{badreddine2022ltn}.}
+\label{tab:implications}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Name & $I(a,b)$ & Class & Based on \\
+\midrule
+Kleene-Dienes & $\max(1-a,b)$ & S & $S_M$ \\
+G\"odel & $1$ if $a\leq b$, else $b$ & R & $T_M$ \\
+Reichenbach & $1-a+ab$ & S & $S_P$ \\
+Goguen & $1$ if $a\leq b$, else $b/a$ & R & $T_P$ \\
+{\L}ukasiewicz & $\min(1-a+b,1)$ & S and R & $S_L$, $T_L$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every axiom of \cref{ch:attacks-ddos} is an implication, so this choice weighs
+more than the others. With Reichenbach the derivative of the implication with
+respect to the consequent is the degree of the antecedent. A unit on which
+the condition is weakly true pushes the class predicate weakly, and an axiom
+acts mostly where its condition holds. We derive this from the formula. {\L}ukasiewicz and Reichenbach coincide when the
+antecedent is crisp. Both return $b$ for $a=1$ and $1$ for $a=0$. They differ
+only when the condition is graded, which is the case that the thesis adds.
+
+\subsection{Aggregators for quantifiers: mean, min, generalised p-mean, pMeanError}
+\label{sec:aggregators}
+
+An aggregation operator maps any number of degrees to one degree. It is
+monotone, returns $x$ for the single input $x$, and returns $0$ or $1$ for
+inputs that are all $0$ or all $1$ \citep{badreddine2022ltn}. A t-norm applied
+repeatedly gives a candidate for the universal quantifier, for example the
+minimum or the product of all degrees. The product of many degrees below $1$
+tends to $0$, which in our view makes it a poor choice for a batch of hundreds
+of units.
+
+Badreddine et al. propose two generalised means instead. For $n$ degrees
+$a_1,\dots,a_n$ in $[0,1]$ and an exponent $p\geq 1$,
+\begin{align}
+\exists:\quad A_{pM}(a_1,\dots,a_n) &=
+  \Bigl(\tfrac{1}{n}\textstyle\sum_{i=1}^{n} a_i^{p}\Bigr)^{1/p}, \\
+\forall:\quad A_{pME}(a_1,\dots,a_n) &=
+  1-\Bigl(\tfrac{1}{n}\textstyle\sum_{i=1}^{n}(1-a_i)^{p}\Bigr)^{1/p}.
+\end{align}
+$A_{pME}$ measures the deviation of each degree from $1$, and the two are
+related by $\exists\equiv\neg\forall\neg$ \citep{badreddine2022ltn}. For $p=1$
+both are the arithmetic mean. As $p$ grows, $A_{pM}$ approaches the maximum
+and $A_{pME}$ the minimum. For $p=2$, $A_{pME}$ equals
+$1-\mathrm{RMSE}(\mathbf{a},\mathbf{1})$, where $\mathbf{a}$ is the vector of
+degrees. The exponent is a hyperparameter, and it can differ from formula to
+formula \citep{badreddine2022ltn}. A formula $\forall x\,P(x)$ with a low $p$
+says that $P$ holds for some $x$, and a higher $p$ says that it holds for most.
+
+\subsection{Vanishing and exploding gradients, and the choice of p}
+\label{sec:gradient-problems}
+
+Three gradient problems arise in fuzzy operators \citep{badreddine2022ltn}. An
+operator is single-passing if its derivative is non-zero for one argument
+only. The gradient vanishes if it is null on part of the domain, and the
+inputs there are not updated. The gradient explodes if large errors
+accumulate and the updates become unstable. \Cref{tab:gradient-problems}
+summarises them for the operators of the previous subsections.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Gradient problems of some operators, from
+\citet{badreddine2022ltn}. A parenthesis marks a problem that appears only on
+an edge case.}
+\label{tab:gradient-problems}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Operator & Single-passing & Vanishing & Exploding \\
+\midrule
+$T_M$, $S_M$, $I_{KD}$ & yes & & \\
+$I_G$ & yes & yes & \\
+$T_P$, $S_P$, $I_R$ & & (yes) & \\
+$T_L$, $S_L$, $I_{\L uk}$ & & yes & \\
+min and max aggregators & yes & & \\
+product and {\L}ukasiewicz aggregators & & yes & \\
+$A_{pM}$, $A_{pME}$ & & & (yes) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The table explains the recommended configuration. The product operators with
+the Reichenbach implication fail only on edge cases. The edge cases are
+$a=b=0$ for $T_P$, $a=b=1$ for $S_P$, and $a=0$, $b=1$ for $I_R$. $A_{pM}$
+explodes when $\sum_i a_i^{p}$ tends to $0$, and $A_{pME}$ when
+$\sum_i(1-a_i)^{p}$ tends to $0$ \citep{badreddine2022ltn}. The authors remove
+these cases with two projections, where $\epsilon$ is an arbitrarily small
+positive number,
+\begin{align}
+\pi_0(a) &= (1-\epsilon)\,a+\epsilon, \\
+\pi_1(a) &= (1-\epsilon)\,a.
+\end{align}
+The first maps $[0,1]$ into $]0,1]$ and the second into $[0,1[$. The stable
+operators apply them before the original ones, so that $T_P'(a,b)=
+T_P(\pi_0(a),\pi_0(b))$ and $S_P'(a,b)=S_P(\pi_1(a),\pi_1(b))$. The
+implication becomes $I_R'(a,b)=I_R(\pi_0(a),\pi_1(b))$, and the aggregators
+are treated alike. Negation is unchanged. The result is the stable product
+configuration \citep{badreddine2022ltn}.
+
+The price is a small distortion. $T_P'(a,1)=(1-\epsilon)a+\epsilon\neq a$ for
+$a<1$, so the stable conjunction is no longer a t-norm
+\citep{badreddine2022ltn}. The authors report that the stable operators
+improve numerical stability in their experiments. We take the stable product
+configuration, with the Reichenbach implication and $A_{pME}$ for every
+universal quantifier. Whether the distortion changes the satisfaction degrees
+that the benchmark reports is a question for the experiments, and $\epsilon$ is
+kept small for that reason.
+% FIXME(open): a sensitivity check of the results to p and epsilon is not yet planned in the experiments; decide in Ch. 7 whether it belongs there.
+
+The exponent $p$ decides where the gradient goes. The derivative of $A_{pME}$
+with respect to $a_i$ contains the factor $(1-a_i)^{p-1}$
+\citep{badreddine2022ltn}. For $p>1$ the units that satisfy the axiom least
+receive the largest share of the gradient. A higher $p$ therefore concentrates
+learning on the violations. The paper uses $p=2$ for the universal aggregator
+in the binary, the multi-class and the digit addition examples. Its evidence on
+scheduling $p$ concerns the existential quantifier in digit addition. There
+$p=2$ from the first epoch gave poor results, and a schedule from $1$ to $6$
+was the most promising approach \citep{badreddine2022ltn}. This evidence does
+not transfer to the universal case that the thesis uses. We start from $p=2$
+as in the paper and treat $p$ as a hyperparameter. A high $p$ has a cost in
+our setting. An axiom such as the SYN flood one is a heuristic with
+exceptions, and a single flash crowd could dominate its degree. This
+argument is ours.
+% FIXME(open): the value of p for each axiom is not fixed in Sec. 5.7; fix it in the methodology chapter (Ch. 8) with the other parameters of the logic.
+
+% ================================================================
+% 5.4 Learning as maximisation of satisfiability
+% ================================================================
+\section{Learning as maximisation of satisfiability}
+\label{sec:learning-satisfiability}
+
+The previous section gave every formula a degree of truth. This section turns
+the degrees into a training objective.
+
+\subsection{The knowledge base as a set of axioms}
+\label{sec:knowledge-base}
+
+A theory of Real Logic has three parts \citep{badreddine2022ltn}. The first is
+a set of closed formulas, the knowledge base $\mathcal{K}$. The second is a
+parametric grounding $\mathcal{G}(\cdot\mid\boldsymbol{\theta})$ of all the
+symbols. The third is the hypothesis space of the parameters. The grounding
+may be fixed for some symbols and learned for others. In the thesis the
+condition predicates are mostly fixed and the class predicates are learned.
+
+A formula aggregating operator $\mathrm{SatAgg}$ combines the degrees of all the
+formulas of $\mathcal{K}$ into one number in $[0,1]$. This number is the
+satisfiability of the theory \citep{badreddine2022ltn}. Learning searches for
+the parameters that maximise it,
+\[
+\boldsymbol{\theta}^{*}=\operatorname*{argmax}_{\boldsymbol{\theta}\in\Theta}
+\ \mathrm{SatAgg}_{\phi\in\mathcal{K}}\ \mathcal{G}_{\boldsymbol{\theta}}(\phi).
+\]
+A regularisation term $-\lambda\mathrm{R}(\boldsymbol{\theta})$ can be added,
+as in ordinary machine learning \citep{badreddine2022ltn}. If the learned
+symbols are predicates, the problem is a classification task. The thesis uses
+only this case. The knowledge base has two groups of axioms. The supervised
+axioms state the labels. The domain axioms are those of
+\cref{ch:attacks-ddos}.
+
+\subsection{Supervised axioms vs domain axioms; weighting the two groups}
+\label{sec:supervised-domain-axioms}
+
+In the multi-class example of Badreddine et al. the labels enter as axioms. A
+variable is grounded with the examples of each class, and an axiom states that
+the predicate of that class holds for them. Because the classes are mutually
+exclusive, the output layer is a softmax, and exclusivity axioms are not
+needed. The paper also contrasts one binary predicate $P(x,l)$ over a shared
+network with one unary predicate per class. The unary predicates give disjoint
+networks, and the binary predicate shares weights
+\citep{badreddine2022ltn}. The thesis takes the shared form, one network whose
+outputs are the class predicates, as in \cref{sec:grounding-predicates}.
+
+The domain axioms are added to the same knowledge base. Training data and
+constraints are then both formulas that must be satisfied
+\citep{badreddine2022ltn}. The aggregator treats all formulas alike, so the
+number of axioms in each group acts as an implicit weight. A weight can be
+introduced explicitly. The authors note that it can be added to a formula
+through a propositional predicate $p_w\wedge\phi$, whose value could then be
+learned \citep{badreddine2022ltn}. The alternative is to aggregate each group
+separately and combine the two numbers. The framework does not choose among
+these. The weighting of the two groups is a design decision of the thesis.
+% FIXME(open): the weighting of supervised formulas and security axioms is not fixed in Sec. 5.7; fix it in the methodology chapter (Ch. 8).
+
+\subsection{Optimisation loop, batching and the role of the guarded quantifier}
+\label{sec:optimisation-loop}
+
+In practice the optimiser minimises
+$L=1-\mathrm{SatAgg}_{\phi\in\mathcal{K}}\,\mathcal{G}_{\boldsymbol{\theta},
+x\leftarrow B}(\phi)$, where $B$ is a minibatch drawn from the data
+\citep{badreddine2022ltn}. The authors work out a binary classification with
+two axioms, one for the positive and one for the negative examples. With the
+stable product configuration and $p=2$ the loss reduces to a combination of
+the root mean square errors of the two groups \citep{badreddine2022ltn}.
+In our reading, supervised training with a logical loss is therefore ordinary
+training with another error function. The objective depends on three choices, the operators,
+their parameters such as $p$, and the formula aggregator. They are part of the
+model definition, and the benchmark must record them.
+
+The minibatch is not neutral. It sets the number of individuals that each
+quantifier aggregates. The classes of the thesis are imbalanced, and a rare
+class such as R2L or U2R can be missing from a batch. The variable of that
+class is then empty. The paper handles empty masks by convention, with the
+universal quantifier returning $1$ and the existential returning $0$
+\citep{badreddine2022ltn}. The axiom is then trivially satisfied and, as we
+infer, carries no gradient. The batch composition therefore decides whether a
+rare class is trained at each step.
+
+A guarded quantifier restricts the individuals before the aggregation, with a
+Boolean mask \citep{badreddine2022ltn}. $\forall x:m(x)\,\phi(x)$ is not the
+same as $\forall x\,(m(x)\rightarrow\phi(x))$. With the mean and Reichenbach,
+a mask of $(0,1,1)$ over degrees $(0.2,0.7,0.8)$ gives $0.75$ for the guarded
+form and $0.833$ for the implication, and the guarded form has no gradient for
+the masked-out individuals \citep{badreddine2022ltn}. The axioms of the
+thesis are written as implications, so they do not use guards. Guards appear
+in a different place. A variable grounded with the examples of one class is
+the same object as a quantifier guarded by the label, and it is how the
+supervised axioms of the previous subsection are built.
+
+% ================================================================
+% 5.5 What LTN can and cannot do
+% ================================================================
+\section{What LTN can and cannot do}
+\label{sec:ltn-capabilities}
+
+The sections so far describe how the framework works. This section says what it
+gives the thesis and where it stops.
+
+\subsection{Querying: satisfaction of a formula as a first-class output}
+\label{sec:querying}
+
+A trained theory can be queried \citep{badreddine2022ltn}. A truth query
+returns the degree of a formula. A generalisation truth query evaluates a
+formula with a free variable on unseen individuals and returns one degree for
+each. The paper defines two more query types, for terms. The generalisation truth
+query is the one that the benchmark needs. The degree of an axiom on a test set is computed
+without retraining, and it can be computed for any axiom, also for one that was
+not in the training knowledge base. The per-unit degrees come before the
+aggregation, so they also show which units violate the axiom and not only how
+many. This use is ours, and it supports the explanation question of RQ4.
+
+A degree is not a guarantee, for two reasons. The first is the aggregator.
+With $p=2$ the degree of a universal formula is $1-\mathrm{RMSE}$, and very
+different situations give the same number. Ten percent of units that violate
+an axiom completely and half of the units with a degree of about $0.55$ both
+give about $0.68$. The example is ours. A single number hides the distribution,
+and the benchmark must report the operators and also a rate of violations.
+% FIXME(open): the rate of violations is the domain-rule violation rate of Ch. 8; \cref{sec:detection-quality-dimension} must say which threshold turns a degree into a violation.
+The second reason is deeper. Badreddine et al. define logical consequence with
+a threshold, and they show that querying after learning can accept a false
+consequence. In their example every run of the optimiser reaches the same
+optimum, no counterexample is found, and the consequence is wrongly assumed to
+hold \citep{badreddine2022ltn}. Their remedy is a search for counterexamples,
+which the thesis does not use. More generally, methods that put the constraints
+in the loss cannot guarantee that the constraints are satisfied, although they
+can generalise from less data or use unlabelled data \citep{giunchiglia2022deep}.
+The thesis therefore measures satisfaction and does not assume it.
+
+\subsection{Reasoning at training time vs reasoning at inference time}
+\label{sec:inference-vs-training}
+
+In a constraint-based model the logic acts in the loss. At each training step
+the loss checks whether the scores satisfy the formulas. At inference only the
+scores of the network are used for the prediction, and the formulas are not
+evaluated \citep{marra2024statistical}. This is the contrast with proof-based
+systems, where a logic program is part of the model. Badreddine et al. say the
+same for the cost. In LTN, inference involves only a forward pass through the
+neural component \citep{badreddine2022ltn}.
+
+For the thesis the consequence is the following. The class predicates are the
+outputs of one network with the architecture of the baseline. The axioms shape
+its parameters during training. At inference the network is called as a plain
+multilayer perceptron, with the same number of parameters and the same forward
+pass as the baseline. The condition predicates and the axioms are not part of
+the prediction. This is our reading of the sources for our design, and the
+latency experiment E12 is meant to test it.
+% FIXME(open): E12 (cost of an LTN-trained MLP at inference against the baseline) is defined in Ch. 7, \cref{ch:usecases-design}; check the wording there.
+It has a limit. The rules are not enforced at inference. A unit that violates
+an axiom is still classified by the network, which is why the satisfaction on
+test data is a result and not a property. Keeping a symbolic component in the
+loop at inference would be a different design with a different cost, for
+example a rule check after the prediction. The thesis does not take it in its
+core experiments.
+
+\subsection{Scalability limits with many axioms and large batches}
+\label{sec:scalability-limits}
+
+The authors report that training and test times of LTN are of the same order
+of magnitude as those of a CNN baseline on digit addition. The measured steps
+take $5.36$ against $2.72$ ms in training and $3.44$ against $1.45$ ms in
+test, on one GPU with batches of $32$ \citep{badreddine2022ltn}. By our
+calculation LTN takes about twice as long in training and about 2.4 times as
+long in test. The task is image
+classification, and nothing is shown for a tabular multilayer perceptron, so
+the figure is a warning and not a prediction. The cost of the thesis models is
+measured in the experiments.
+
+Two limits follow from the grounding. A formula with several free variables
+grounds to a tensor with one axis for each, and by default every individual of
+one variable is paired with every individual of the others, so the size is the
+product of the batch sizes \citep{badreddine2022ltn}. Diagonal quantification
+avoids it when examples match one to one. The axioms of \cref{ch:attacks-ddos}
+have a single free variable, and sources are described by features computed
+beforehand, so the thesis stays on the cheap side. The second limit concerns the
+number of axioms. If every class predicate wraps the whole network, each use of
+a predicate in an axiom runs the forward pass again. The cost then grows with
+the number of occurrences. Computing the outputs once per batch and letting the
+predicates read them avoids this. The point is ours, and it belongs to the
+implementation.
+
+% ================================================================
+% 5.6 Alternatives and why LTN is chosen here
+% ================================================================
+\section{Alternatives and why LTN is chosen here}
+\label{sec:ltn-alternatives}
+
+\subsection{LTN vs Semantic Loss vs DeepProbLog vs NeurASP: criteria and trade-offs}
+\label{sec:ltn-vs-alternatives}
+
+We compare the four systems on three criteria. The first is the semantics of
+the logic. The second is the role of the logic, as a term of the loss or as a
+program that the network feeds. The third is what happens at inference.
+\Cref{tab:ltn-alternatives} gives the result.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{LTN and the three alternatives on the criteria of this section.
+Sources: \citet{badreddine2022ltn,marra2024statistical,xu2018semantic,%
+manhaeve2018deepproblog,yang2020neurasp}.}
+\label{tab:ltn-alternatives}
+\begin{tabular}{@{}p{2.1cm}p{3.3cm}p{3.5cm}p{3.1cm}@{}}
+\toprule
+System & Semantics & Role of the logic & At inference \\
+\midrule
+LTN & Fuzzy, first-order, many-valued & Term of the loss & Network only \\
+Semantic Loss & Probabilistic, propositional constraints & Term of the loss & Network only \\
+DeepProbLog & Probabilistic logic program & Network feeds a program & Program is part of the model \\
+NeurASP & Answer set program with probabilities & Network feeds a program & Program is part of the model \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The semantic loss compiles propositional constraints into arithmetic circuits
+for weighted model counting, and the loss measures how close the network is to
+satisfying them \citep{badreddine2022ltn}. DeepProbLog
+reads the output of a network as the probability of an atom. A query is
+answered by probabilistic inference based on model counting, with a closed
+world assumption and a language without function symbols. The clauses are
+compiled into a circuit, and the compilation is costly. In LTN the truth value
+of a formula is computed from the values of its atoms, which the authors judge
+more efficient than model counting and compatible with full first-order logic
+\citep{badreddine2022ltn}. The two kinds of inference are not comparable
+\citep{badreddine2022ltn}. NeurASP reads the outputs of a network as
+probability distributions over the facts of an answer set program
+\citep{yang2020neurasp}.
+
+We choose LTN for four reasons, and they are our judgment. First, the
+architecture stays that of the baseline. The comparison of the thesis isolates
+the effect of knowledge in the loss, and a program that the network feeds would
+make the model something else than a multilayer perceptron. Second, the
+conditions of the axioms are graded, such as a high rate, and a degree of truth
+expresses that. A probabilistic reading would ask for the probability of a
+condition that has no frequency behind it. Third, the cost at inference stays
+that of the baseline, in line with the use case of the thesis. Fourth, the
+framework has a TensorFlow 2 implementation \citep{badreddine2022ltn}, the
+framework chosen for the work.
+
+The choice has limits that we state. The sources read here do not compare the
+four systems on network traffic, and the thesis does not run the other three.
+Neural predicates could also adapt to rules over predicates, as the previous
+chapter notes, and a program that derives the attack class from scored
+conditions would put the logic in the decision. That design tests another
+question. The choice of LTN is therefore a choice of what to measure, and not a
+proof that it is the best system. The comparison of tooling maturity is left
+open.
+% FIXME(open): the tooling maturity of DeepProbLog, DeepStochLog, NeurASP, DL2 and semantic loss is not compared; do it before Ch. 9 or declare it a limitation in Ch. 11.
+
+\subsection{Place in the taxonomy of Kautz}
+\label{sec:kautz-place}
+
+\Cref{sec:kautz-taxonomy} left the type of the LTN models to this chapter.
+Kautz names logic tensor networks as an example of the fifth type
+\citep{kautz2022third}, and \citet{wan2024cognitive} describe that type as soft
+constraints or regularizers. The survey of \citet{marra2024statistical} places
+the framework among the systems that turn formulas into a regularisation loss.
+We keep the assignment to the fifth type for the framework. The thesis uses
+the framework at the level of the loss only. The architecture of the network
+is not built from the rules. The description of the fourth type in
+\cref{tab:kautz-types}, a training regime based on symbolic rules, fits this
+use at least as well as the description of the fifth, symbolic rules as
+templates for structures. The assignment is therefore not confirmed without
+reservation, and we call our models the fifth type by the authority of the
+example, with this reservation.
+
+% ================================================================
+% 5.7 Formalising network security knowledge in Real Logic
+% ================================================================
+\section{Formalising network security knowledge in Real Logic}
+\label{sec:formalising-security-knowledge}
+
+This section writes the knowledge of \cref{ch:attacks-ddos} in the language
+of the chapter. It settles what the framework leaves open, which are the
+individuals, the shape of the condition predicates and the axiom set.
+
+\subsection{Predicate design over flow features}
+\label{sec:predicate-design}
+
+The classifier labels one unit for each decision. In NSL-KDD it is a
+connection record, in the flow datasets it is a flow. The axioms of
+\cref{tab:candidate-axioms} speak of windows, flows and sources. We attach
+to every unit the statistics of its window and of its source. For the window
+of a connection record, the traffic features of
+\cref{sec:time-window-connection-aggregates} already do this, but they group
+connections by destination host or service. NSL-KDD records carry no source
+address, so a statistic over the connections of one source cannot be
+computed there. In the flow datasets the window and source statistics are
+not given and must be computed from the flows. All predicates then take one variable $x$ over
+units, and $f$, $w$ and $s$ name only the scope of a statistic. The slow DoS
+axiom, for example, reads a flow statistic of $x$, and the SYN flood axiom
+reads the statistics of the window of $x$. We take this design because the
+classes are predicates of the labelled unit, and because it avoids a
+membership relation between flows, windows and sources inside the logic.
+
+The design has a cost. Many units share the statistics of one source, so an
+axiom on sources is evaluated once for each unit and not once for each source.
+A source with many units weighs more in the satisfaction degree, a
+consequence we draw from the design.
+
+A condition predicate reads one or two of these statistics and returns a
+degree. The class predicates are the outputs of the network, as in
+\cref{sec:grounding-predicates}. The mapping of each condition to the
+features of each dataset belongs to the implementation.
+% FIXME(open): the mapping of every condition predicate to the features of NSL-KDD, CIC-IDS2017 and CIC-DDoS2019 is given in Ch. 9, \cref{ch:implementation}.
+
+\subsection{Discretisation and fuzzification of continuous features: thresholds vs sigmoids}
+\label{sec:fuzzification}
+
+A condition such as a high rate needs a threshold. Two forms are possible. A
+crisp predicate returns $1$ above the threshold $\tau$ and $0$ below it. A
+graded predicate returns $\sigma\bigl((v-\tau)/s\bigr)$ for a feature $v$,
+where $\sigma$ is the logistic function and $s>0$ sets the width of the
+transition. The crisp form is the limit of the graded one for $s\to 0$. The
+choice has two effects. A crisp condition gives a unit just under the
+threshold no influence, and one just over it full influence. A graded
+condition gives each unit a partial influence, and with the Reichenbach
+implication of \cref{sec:fuzzy-implications} this is a gradient weight on the
+consequent. We prefer the graded form for this reason, and we keep the crisp
+one as a baseline.
+
+The parameters $\tau$ and $s$ are hyperparameters of the logic. They must be
+chosen on the training and validation splits and never on the test set. They
+should not be learned together with the network. An implication is true when
+its antecedent is false, so a learnable threshold lets the optimiser satisfy
+an axiom by moving the threshold until the condition never holds. The
+satisfaction degree rises and the axiom no longer says anything. This risk is
+ours, and it is one more reason to fix the thresholds.
+
+\subsection{The axiom set inherited from the internship, restated formally}
+\label{sec:axiom-set-internship}
+
+The thesis builds on the internship of its author, whose report is not
+published. The report defines four domain axioms on NSL-KDD, guided by an
+analysis of the errors of the model on the training data. Written in Real
+Logic, with the conditions of the report, they are
+\begin{align}
+&\forall x\,\bigl(\mathrm{DiffSrv}(x)\vee\mathrm{DstHostDiffSrv}(x)\rightarrow
+  \mathrm{Probe}(x)\bigr),\\
+&\forall x\,\bigl(\mathrm{GuestLogin}(x)\vee\mathrm{FailedLogins}(x)\vee
+  \mathrm{Hot}(x)\rightarrow\mathrm{R2L}(x)\bigr),\\
+&\forall x\,\bigl(\mathrm{RootShell}(x)\vee\mathrm{SuAttempted}(x)\vee
+  \mathrm{FileCreations}(x)\rightarrow\mathrm{U2R}(x)\bigr),\\
+&\forall x\,\bigl(\mathrm{LoggedIn}(x)\wedge\mathrm{NoSynErrors}(x)\wedge
+  \mathrm{NoHot}(x)\rightarrow\mathrm{Normal}(x)\bigr).
+\end{align}
+The first axiom reads the rates of connections to different services, and the
+last one protects legitimate traffic. The report uses crisp conditions on
+standardised features, mostly a threshold of $0.5$, and the binary features
+as they are. We restate them here with graded predicates, and the
+thresholds are open to the choice of the previous subsection.
+
+Two points limit their use. The conditions of the R2L and U2R axioms are
+content features of NSL-KDD, such as a guest login or a root shell. Flow
+records do not carry them, as \cref{sec:r2l-u2r-hard} notes. These axioms can
+be evaluated on NSL-KDD only, and a detector deployed on flow records could not
+use them. This is our judgment, and the benchmark keeps them as an NSL-KDD
+specific group. Second, the axioms were written after looking at the errors of
+one model on the training data. They are tuned to that model and dataset, and
+they are not independent knowledge like those of \cref{ch:attacks-ddos}. The
+results of the report are not used in this thesis.
+
+\subsection{Extending it: DDoS-specific axioms, mutual exclusivity, hierarchy axioms}
+\label{sec:ddos-axioms}
+
+The seven axioms of \cref{tab:candidate-axioms} are the DDoS-specific group,
+and they join the knowledge base with the form of \cref{sec:predicate-design}.
+They cover the class that the internship axioms leave without a rule.
+
+Two structural groups can be added. Mutual exclusivity states that a unit has
+one class, for example $\forall x\,\neg(\mathrm{Normal}(x)\wedge\mathrm{U2R}(x))$.
+\citet{onchis2022neurosymbolic} use axioms of this form in a classifier built
+with logic tensor networks and applied to KDD99 and CIC-IDS2017. With a softmax
+output they are redundant, as the exclusivity is then built into the grounding
+\citep{badreddine2022ltn}. They matter only if the classes use independent
+sigmoids. Hierarchy axioms relate a subclass to its class, for example
+$\forall x\,(\mathrm{Reflection}(x)\rightarrow\mathrm{DoS}(x))$ and
+$\forall x\,(\mathrm{DoS}(x)\rightarrow\neg\mathrm{Normal}(x))$. They need a
+dataset with the finer labels. CIC-DDoS2019 has reflection attacks over several
+protocols \citep{cic2019ddos}. Whether the structural axioms add anything to
+a softmax is an empirical question of the benchmark.
+
+% ================================================================
+% 5.8 Summary
+% ================================================================
+\section{Summary}
+\label{sec:ch5-summary}
+
+Real Logic gives the predicates of \cref{ch:attacks-ddos} a degree of truth, and
+a fuzzy semantics turns a formula into a number that a network can maximise.
+The thesis takes the stable product configuration and trains a network with
+the architecture of the baseline on supervised and domain axioms. At inference
+the network is a plain multilayer perceptron, and the satisfaction of an axiom
+is measured and not assumed. The axioms are the seven of the attack
+taxonomy and the four of the internship, over one domain of classified units with
+graded conditions. The next chapter reviews the work on neurosymbolic detection
+that came before.

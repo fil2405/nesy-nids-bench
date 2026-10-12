@@ -1,0 +1,762 @@
+\chapter{Network Traffic Analysis: Foundations}
+\label{ch:foundations}
+
+% ================================================================
+% 2.1 Network traffic: what is observed and at which layer
+% ================================================================
+\section{Network traffic: what is observed and at which layer}
+\label{sec:network-observation-levels}
+
+Every detection approach discussed in this thesis, whether signature-based,
+purely data-driven or neurosymbolic, works on a representation of network
+traffic and never on the traffic itself. That representation is chosen at a
+specific level of granularity and captured at a specific point in the
+network. The choice is not a neutral implementation detail. Before any
+detection logic is designed, it fixes which attacks can be observed at all,
+how much state the monitor has to keep, and how much the raw packet stream
+is reduced. These three properties come back throughout the thesis, from the
+limits of classical detection in \cref{ch:introduction} to the feature sets
+used in the benchmark. This section introduces the levels of observation and
+then places them on the TCP/IP stack, as seen by a passive monitor.
+
+\subsection{Packet level, flow level, session level, host level}
+\label{sec:levels-packet-flow-session-host}
+
+Four levels of observation recur in the monitoring and intrusion-detection
+literature. They are not mutually exclusive. A flow record is computed from
+packets, a session groups flows or connections, and a host-level view
+aggregates many sessions of the same endpoint. What changes from one level
+to the next is the unit of analysis handed to the detector, and therefore
+what it can and cannot see.
+
+\paragraph{Packet level.}
+The finest unit is the individual packet: its link-, network- and
+transport-layer headers and, when available and unencrypted, its payload.
+Signature-based detection compares units of activity such as a packet to a
+list of signatures using string comparison \citep{scarfone2007nist80094}.
+Snort works at this level \citep{roesch1999snort}. The price is cost.
+Inspecting the content of every packet cannot easily be done at high speed
+\citep{sperotto2010flowbased}.
+
+\paragraph{Flow level.}
+A \emph{flow} groups packets that share common properties into one record
+and discards the packets once they have been counted. This thesis uses the
+definition of the IETF \gls{ipfix} working group: a flow is ``a set of
+packets or frames passing an Observation Point in the network during a
+certain time interval'' \citep{claise2013rfc7011}. Membership is decided by
+the \emph{Flow Key}, the fields that define the properties common to all
+packets of the flow. A common choice is the 5-tuple of source and
+destination address, source and destination port, and transport protocol.
+The \emph{Metering Process} turns observed packets into flow records and
+exports a \emph{Flow Record} for each flow. A flow is expired and exported
+when it has been idle for longer than an inactivity timeout, when it reaches
+a maximum lifetime, or when a TCP FIN or RST is seen
+\citep{sperotto2010flowbased}. NetFlow v9 also exports long-lived flows
+periodically \citep{claise2004rfc3954}.
+
+Two properties of flows matter for the scope of this thesis. First, flows do
+not carry any payload \citep{sperotto2010flowbased}. They record that two
+endpoints communicated and how much, not what they exchanged. This is the
+boundary set in \cref{sec:scope-limitations}: the thesis does not inspect
+payload. Only on NSL-KDD do the detectors also see content features, which
+come with that dataset. Second,
+flow analysis reduces the work of the monitor considerably.
+\citet{sperotto2010flowbased} start from the observation that packet
+inspection ``cannot easily be performed at high-speeds''. In flow-based
+detection ``the flow of data through the network is analyzed, instead of the
+contents of each individual packet''. For the network of the University of
+Twente they calculate that the packets exported by NetFlow are on average
+0.1\% of the packets on the network, and that the overhead in bytes is on
+average 0.2\%. Flow analysis therefore scales to fast links, at the cost of
+the payload-level detail of the packet level. The same trade-off,
+information lost in exchange for tractability, motivates the search for
+detectors that compensate with domain knowledge, which is the subject of
+\cref{ch:learning-paradigms}.
+
+A flow should not be confused with a transport-layer connection. A UDP
+exchange between two address and port pairs generates a flow just as a TCP
+session does. The IPFIX definition also allows a flow to represent ``zero or
+more packets'', so a single packet is enough to create one
+\citep{claise2013rfc7011,sperotto2010flowbased}.
+
+\paragraph{Session level.}
+A flow is defined only by shared header properties within a metering
+process. This thesis uses the word \emph{session}, or \emph{connection}, for
+a bounded communication episode with an explicit beginning and end. The
+classical session-level data come from the DARPA and KDD datasets, on which
+much of the early \gls{ml}-based detection work and the NSL-KDD benchmark
+used later in this thesis are built. \citet{tavallaee2009kddcup99} describe
+the data as single connection vectors, each with 41 features and a size of
+about 100 bytes, labelled as normal or as a specific attack. The attacks
+fall into four classes: denial of service (DoS), probing, Remote-to-Local
+(R2L) and User-to-Root (U2R). The features fall into three categories. Basic
+features are the attributes that can be extracted from a TCP/IP connection.
+Content features come from
+inspecting the data portion of the packets. Traffic features are computed
+over a window of related connections. Part of a connection record therefore
+comes from content, which a bare IPFIX record does not carry. The session
+level is the one at which the NSL-KDD feature set is defined, and
+\cref{sec:feature-engineering-traffic} goes through its categories.
+
+\paragraph{Host level.}
+The coarsest level aggregates traffic around an endpoint, usually a
+destination host and sometimes a destination service, over a window fixed
+either by time or by a number of preceding records. It exists because some
+attacks are invisible in any single connection and show up only in how many
+connections a host is involved in. A scan of many destination hosts, for
+example, produces no anomalous connection, only an unusually large number of
+short connections converging on or leaving one endpoint. The KDD feature set
+uses two windows for this purpose. The time-based traffic features look at
+the last two seconds. Some slow probing attacks scan at much longer
+intervals, for example one connection per minute, and leave no pattern in
+such a window. The connection-based traffic features therefore look at the
+last 100 connections \citep{tavallaee2009kddcup99}. Host-level aggregation is a second-order construction: it presupposes
+that flows or connections have been extracted and computes statistics across
+them. The same idea, generalised from hand-picked aggregates to explicit
+domain rules, motivates the formalisation of host- and flow-level conditions
+of each attack family as candidate logical axioms in
+\cref{ch:attacks-ddos}.
+
+\subsection{The TCP/IP stack from the point of view of a monitor}
+\label{sec:tcpip-stack-monitor-view}
+
+The four levels of observation follow the layering of the protocol suite
+that produces the traffic. The layering shows which fields are
+available for a Flow Key, a connection record or a host aggregate, and where
+payload begins. This thesis uses the four-layer description of the Internet
+protocol suite in the \gls{ietf} host-requirements standard. The
+\emph{application layer} is ``the top layer of the Internet protocol suite''
+and hosts user protocols such as Telnet, FTP or SMTP. The \emph{transport
+layer} ``provides end-to-end communication services for applications'',
+either as connection-oriented, reliable \gls{tcp} or as connectionless
+\gls{udp}. In the \emph{internet layer}, every Internet transport protocol
+uses \gls{ip} ``to carry data from source host to destination host'', which
+is ``a connectionless or datagram internetwork service, providing no
+end-to-end delivery guarantees''. The \emph{link layer} is the protocol a
+host ``must implement'' in order ``to communicate on its directly-connected
+network'' \citep{braden1989rfc1122}.
+
+Two aspects of this layering decide what a passive monitor at an
+Observation Point can see.
+
+The first is \emph{encapsulation}. Each layer's data unit travels unchanged
+inside the data unit of the layer below. A link-layer \emph{frame} is a
+link-layer header followed by a packet, an \gls{ip} \emph{datagram} is an
+\gls{ip} header followed by transport-layer data, and a \gls{tcp}
+\emph{segment} is a \gls{tcp} header followed by application data
+\citep{braden1989rfc1122}. A monitor therefore captures nested headers, not
+independent layers. The Flow Key fields come from two different headers: the
+addresses and the protocol number from the \gls{ip} header, the ports from
+the \gls{tcp} or \gls{udp} header. Everything after the transport-layer
+header is application payload.
+
+The second is where \emph{connection semantics} live, which settles the
+difference between flow and connection. The internet layer is connectionless.
+\gls{ip} moves each datagram independently, so nothing at that layer
+separates an ongoing exchange from a single unrelated datagram
+\citep{braden1989rfc1122}. The handshake, the sequence numbers and the
+explicit close with FIN or RST, which a Metering Process uses as one of its
+expiry conditions, are built by \gls{tcp} at the transport layer on top of a
+network layer that knows nothing about them. \gls{udp} builds none of it
+\citep{braden1989rfc1122}. A flow can therefore be computed from internet-
+and transport-layer headers alone, whether or not the transport protocol
+keeps connection state. A connection exists only where that state exists,
+which is why the notion is meaningful for \gls{tcp} and not, in the same
+sense, for \gls{udp}.
+
+The layering also marks what the detectors in this thesis are given. Every
+field used at the packet, flow, session and host levels comes from link,
+internet or transport headers. Only the content features reach into
+application payload, and only when it is readable. Where the monitor is
+placed to capture these headers, and how sampling there affects detection,
+is the subject of \cref{sec:data-acquisition}. What happens when payload is
+encrypted is discussed in \cref{sec:feature-drift-encrypted-traffic}, and it
+is one of the boundaries already fixed in \cref{sec:scope-limitations}.
+
+% ================================================================
+% 2.2 Data acquisition
+% ================================================================
+\section{Data acquisition}
+\label{sec:data-acquisition}
+
+Headers must be captured at an Observation Point before they can be
+aggregated into packets, flows, connections or host statistics. This section
+covers how a monitor is attached to the network, which standards export the
+traffic as flow records, and how sampling at the point of capture trades
+completeness for lower load.
+
+\subsection{Full packet capture (pcap), SPAN ports, TAPs}
+\label{sec:packet-capture-mechanisms}
+
+\emph{Full packet capture} records every packet crossing an Observation
+Point, typically in the pcap format. It is the prerequisite for packet-level
+analysis, since a signature-matching sensor needs the actual bytes and not a
+derived record. How the sensor is attached determines what it can do with
+them. \citet{scarfone2007nist80094} distinguish two placements. An
+\emph{inline} sensor is deployed so that the traffic it monitors ``must pass
+through it''. Its main motivation is to stop attacks by blocking traffic. A
+\emph{passive} sensor ``monitors a copy of the actual network traffic''.
+Passive techniques typically provide no reliable way to stop traffic from
+reaching its destination. This capability trade-off is fixed by the
+placement alone, whatever detection logic runs downstream. The same guide
+lists three ways to obtain the copy. A spanning port, often called SPAN, is
+``a port that can see all network traffic going through the switch''. A
+network tap is ``a direct connection between a sensor and the physical
+network media itself''. An IDS load balancer is ``a device that aggregates
+and directs network traffic to monitoring systems''
+\citep{scarfone2007nist80094}. The guide warns that a spanning port may not
+see all traffic when the switch is under heavy load or badly configured, so
+the copy is not always complete. Placement does not change what encrypted
+payload reveals. A copy taken at a SPAN port or a tap carries the same
+ciphertext as the original link.
+
+\subsection{Flow export standards: NetFlow v5/v9, IPFIX (RFC 7011), sFlow}
+\label{sec:flow-export-standards}
+
+Once packets are captured, turning them into flow records requires an export
+format on which the Metering Process and the collector agree. Cisco's
+NetFlow introduced this model. Its early versions, including v5, export a
+\emph{fixed} record format. A NetFlow v5 record has a fixed size of 48 bytes
+\citep{sperotto2010flowbased}. NetFlow v9 replaced this with a
+\emph{template}-based design. A Flow Record is no longer self-describing but
+is interpreted against a separately exported Template, ``a collection of
+fields, with corresponding descriptions of structure and semantics'', so new
+field types can be added without changing the export format
+\citep{claise2004rfc3954}. \gls{ipfix}, standardised by the \gls{ietf} in
+RFC~7011, adopts the same template mechanism as an open, vendor-neutral
+standard. This is why the flow definition used in this thesis comes from
+IPFIX and not from NetFlow \citep{claise2013rfc7011}.
+
+sFlow takes a different route. Instead of metering and exporting complete
+flow records, an sFlow Agent combines statistical \emph{packet sampling}
+with periodic polling of interface counters, and streams both, unaggregated,
+to a central collector over UDP. Sampling works with a counter that
+decrements with every packet, triggers a sample at zero and restarts from a
+random value, so that the ratio of sampled to total packets converges to a
+configured rate \citep{phaal2001rfc3176}. Unlike NetFlow and IPFIX, it does
+not build flow records on the device. The collector receives samples and
+counters, so its view of the traffic is statistical.
+
+\subsection{Sampling and its effect on detection}
+\label{sec:sampling-detection-effect}
+
+Sampling is applied for the same reason as flow export, to keep monitoring
+tractable on fast links. Two forms are common. \emph{Packet sampling}, on
+which sFlow relies, selects a subset of packets \emph{before} flow records
+are built, so under-sampled flows are formed from an incomplete view of the
+traffic. \emph{Flow sampling} selects among flows, with each flow retained
+with a random probability. \citet{sperotto2010flowbased} note that
+sampling lowers the demands on the flow exporter but also makes the
+detection of intrusions harder.
+
+Sampling is not neutral for detection. \citet{brauckhoff2006samplingimpact}
+took flow records from the backbone of a national network that contained
+the Blaster worm outbreak, reconstructed a packet trace from them and
+simulated packet sampling at rates from 1 in 10 to 1 in 1000. Byte and
+packet counts are not disturbed, because they can be recovered by scaling
+with the inverse of the sampling rate. Flow counts are grossly biased. A
+scanning worm creates many small flows, and small flows are likely to be
+missed, so in flow counts the worm is ``virtually undetectable at higher
+sampling rates''. Entropy metrics, which summarize the distribution of
+header fields such as addresses, are affected much less. The worm stays
+exposed in flow entropy even at 1 in 1000.
+
+For this thesis the consequence is that the observation level alone does not
+guarantee that an attack is visible. Whether it survives the sampling regime
+in place at the Observation Point is a separate question, and it returns
+when the benchmark datasets and their collection setup are described in
+\cref{ch:implementation}.
+% FIXME(open): \cref{ch:implementation} (Chapter 9, Sec. 9.2) renders as "??" until that chapter exists and is \include-d in main.tex.
+
+% ================================================================
+% 2.3 Feature engineering for traffic
+% ================================================================
+\section{Feature engineering for traffic}
+\label{sec:feature-engineering-traffic}
+
+None of the observation levels can be fed directly to a detector, symbolic or
+learned. A raw packet, flow or connection record must first become a
+fixed-length numerical representation. This section covers four recurring
+families of such representations: statistics of a single flow, aggregates
+over a time or connection window, features that require inspecting payload,
+and the effect of widespread encryption on all of them.
+
+\subsection{Flow statistics (CICFlowMeter-style feature sets)}
+\label{sec:flow-statistics-cicflowmeter}
+
+The most direct family works on a single flow. \citet{sharafaldin2018cicids2017}
+describe CICFlowMeter, a flow-based feature extractor that computes more than
+80 statistical features from a pcap file. Flows are identified by the
+5-tuple of source and destination address, source and destination port, and
+protocol, the same Flow Key as before. The features include the duration of
+the flow, the minimum, mean, maximum and standard deviation of the
+inter-arrival time, the number of bytes and packets sent in each direction,
+packet-length statistics, counts of TCP flags such as SYN, ACK and PSH, the
+initial window size in bytes, and packet rates. The dataset produced with
+it, CICIDS2017, is a widely used benchmark for flow-based detection. Such a
+feature set is a clear example of the payload-free, flow-level
+representation to which the detectors of this thesis are restricted by
+\cref{sec:scope-limitations}.
+
+\subsection{Time-window and connection-window aggregates (the NSL-KDD ``traffic'' features)}
+\label{sec:time-window-connection-aggregates}
+
+A second family looks at the connections around the current one.
+\citet{tavallaee2009kddcup99} define \emph{traffic features} as statistics
+over the connections that share the destination host or the service of the
+current connection, computed on a sliding window. The \emph{time-based}
+variant uses the last two seconds and yields, for instance, the number of
+connections to the same host or service. The \emph{connection-based} variant
+uses a window of 100 connections. Both are second-order features. They
+assume that connection records already exist and compute statistics across
+them, and they say nothing about a connection in isolation.
+
+\subsection{Content / host-based features}
+\label{sec:content-host-based-features}
+
+A third family departs from header statistics altogether.
+\citet{tavallaee2009kddcup99} define \emph{content features} as indicators
+obtained by inspecting the data portion of a connection for signs that
+domain knowledge associates with an attack, for example the number of
+failed login attempts. The reason is that R2L and U2R attacks, unlike DoS
+and probing, do not involve many connections in a short period. They are
+embedded in the data portions of the packets and normally involve a single
+connection. Unlike the two families above, content features can be computed
+only when the payload is readable. They depend on the same packet-level
+visibility discussed in \cref{sec:tcpip-stack-monitor-view}, and encryption
+removes it.
+
+\subsection{Feature drift and the encrypted-traffic problem}
+\label{sec:feature-drift-encrypted-traffic}
+
+Content features were defined on traffic from an era when payload was
+routinely readable. On today's largely encrypted traffic that assumption
+fails. \citet{moriarty2018rfc8404} document the effect of pervasive
+encryption on network operators. Payload examination ``in the clear'' offers
+filtering opportunities that encryption removes, and estimating the type of
+traffic becomes ``more complex and less accurate''. With transport-layer
+encryption the 5-tuple stays visible, so NetFlow-type data can still be
+collected. Only tunnelling, such as IPsec in tunnel mode, restricts the
+observable fields further, to a 2-tuple of the tunnel endpoints. What
+survives is, in other words, the flow- and header-level information of the
+first two families.
+
+For feature engineering this has a direct consequence. A detector designed
+and validated on older datasets rich in content features can silently lose
+the features it depends on when deployed on encrypted traffic. This
+distribution mismatch is why the thesis keeps content features apart, as
+fixed in \cref{sec:scope-limitations}. They are used only on NSL-KDD, where
+they come with the records. On the flow datasets and in the experiments
+across datasets the feature space is flow- and header-level only. A result
+that rests on content features is therefore read as specific to NSL-KDD. The
+separation is a design choice and not a failure discovered at deployment. For a survey of how analysis
+techniques adapt to encrypted traffic, see \citet{papadogiannaki2021encryptedsurvey}.
+
+% ================================================================
+% 2.4 Classical approaches to traffic analysis and intrusion detection
+% ================================================================
+\section{Classical approaches to traffic analysis and intrusion detection}
+\label{sec:classical-approaches}
+
+Before learning-based detectors, network monitoring relied on a small set of
+classical methods. NIST distinguishes three detection methodologies:
+signature-based, anomaly-based and stateful protocol analysis
+\citep{scarfone2007nist80094}. This section follows that classification and
+adds threshold and rate-limiting defences, which act on traffic rates and not
+on attack patterns. Each family makes a different assumption about what an
+attack looks like, and the differences show what later chapters try to
+improve.
+
+\subsection{Signature-based detection: Snort, Suricata, Zeek rule sets}
+\label{sec:signature-rulesets}
+
+Signature-based detection was defined in \cref{sec:signature-not-enough}.
+Here the question is how the rules are built. \citet{roesch1999snort}
+presents Snort as a libpcap-based packet sniffer and logger that can serve as
+a lightweight \gls{nids}, with rule-based logging that performs content
+pattern matching. A Snort rule has a header and options. The header gives the
+protocol, the direction, and the addresses and ports. The options, written in
+parentheses, add further tests, and all of them must be true for the rule to
+match. The most basic rules contain only protocol, direction and port. A
+matching rule triggers one of three actions: pass, log or alert. Snort itself
+has three subsystems: a packet decoder, a detection engine and a logging and
+alerting subsystem. New rules are written by running an exploit on a test
+network, recording the traffic, finding a unique signature in it and
+condensing that signature into a rule. The original paper also lists
+limitations of that first version, among them the lack of TCP stream
+reassembly.
+
+Suricata rules have the same overall shape: an action, a header with
+protocol, addresses, ports and direction, and options that define the
+specifics of the rule \citep{suricata2026rules}. Zeek is built differently.
+It was first published as Bro \citep{paxson1998bro} and renamed Zeek in 2018
+\citep{zeek2018rename}. In Bro an event engine reduces the stream of packets
+to higher-level network events, and an interpreter runs a specialized
+scripting language in which a site's security policy is written as event
+handlers \citep{paxson1998bro}. Detection is then expressed as scripts over
+events and not as a list of patterns. For this thesis the important point is
+that rules with content options need payload, while the most basic rules use
+only header fields.
+
+\subsection{Specification and protocol-anomaly detection}
+\label{sec:specification-protocol-anomaly}
+
+NIST calls this family stateful protocol analysis. It compares predetermined
+profiles of generally accepted benign protocol activity, for each protocol
+state, against observed events \citep{scarfone2007nist80094}. The profiles are
+not learned on the local network. They are universal profiles developed by
+vendors, which specify how a protocol should and should not be used. A
+signature describes an attack. A specification describes normal protocol
+behavior, so an attack is found when it breaks the protocol, even if no
+signature for it exists. The analysis follows the state of each connection,
+which TCP builds at the transport layer, as described in
+\cref{sec:tcpip-stack-monitor-view}. NIST lists three limitations. The
+analysis is resource-intensive because of its complexity. It cannot detect
+attacks that stay within accepted protocol behavior. And the protocol model
+used by the detector may conflict with the way the protocol is implemented
+\citep{scarfone2007nist80094}. A specification is a set of explicit rules
+written by experts, which makes it close in spirit to the domain knowledge
+that later chapters encode as logical axioms.
+
+\subsection{Statistical anomaly detection (entropy, CUSUM, EWMA, PCA-based)}
+\label{sec:statistical-anomaly-detection}
+
+NIST defines anomaly-based detection as the comparison of a profile of normal
+behavior with current activity. The profiles describe users, hosts, network
+connections or applications, are built by monitoring typical activity over a
+period of time, and are compared with the current activity through
+statistical methods and thresholds. NIST also lists the weaknesses. A profile
+can inadvertently include malicious activity. Accurate profiles are hard to
+build. And benign activity that deviates strongly from the profile often
+produces many false positives \citep{scarfone2007nist80094}. Four
+statistical techniques are common in the traffic-analysis literature.
+
+\emph{Entropy} summarizes how concentrated or dispersed the distribution of a
+packet feature is. \citet{lakhina2005mining} apply it to source and
+destination addresses and ports in flow traces. Scans and small denial of
+service attacks may barely change the traffic volume but change these
+distributions. In the anomalies the authors found, the port scans, network
+scans and point-to-multipoint transfers were not detected with volume
+metrics and were found only with entropy. The robustness of entropy to
+sampling was seen in \cref{sec:sampling-detection-effect}.
+
+\emph{PCA} separates regular from irregular traffic. \citet{lakhina2004diagnosing}
+apply it to traffic counts on the links of a network, in ten-minute bins. The
+first principal components span a normal subspace that captures regular
+patterns such as the daily cycle. The rest is a residual subspace, and a
+volume anomaly shows up as a large residual. The authors note that the method
+finds anomalies that are significant at the ten-minute scale, and that
+anomalies are harder to detect in flows with large variance. Their later
+work extends the method to several features at once \citep{lakhina2005mining}.
+
+\emph{CUSUM} is a cumulative-sum test for a persistent change in a series.
+\citet{wang2002detecting} use a non-parametric version to detect SYN
+flooding. They monitor the difference between the number of SYN packets and
+of FIN and RST packets, which is small in normal operation and grows when
+spoofed SYN packets flood the network. The detector needs no per-connection
+state, only counters for the three packet types. The authors point out that
+an attacker who knows the scheme can defeat it by flooding a mixture of SYN
+and FIN or RST packets.
+
+\emph{EWMA} is an exponentially weighted moving average. \citet{muenz2008control}
+apply Shewhart, CUSUM and EWMA control charts, not to the counts themselves
+but to the prediction errors of exponential smoothing and Holt-Winters
+forecasts. The data are byte, packet and flow counts from unsampled NetFlow
+v5 records of an ISP backbone, aggregated in intervals of 300 seconds. An
+alarm is raised when the statistic leaves limits defined as multiples of the
+estimated standard deviation. Among the alarms the authors found a mailbomb,
+a password guessing attempt and a network failure, but most of them were
+caused by legitimate traffic, mainly large downloads from web or file
+servers.
+
+The four methods share one design: a statistic computed on the traffic, a
+model of normal values and a threshold. None of them needs labelled attack
+examples. They also share the weakness NIST names, since any strong benign
+deviation raises an alert. This is the base-rate problem taken up in
+\cref{sec:evaluation-practice}.
+
+\subsection{Threshold and rate-limiting defences}
+\label{sec:threshold-rate-limiting}
+
+A threshold rule raises an alert, or drops traffic, when a count or a rate
+exceeds a fixed limit, for example the number of packets per second from one
+source. It is the statistical idea of the previous subsection with the limit
+set by an operator instead of being estimated from data. This is the
+weakness of the approach. \citet{handley2006rfc4732} state that in principle
+it is not possible to distinguish a sufficiently subtle denial of service
+attack from a flash crowd, that is, a legitimate surge of users. A limit low
+enough to stop the attack also hits legitimate traffic, and a limit high
+enough to spare legitimate users lets a subtle attack through. The same RFC
+notes that filtering at the victim server does not help against attacks that
+saturate a link, because the traffic has already crossed the scarce link, so
+filtering has to happen closer to the source. Attacks designed to stay under
+the limits make the problem worse. StormWall reports that reconnaissance
+attacks, which usually last up to 15 minutes at relatively low intensity,
+often stay below filtering thresholds \citep{stormwall2026forecast}. A
+fixed numerical limit is also the simplest example of an explicit domain
+rule given to a detector, which the neurosymbolic approach of this thesis
+generalizes.
+
+% ================================================================
+% 2.5 Standards, taxonomies and reference architectures
+% ================================================================
+\section{Standards, taxonomies and reference architectures}
+\label{sec:standards-taxonomies}
+
+The methods of the previous section leave three questions open. How does a
+detector fit into a deployment, how are the attacks it reports named, and
+how do its alerts reach other tools? Standards and taxonomies answer them.
+They detect nothing themselves. This section covers the ones a reader meets
+next to the detectors of this thesis.
+
+\subsection{NIST SP 800-94 (IDPS), ISO/IEC 27033}
+\label{sec:nist-iso-architectures}
+
+NIST SP 800-94 is the source of the detection methodologies used so far. It
+is also an architecture guide. Its abstract names four classes of intrusion
+detection and prevention systems, or IDPS: network-based, wireless, network
+behavior analysis and host-based. A typical deployment has four components:
+sensors or agents, a management server, a database server and a console.
+The guide lists four capabilities: information gathering, logging, detection
+and prevention \citep{scarfone2007nist80094}. The class closest to this
+thesis is network behavior analysis. The guide describes it as examining
+network traffic for threats that produce unusual traffic flows, and names
+\gls{ddos} attacks as an example \citep{scarfone2007nist80094}. The guide
+dates from 2007. NIST drafted a revision in 2012 but never finalised it and
+has retired the draft \citep{scarfone2007nist80094}.
+
+ISO/IEC 27033 is a series on network security. Its first part gives an
+overview of network security and related definitions and is a road map to
+the other parts. The catalogue description speaks of risks, controls and
+network security architecture \citep{iso2015iec27033}. The thesis does not
+use it further.
+
+\subsection{MITRE ATT\&CK as a semantic vocabulary for attack behaviour}
+\label{sec:mitre-attack-vocabulary}
+
+\citet{strom2020attack} describe ATT\&CK as a knowledge base of adversary
+tactics and techniques based on real-world observations. A tactic is the
+tactical objective of the adversary, the why. A technique is how the
+adversary reaches that objective by performing an action, the how. A
+procedure is a specific implementation of a technique used by adversaries.
+The first model was created in 2013 and focused mainly on Windows
+enterprise environments. The ATT\&CK website now lists three matrices,
+Enterprise, Mobile and ICS, and its current version is 19.2, released in
+April 2026 \citep{mitre2026attackversions}.
+
+Network flooding appears as technique T1498, Network Denial of Service,
+under the tactic Impact. Its sub-techniques are Direct Network Flood and
+Reflection Amplification \citep{mitre2025t1498}. One of the detection
+strategies attached to it watches for executables or scripts that generate
+a large volume of outbound traffic \citep{mitre2025t1498}. That is a view
+from the host that sends the traffic and not from the link that receives it.
+ATT\&CK therefore gives the attack families of \cref{ch:attacks-ddos} a name
+in a shared vocabulary, but it gives no flow-level conditions that a network
+detector could test. In this thesis it is a label space and not a rule set.
+
+\subsection{Alert formats and exchange: IDMEF, STIX/\allowbreak TAXII, CEF}
+\label{sec:alert-formats}
+
+Once a detector raises an alert, it has to be passed on. NIST lists e-mail,
+pages, messages on the IDPS user interface, SNMP traps, syslog messages and
+user-defined programs or scripts as delivery methods
+\citep{scarfone2007nist80094}. Four specifications cover what is delivered
+and how it travels.
+
+IDMEF defines a data model for information exported by intrusion detection
+systems, with an XML implementation. It has two message types, Alert and
+Heartbeat. An Alert carries, among other things, the analyzer, the
+classification, the source and the target. The RFC has Experimental status
+and is not a candidate for an Internet Standard \citep{debar2007rfc4765}.
+
+STIX 2.1 is an OASIS Standard, approved in June 2021. It is a language for
+sharing cyber threat intelligence in machine-readable form. Information about
+attacks, attackers and vulnerabilities is represented as linked objects such
+as malware, threat actors and attack patterns \citep{jordan2021stix}.
+TAXII 2.1 carries this content. It is an application layer protocol that runs
+over HTTPS, with Collections, where consumers request data from a producer,
+and Channels, for publish and subscribe. The specification reserves Channels
+for future versions \citep{jordan2021taxii}.
+
+CEF is the event format of ArcSight, described in a document of its
+vendor and not in a standard of an independent body. A message has seven
+header fields separated by pipes, namely version, device vendor, device
+product, device version, event class ID, name and severity, followed by an
+extension of key-value pairs. It uses syslog as transport
+\citep{opentext2023cef}.
+
+The four differ in scope. IDMEF describes an alert from one detector. STIX
+describes threat knowledge and TAXII moves it. CEF is a compact event record.
+Comparing detectors needs none of them. They matter for what happens to the
+output afterwards. ATT\&CK and threat-intelligence feeds matter earlier, as a
+possible source of formal knowledge for the detector itself, which is listed
+as future work in \cref{ch:conclusions}.
+% FIXME(open): \cref{ch:conclusions} renders as "??" until Chapter 11 exists and is \include-d in main.tex.
+
+% ================================================================
+% 2.6 Evaluation practice in NIDS and its recurring flaws
+% ================================================================
+\section{Evaluation practice in NIDS and its recurring flaws}
+\label{sec:evaluation-practice}
+
+Every method in this chapter is judged on labelled traffic, and the way that
+judgement is made has its own failure modes. They are old, well documented
+and still common. The benchmark of this thesis has to avoid each of them, so
+this section states them. It builds on the two critiques of
+\cref{ch:introduction}, \citet{sommer2010outside} and
+\citet{arp2022dosdonts}, and looks at what they mean for measurement.
+
+\subsection{Base-rate fallacy and the cost of false positives}
+\label{sec:base-rate-false-positives}
+
+Attacks are rare in most traffic. A detector works on data with a strong
+class imbalance, and its false positive rate cannot be read alone.
+\citet{axelsson2000baserate} applied Bayes' theorem to intrusion detection.
+For an operator the useful quantity is the probability that an alarm marks a
+real intrusion:
+\[
+P(I \mid A) = \frac{P(I)\,P(A \mid I)}
+  {P(I)\,P(A \mid I) + P(\neg I)\,P(A \mid \neg I)},
+\]
+where $I$ is an intrusion and $A$ an alarm. When $P(I)$ is small, the second
+term of the denominator dominates unless $P(A \mid \neg I)$ is very small
+too. In Axelsson's example an intrusion accounts for about $2 \cdot 10^{-5}$
+of the events. Even with a detection rate of 1.0, the false alarm rate has to
+be about $10^{-5}$ for $P(I \mid A)$ to reach 66\%. He concludes that the
+false alarm rate limits the performance of an intrusion detection system
+\citep{axelsson2000baserate}.
+
+\citet{arp2022dosdonts} make the same point for machine learning. With a
+class ratio of 1:100, a detector with 99\% true positives and 1\% false
+positives produces 100 false positives for every 99 true positives, so about
+half of its alarms are false. A rarer attack class makes it worse. Take one
+attack flow in 10{,}000 and the same rates. In one million flows there are
+100 attack flows, of which 99 are detected, and 9{,}999 benign flows are
+flagged as attacks. About 1\% of the alarms are real. These figures are
+illustrative and the calculation is ours. The base rate is also not fixed.
+During a flood, attack flows can outnumber benign ones, and the same
+detector then looks far better. A precision figure has meaning only together
+with the prevalence of the data it was computed on.
+
+Two costs follow. The first is analyst time. \citet{sommer2010outside} list
+the high cost of errors among the difficulties of applying machine learning
+to intrusion detection. A false positive costs the time of an analyst who
+examines the reported incident, and, citing Axelsson, even a very small rate
+of them can make a detector unusable. A false negative has its own cost,
+since a single compromised system can undermine the IT infrastructure. The
+second cost falls on users. An inline sensor can block traffic
+\citep{scarfone2007nist80094}, and every false positive then denies service
+to a legitimate user.
+
+Accuracy hides both costs. \citet{arp2022dosdonts} show that on data with a
+1:100 ratio a ROC curve can look excellent while the precision-recall curve
+shows poor performance. They recommend precision, recall and precision-recall
+curves for the detection of rare events. A benchmark that reports accuracy
+alone would repeat the flaw. The metric set of the benchmark is fixed in
+\cref{ch:benchmarking-methodology}.
+% FIXME(open): \cref{ch:benchmarking-methodology} renders as "??" until that chapter exists and is \include-d in main.tex.
+
+\subsection{Class imbalance, temporal leakage, in-distribution bias}
+\label{sec:imbalance-leakage-bias}
+
+Three flaws concern the data and the way it is split. They are separate, and
+each one inflates the result.
+
+\emph{Class imbalance} is the property behind the previous subsection. A
+dataset is a fixed sample, and \citet{arp2022dosdonts} note that researchers
+usually do not know the true distribution of the data, so a fixed dataset may
+differ from real conditions. The class ratio is one part of that difference.
+The benchmark therefore treats the degree of imbalance as a variable, and
+stronger imbalance is one of its stress scenarios.
+
+\emph{Temporal leakage} lets information from the period under test reach
+training. \citet{arp2022dosdonts} call it temporal snooping and define it as
+ignoring the time dependencies within the data. In security the distribution
+is not stationary, because attacks evolve. They recommend that dataset splits
+take these dependencies into account and that test data be kept apart until
+the final evaluation. A random split of one capture into training and test
+sets ignores time, since it mixes earlier and later traffic.
+
+\emph{In-distribution bias} is the term used here for a score that holds
+only on the collection where it was measured. Training and test data come
+from the same source, so the score measures fit to that source and not
+detection. The closest pitfalls in \citet{arp2022dosdonts} are sampling bias
+and lab-only evaluation. The KDD Cup 99 data are an example. The NSL-KDD
+page reports that removing duplicate records cut the training set by 78.05\%
+and the test set by 75.15\%. It explains that the redundancy biases learners
+towards frequent records and the evaluation towards methods that do well on
+them \citep{cic2009nslkdd}. NSL-KDD removes the duplicates. It does not
+change the age of the traffic. The KDD Cup data derive from the 1998 DARPA data, which
+\citet{sommer2010outside} already judged too old and too synthetic for
+current studies. A second example is the case study of
+\citet{arp2022dosdonts} on the Kitsune detector. On the Mirai dataset a
+simple boxplot baseline outperformed it at low false positive rates. The
+authors trace this to attack signals in the dataset that are easy to see and
+not representative of real attacks.
+
+The remedies point the same way. \citet{sommer2010outside} ask for
+evaluation on data from several networks. \citet{arp2022dosdonts} suggest
+building several estimates of the true distribution, analysing each one
+separately and not mixing data from incompatible sources. Cross-dataset
+transfer, one of the stress scenarios of the benchmark, follows from this.
+
+\subsection{Discussion of ``Outside the Closed World'' and ``Dos and Don'ts'' critiques}
+\label{sec:closed-world-dos-donts}
+
+The two papers are twelve years apart and ask different questions.
+\citet{sommer2010outside} explain why intrusion detection is a hard task for
+machine learning. They name the closed world assumption, the cost of errors,
+the semantic gap, the diversity of traffic and the difficulty of evaluation.
+Their recommendations are to understand the threat model, keep the scope
+narrow, justify the choice of features, reduce the cost of errors and
+evaluate on real traffic from several networks with independent ground truth.
+\citet{arp2022dosdonts} look at how studies go wrong. They define ten
+pitfalls, from sampling bias to an inappropriate threat model, and give
+recommendations for each.
+
+They overlap in three places. Both ask for an explicit threat model. Both
+raise the cost of false positives, as the cost of errors in one and the base
+rate fallacy in the other. Both ask for evaluation data closer to real
+conditions, as several networks in one and the pitfalls of sampling bias and
+lab-only evaluation in the other. This overlap is our reading. It gives a
+checklist for the benchmark. The design of the comparison takes it as a
+constraint: matched baselines, several datasets, cross-dataset transfer,
+imbalance as a controlled variable and metrics that stay informative under
+imbalance.
+
+The critiques have limits. \citet{sommer2010outside} argue mostly at an
+intuitive level and do not prove their points formally. They list the
+semantic gap and the diversity of traffic among the difficulties. This thesis
+asks whether explicit domain knowledge helps with them. It does not assume the
+answer, and the checklist applies to its own experiments as much as to the
+literature it compares.
+
+% ================================================================
+% 2.7 Summary
+% ================================================================
+\section{Summary}
+\label{sec:ch2-summary}
+
+This chapter fixed what a detector in this thesis sees and how its results
+are judged. The level of observation and the capture point decide which
+attacks are visible. Packets, flows, sessions and host aggregates offer
+different units of analysis, and sampling can hide an attack even at the
+right level. Feature families range from flow statistics to content features,
+and encryption removes the content features. The detectors compared here are
+therefore limited to flow- and header-level features.
+
+The classical methods each rest on something explicit. A signature describes
+an attack, a specification describes normal protocol behavior, a statistic
+models normal traffic and a threshold sets a limit. Each fails in a known
+way. Signatures miss unknown attacks, statistics and thresholds raise alarms
+on benign deviations, and a subtle attack cannot in principle be told from a
+flash crowd. NIST SP 800-94 gives the reference classification, ATT\&CK a
+vocabulary for naming attacks, and IDMEF, STIX, TAXII and CEF formats for
+passing information on.
+
+Evaluation has its own recurring flaws: the base-rate fallacy, class
+imbalance, temporal leakage and in-distribution bias. Two things carry
+forward. Fixed rules and limits are the simplest explicit domain knowledge,
+and neurosymbolic detection generalizes them. The checklist drawn from
+Sommer and Paxson and from Arp et al. applies to the benchmark of this
+thesis.

@@ -1,0 +1,462 @@
+\chapter{Introduction}
+\label{ch:introduction}
+
+% ================================================================
+% 1.1 Context and motivation
+% ================================================================
+\section{Context and motivation}
+\label{sec:context-motivation}
+
+\subsection{Growth and evolution of network threats}
+\label{sec:growth-evolution-threats}
+
+The volume and variety of attacks on network infrastructure keep growing. Two
+independent sources of evidence, gathered from very different vantage
+points, point the same way.
+
+The first is regulatory and incident-driven. The 2026 edition of the
+\gls{enisa} \emph{Threat Landscape} report analyzes 8{,}257 incidents
+recorded between January and December 2025. They come mainly from open
+sources, plus anonymised information shared by Member States and partners.
+\gls{ddos} was the primary incident type at 51.3\%, followed by
+unauthorised access at 39.5\% \citep{enisa2026threatlandscape}. The report
+calls these \gls{ddos} attacks low-impact. It also warns that ransomware and
+\gls{ddos} are more immediately visible than other threats, because their
+operators often claim them directly, so the counts should be read with this
+in mind. By assessed objective, 57.3\% of the incidents were ideology-driven,
+particularly hacktivist \gls{ddos} campaigns, and about 29\% were financially
+motivated. The report states that financially motivated activity remains the
+most impactful threat in the short term.
+Among social engineering techniques, phishing made up 77.8\%. The report
+could identify an intrusion vector for only 5.2\% of the unauthorised access
+incidents, and in 60.4\% of those the vector was a vulnerability. The report
+also observes a growing use of AI by attackers, mostly consumer-grade tools
+that augment existing skills and do not give breakthrough capabilities.
+
+The second source comes from a commercial mitigation provider, which
+observes attack traffic directly. Its figures are vendor data and cannot be
+checked independently. For 2025, StormWall reports that the total number of
+\gls{ddos} attacks grew by 198\% and that about 70\% of websites
+experienced at least one attack during the year
+\citep{stormwall2026forecast}. The character of the attacks is changing as
+well. The same source reports that multi-vector attacks, which combine two
+or more vectors in one incident, grew by 83\% and appeared in nearly one
+third of all incidents. It forecasts a share of up to 65\% for 2026. It also
+describes a 4.8~Tbps attack of the carpet-bombing type, which spreads
+malicious traffic across IP ranges and subnets instead of concentrating it
+on a single vector. Reconnaissance attacks are a further case. They usually
+last up to 15 minutes at relatively low intensity, often stay below
+filtering thresholds, and made up 25\% of the recorded incidents. This
+matters for the thesis because attacks of this kind are hard for classical
+volumetric thresholds to catch, a point taken up again with the threshold
+defences of \cref{sec:threshold-rate-limiting}.
+
+Two conclusions follow. First, the attacker population is heterogeneous and
+changes over time. Hacktivist volumetric noise, financially motivated
+application-layer abuse and slow, targeted reconnaissance coexist on the
+same networks, so a detector tuned for one profile will misjudge the
+others. Second, the growth itself keeps moving. With increases as large as
+the 198\% reported above, any approach whose maintenance cost grows with the
+number of known attack signatures is bound to fall behind. These two points
+lead to the two limitations examined next. Purely signature-based detection
+cannot keep pace, and purely data-driven detection, although it addresses
+that problem, brings failure modes of its own.
+% Note: the ENISA figures are from the 2026 edition (September 2026). The
+% report gives the financially motivated share as 29.2% in Chapter 1 and as
+% 29.3% in the Executive Summary, hence "about 29%" in the text.
+
+\subsection{Why classical signature-based detection is not enough}
+\label{sec:signature-not-enough}
+
+The paradigm that has dominated operational \gls{nids} deployments since the
+1990s is \emph{misuse}, or \emph{signature-based}, detection. NIST defines a
+signature as ``a pattern that corresponds to a known threat'', and
+signature-based detection as ``the process of comparing signatures against
+observed events to identify possible incidents''
+\citep{scarfone2007nist80094}. Snort, whose original design was published by
+\citet{roesch1999snort}, is the best-known tool of this kind. The approach
+is also simple. The NIST guide calls it ``the simplest detection method'',
+because it only compares the current unit of activity, such as a packet or a
+log entry, to a list of signatures using string comparison. The same guide
+describes it as ``very effective at detecting known threats''
+\citep{scarfone2007nist80094}.
+
+The guide is explicit about the opposite weakness. Signature-based detection
+is ``largely ineffective at detecting previously unknown threats, threats
+disguised by the use of evasion techniques, and many variants of known
+threats''. Such tools also have ``little understanding of many network or
+application protocols and cannot track and understand the state of complex
+communications'' \citep{scarfone2007nist80094}. \citet{khraisat2019survey}
+make the same point. Signature-based systems give excellent detection
+accuracy on previously known intrusions. They have difficulty with zero-day
+attacks, because no matching signature exists in the database until the
+signature of the new attack has been extracted and stored. The survey also
+lists the need to update the signature set frequently, and the poor fit for
+multi-step attacks, among the disadvantages.
+
+Here the growth documented above turns a known limitation into an
+operational problem. A signature database has to be maintained. Every new
+attack variant that should be caught needs an analyst, or an automated
+pipeline standing in for one, to write, test and deploy a new rule, and
+every added rule raises the matching cost paid by all later traffic. If
+attack volumes grow as fast as the industry figures suggest, and attackers
+keep diversifying their tactics, the rule base must grow with them. The part
+of that growth that is genuinely new, and not a cosmetic variant of
+something already covered, is the part a signature-based system cannot
+address until a human closes the gap. The result is a delay between the
+appearance of an attack technique and the system's ability to recognize it,
+the \emph{zero-day gap}. Its length depends on analyst response time and not
+on anything the detector can improve by itself. This gap motivated the move
+to learning-based detection, which trades it for a different set of
+problems.
+
+\subsection{Why purely data-driven detection is not enough either}
+\label{sec:datadriven-not-enough}
+
+The limits of misuse detection led, from the late 1990s and with growing
+force after the arrival of deep learning, to \gls{ml}- and \gls{dl}-based
+detection. A common framing is \emph{anomaly detection}. Instead of matching
+traffic against known-bad patterns, a model is trained on normal behavior and
+flags deviations from it. The promise is to catch attacks never seen before, which would close the
+zero-day gap. In practice, the literature has spent over a decade showing
+why this is harder than the successes of machine learning in image
+recognition, speech or language suggest.
+
+The foundational critique is that of \citet{sommer2010outside}. They observe
+that operational deployments use almost only misuse detectors. They argue
+that finding attacks is fundamentally different from the tasks where machine
+learning works well, such as product recommendation, optical character
+recognition or spam detection. A classifier needs training examples of every
+class. An anomaly detector aimed at novel attacks cannot train on the
+attacks of interest and sees only normal traffic. The authors call this the
+\emph{closed world assumption}, following Witten et al. They add further
+difficulties: a very high cost of errors, a semantic gap between a detected
+deviation and a report an operator can act on, a diversity of network
+traffic that makes it hard to find a stable notion of normality, and an
+evaluation that is harder than building the detector. They argue mostly at
+an intuitive level and not formally. This matters for the growth pattern of
+the previous subsections. If traffic and attacks keep shifting, a model
+fitted to yesterday's data gives no guarantee about tomorrow's.
+
+A second line of critique concerns how the field measures whether a
+detector works at all. \citet{arp2022dosdonts} identify ten pitfalls of
+machine learning in security. They review thirty papers from four top
+security conferences, on topics from malware detection to network intrusion
+detection. Every paper suffers from at least three of the pitfalls. Four
+of them matter most here. \emph{Data snooping} lets information that is not
+available in practice reach training, including test data and data from the
+future. \emph{Spurious correlations} lead a model to learn artifacts
+unrelated to the security problem instead of the attack behavior. The
+\emph{base rate fallacy} ignores a large class imbalance when interpreting
+performance. \emph{Lab-only evaluation} tests a system in a closed-world
+setting with limited diversity, without considering that data change over
+time. In four case studies the authors show that individual pitfalls can
+lead to unrealistic performance. The base-rate problem is especially serious
+for network traffic, where malicious flows are a small fraction of the
+total. The authors give an example with a class ratio of 1:100. A detector
+with 99\% true positives and 1\% false positives then produces 100 false
+positives for every 99 true positives. The ratio in real traffic can be more
+extreme, and the effect grows with it. This is worked out numerically in
+\cref{sec:evaluation-practice}, where the benchmarking protocol of this
+thesis is motivated.
+
+Taken together, the two critiques show that purely data-driven detection
+does not just swap one problem for the opposite one. It exchanges a
+well-understood if inconvenient limitation, blindness to the unknown, for
+harder ones: an unstable notion of normality, and an evaluation practice
+that can make brittle models look robust. More model capacity or more
+training data fixes neither, because both problems concern what is learned
+and how success is measured, not the expressive power of the learner. This
+gap motivates injecting explicit domain knowledge into the learning process,
+which is the neurosymbolic approach studied in this thesis. Detection quality
+is then not treated as something that more data or a bigger network will
+eventually solve. \Cref{ch:learning-paradigms,ch:ltn} develop the argument
+once the machine-learning and logic background is in place.
+
+% ================================================================
+% 1.2 Problem statement
+% ================================================================
+\section{Problem statement}
+\label{sec:problem-statement}
+
+The argument so far leads to an uncomfortable observation. Neurosymbolic
+integration is the kind of remedy the previous section calls for. It injects
+the explicit domain knowledge a purely data-driven detector lacks, without
+giving up the pattern-recognition capacity that made data-driven detection
+attractive. The literature accordingly proposes it as a way to improve
+generalization, handle rare or unseen attack classes and produce explainable
+alerts. Yet this thesis does not set out to show that neurosymbolic
+detection works. It asks \emph{whether}, and under which conditions, it is
+worth adopting at all, because the available evidence does not support a
+confident answer either way.
+
+The difficulty is not a lack of individual results but the lack of a shared
+methodology to produce and compare them. The studies surveyed in
+\cref{ch:related-work} evaluate neurosymbolic detectors under different
+protocols: different datasets, different splits, different sets of encoded
+rules, and mostly one or two datasets per paper. It stays open whether a
+reported gain comes from the approach or from the benchmark it was measured
+on. Reported outcomes are mostly limited to accuracy or closely related
+classification metrics, with computational cost, such as training time, inference latency or memory
+footprint, reported by few papers, and almost never under
+the throughput and latency limits of a real deployment. Because the
+studies rarely share a protocol, their results can hardly be aggregated or
+contrasted. The
+field collects isolated positive findings and has no comparable picture of
+when the approach helps and when it does not.
+
+This gap has a practical cost. A security operations engineer who must
+decide whether to adopt a neurosymbolic detector, instead of or next to an
+existing machine-learning pipeline, is asking a concrete question: under
+which conditions is a neurosymbolic detector worth its extra complexity? The
+literature offers no shared answer. It offers data points, each obtained
+under its own assumptions, but no systematic account of the operating regime.
+That regime is the combination of data availability, class imbalance,
+exposure to unseen attacks and knowledge quality in which the added
+engineering complexity gives a measurable advantage over a matched, purely
+neural baseline, and the regime in which it does not. This thesis supplies
+that account through a benchmark designed for comparability and not for
+showcasing a single best result. \Cref{sec:research-questions,sec:contributions}
+turn it into research questions and contributions.
+
+% ================================================================
+% 1.3 Research questions
+% ================================================================
+\section{Research questions}
+\label{sec:research-questions}
+
+The problem statement is split into five research questions. The first four
+cover the three axes a fair comparison needs, detection quality, cost and
+usability, plus the operating-regime question that ties them together. The
+fifth makes the exercise itself a methodological deliverable, because
+RQ1--RQ4 can be answered credibly only once a benchmark protocol able to
+support the answer exists.
+
+\begin{description}
+  \item[RQ1 -- Detection quality.] Does injecting domain knowledge through
+    a \gls{ltn} improve detection over an identical, purely neural model,
+    and on which classes or attack families does the improvement, or its
+    absence, concentrate? This is the most direct test of the neurosymbolic
+    claim. With architecture, features and training budget held fixed, a
+    difference in detection quality can be attributed to the logic-based
+    knowledge component and not to model capacity. Reporting the answer per
+    attack family avoids merging different failure modes, such as volumetric
+    \gls{ddos} and rare user-to-root attacks, into one aggregate number.
+
+  \item[RQ2 -- Operating regime.] Under which conditions does the
+    neurosymbolic advantage of RQ1, if any, appear and disappear? The
+    conditions considered are the amount of labelled data, the degree of
+    class imbalance, exposure to attacks unseen in training, shift across
+    datasets and the quality of the encoded knowledge. This is the question
+    the problem statement finds missing in the literature. Individual papers
+    report a result under one set of conditions, and no systematic account
+    exists of the boundary between the regime where the approach helps and
+    the regime where it does not, including the possibility that it never
+    helps.
+
+  \item[RQ3 -- Cost.] What is the computational price of the neurosymbolic
+    approach in training and in inference, in batch and in streaming
+    operation? A detector that improves quality at an unreported or
+    prohibitive cost is of no use to an operator with a latency or
+    throughput budget. Cost is therefore an independently reported axis and
+    not a footnote to a quality result.
+
+  \item[RQ4 -- Usability.] What does adopting the neurosymbolic approach
+    cost in engineering effort, to build, validate and maintain the
+    knowledge base, and what does it return in alerts that a human analyst
+    can interpret and audit? Quality and computational cost do not show
+    whether an organization can realistically build, maintain and trust the
+    system. This question states that dimension explicitly and does not
+    leave it to informal claims about interpretability.
+
+  \item[RQ5 -- Methodology.] What must a fair, reproducible benchmark for
+    machine-learning versus neurosymbolic network traffic analysis look
+    like? RQ1--RQ4 can be answered credibly only when matched baselines,
+    controlled confounds and comparable cost and usability measurements are
+    defined well enough for another researcher to reproduce them. RQ5 is
+    both a question in its own right and a precondition for the other four.
+    Its answer is the methodology of \cref{ch:benchmarking-methodology}.
+\end{description}
+% FIXME(open): \cref{ch:benchmarking-methodology} (Chapter 8) renders as "??" until that chapter exists and is \include-d in main.tex.
+
+% ================================================================
+% 1.4 Contributions
+% ================================================================
+\section{Contributions}
+\label{sec:contributions}
+
+Answering the research questions yields five contributions. The first is the
+methodological instrument that makes the others possible. The next three are
+the empirical and engineering results obtained with it. The last introduces
+evaluation signals that this thesis argues the mainstream \gls{nids}
+literature is missing.
+
+\begin{description}
+  \item[C1 -- A reproducible benchmark suite.] A benchmark suite for
+    comparing \gls{ml} and neurosymbolic network traffic analysis along
+    three independent axes, detection quality, computational performance
+    and operational usability, in both batch and real-time settings. It
+    answers RQ5 and is the foundation of C2 to C4. It is developed in
+    \cref{ch:benchmarking-methodology} and instantiated in
+    \cref{ch:implementation}.
+
+  \item[C2 -- A systematic empirical comparison.] A controlled,
+    matched-baseline comparison of a \gls{ltn}-based detector against
+    \gls{ml}/\gls{dl} baselines, repeated across several datasets and
+    several stress scenarios: scarce labels, class imbalance, unseen
+    attacks, cross-dataset transfer and deliberately degraded domain
+    knowledge. It answers RQ1 and supplies the evidence from which RQ2 is
+    answered. The results are reported in \cref{ch:results}.
+
+  \item[C3 -- A characterisation of the operating regime.] An explicit
+    account of the conditions under which neurosymbolic integration pays
+    off, built from the stress-scenario results of C2, including the
+    negative ones. It answers RQ2 and is reported with the same rigor
+    whether the outcome favors the neurosymbolic approach or not, since a
+    negative result is as useful to a practitioner as a positive one.
+
+  \item[C4 -- A streaming reference pipeline.] A reference implementation
+    that runs an \gls{ltn}-trained detector on live, replayed traffic and
+    reports end-to-end detection latency and throughput, not only offline
+    batch accuracy. It supplies the real-time half of the answer to RQ3.
+    The batch half comes from the cost measurements of C1 on the models
+    trained for C2. The pipeline is described in \cref{sec:realtime-pipeline}.
+
+  \item[C5 -- Two NeSy-specific evaluation metrics.] Two metrics that the
+    mainstream \gls{nids} literature does not report but that follow
+    naturally once a logic-based knowledge component is part of the system.
+    \emph{Axiom-level satisfaction} is an explanation signal: it shows how
+    well the predictions satisfy each individual domain rule and not only
+    the aggregate label. The \emph{domain-rule violation rate} measures how
+    often the predictions themselves break a domain rule. The first
+    contributes to the answer to RQ4, giving the usability axis of C1 a
+    quantitative instrument, and the second adds to detection quality. Both
+    are defined formally in \cref{sec:detection-quality-dimension} before
+    being measured.
+\end{description}
+
+Contributions C1 to C5 are set against the research questions in
+\cref{ch:conclusions}, once the evidence for each has been presented.
+% FIXME(open): \cref{ch:implementation}, \cref{sec:realtime-pipeline}, \cref{sec:detection-quality-dimension}, \cref{ch:results} and \cref{ch:conclusions} render as "??" until Chapters 8 to 11 exist and are \include-d in main.tex.
+
+% ================================================================
+% 1.5 Methodology in brief
+% ================================================================
+\section{Methodology in brief}
+\label{sec:methodology-brief}
+
+The full methodology is developed in \cref{ch:benchmarking-methodology} and
+executed in \cref{ch:implementation,ch:results}. Here it is only outlined,
+without anticipating the design choices and their justification.
+
+The center of the thesis is a comparison between a \gls{ltn}-based detector
+and a set of \gls{ml}/\gls{dl} baselines matched to it as closely as the two
+paradigms allow. They share the input features and the preprocessing
+pipeline, and the baseline uses a neural architecture identical to the one
+embedded in the \gls{ltn} formulation. A measured difference in detection
+quality can then be attributed to the logic-based domain knowledge and not
+to a difference in model capacity or data access. The comparison runs on
+established \gls{nids} datasets and is repeated under stress scenarios:
+fewer labels, stronger class imbalance, attack families withheld from
+training, transfer across datasets, and domain knowledge that is deliberately
+degraded or partly wrong. Each scenario targets one of the conditions named
+in RQ2.
+
+Three evaluation dimensions are measured for every model in every scenario,
+not accuracy alone. \emph{Detection quality} uses a metric set that stays
+informative under severe class imbalance and is reported together with the
+two neurosymbolic signals of C5. \emph{Computational cost} covers training
+time and inference latency and throughput, in a batch setting and in a
+streaming pipeline that replays traffic and measures end-to-end detection
+delay. \emph{Usability} is a rubric-based account of the engineering effort
+needed to build and maintain the knowledge base, set against the
+interpretability the resulting alerts provide. Differences between models
+are assessed with paired statistical tests on shared data splits. Every
+experiment is run with several random seeds, and the configuration,
+environment and code are released so that a third party can reproduce any
+result reported in \cref{ch:results}.
+
+% ================================================================
+% 1.6 Scope and limitations
+% ================================================================
+\section{Scope and limitations}
+\label{sec:scope-limitations}
+
+The methodology is deliberately bounded, to keep the comparison controlled
+and to fit the scope of a single-author thesis. Four exclusions apply
+throughout. They are stated here so that the results are read with the right
+boundaries in mind.
+
+First, the thesis does not address inspection of encrypted payload or TLS
+fingerprinting, and it does not inspect payload at all. On the flow datasets
+the detectors use flow-level and header-level features of the kind
+introduced in \cref{ch:foundations}. On NSL-KDD they also use the content
+features that come with its records. These features were computed when the
+dataset was built, and no flow record carries them. Second, adversarial
+machine learning is considered only through the simple evasion perturbations
+of one stress scenario, experiment E10 in \cref{ch:implementation}. A
+systematic study of robustness against an adaptive attacker is left to
+future work, discussed in \cref{sec:future-work}. Third, all training and
+inference experiments run on a single workstation. Distributed or multi-node
+training, and the scalability questions that come with it, are out of scope.
+Fourth, the thesis stops at the detection and measurement layer. Production
+integration with a security operations center, meaning SIEM ingestion, alert
+ticketing and automated response, is neither implemented nor evaluated,
+although the usability findings of RQ4 are meant to inform that context.
+
+These boundaries limit what \cref{ch:results,ch:conclusions} can claim. The
+comparison targets what a neurosymbolic detector costs and delivers as a
+detection component, evaluated on realistic but decrypted, single-node,
+non-adversarial traffic. It makes no claim about behavior under encrypted
+payloads, an adaptive adversary, distributed deployment or full SOC
+integration, each of which would need its own study.
+% FIXME(open): \cref{sec:future-work} renders as "??" until Chapter 11 exists and is \include-d in main.tex.
+
+% ================================================================
+% 1.7 Structure of the thesis
+% ================================================================
+\section{Structure of the thesis}
+\label{sec:thesis-structure}
+
+The remaining ten chapters form three parts. The first, background and
+design, comprises
+\cref{ch:foundations,ch:attacks-ddos,ch:learning-paradigms,ch:ltn,ch:related-work,ch:usecases-design}.
+The second, benchmarking and implementation, comprises
+\cref{ch:benchmarking-methodology,ch:implementation}. The third, results and
+conclusions, comprises \cref{ch:results,ch:conclusions}.
+
+\Cref{ch:foundations} sets the vocabulary used in the rest of the thesis:
+what is observed in network traffic and at which layer, how it is acquired
+and turned into features, the classical detection approaches, the relevant
+standards and taxonomies, and the recurring flaws in evaluation, treated
+there in more quantitative depth.
+\Cref{ch:attacks-ddos} develops the attack taxonomy, with emphasis on
+\gls{ddos} given its weight in the incident figures above. It closes by
+translating informal attacker knowledge into candidate logical axioms, which
+\cref{ch:ltn} later formalizes.
+\Cref{ch:learning-paradigms} surveys machine learning, deep learning and
+symbolic AI on their own terms, then introduces the taxonomy of
+neurosymbolic integration strategies in which the \gls{ltn} approach of this
+thesis is placed.
+\Cref{ch:ltn} presents \gls{ltn} in full, with its logical syntax, tensor
+grounding, fuzzy semantics and training as satisfiability maximization, and
+formalizes the network-security knowledge base used in the experiments.
+\Cref{ch:related-work} surveys prior work on \gls{ml}/\gls{dl} for intrusion
+detection and on neurosymbolic AI in cybersecurity, and places the research
+gap of \cref{sec:problem-statement} against it.
+\Cref{ch:usecases-design} turns the research questions into use cases,
+functional and non-functional requirements, and the reference system
+architecture, batch and streaming, used in the rest of the thesis.
+\Cref{ch:benchmarking-methodology} is the methodological core announced in
+\cref{sec:methodology-brief}. It gives the full benchmark design answering
+RQ5 and delivering C1, including the three evaluation dimensions, the
+statistical analysis plan and the threats to validity.
+\Cref{ch:implementation} describes how the methodology is implemented: data
+pipelines, models under test, the real-time pipeline delivering C4, and the
+experimental setup.
+\Cref{ch:results} reports and discusses the results against RQ1 to RQ4,
+including the stress-scenario findings behind C2 and C3 and the usability
+and explainability measurements behind C5.
+\Cref{ch:conclusions} answers RQ1 to RQ5 explicitly, revisits C1 to C5,
+distills a practical decision checklist for practitioners and outlines the
+future work mentioned in \cref{sec:scope-limitations}.

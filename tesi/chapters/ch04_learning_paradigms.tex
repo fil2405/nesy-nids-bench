@@ -1,0 +1,774 @@
+\chapter{Learning Paradigms: ML, DL and Neurosymbolic AI}
+\label{ch:learning-paradigms}
+%running head
+\chaptermark{Learning Paradigms: ML, DL and NeSy AI}
+
+The previous chapters fixed what a detector sees and what it has to find.
+This chapter describes the ways a detector can be built. It starts from
+machine learning and deep learning, covers symbolic AI, and then reaches
+neurosymbolic AI, where the two meet. It ends with a comparison of the
+paradigms and with the question of what an operator needs from an alert.
+
+% ================================================================
+% 4.1 Machine learning essentials
+% ================================================================
+\section{Machine learning essentials}
+\label{sec:ml-essentials}
+
+A learning algorithm builds a classifier from examples and not from rules
+written by hand. This section covers the part of machine learning that the
+benchmark relies on. It describes how the data are labelled, which classical
+models exist, what limits their generalization and how class imbalance is
+treated.
+
+\subsection{Supervised, unsupervised, semi-supervised learning}
+\label{sec:supervised-unsupervised}
+
+The three settings differ in the labels they use. In supervised learning the
+model receives pairs of an input and a label and learns to predict the label
+of new inputs. Unsupervised learning receives only unlabelled data and looks
+for structure in it. Semi-supervised learning uses labelled and unlabelled
+data together, so that a large unlabelled set can add to a small labelled
+one. The survey of \citet{vanengelen2020semisupervised} places it between
+the other two.
+
+Detection shows why the choice matters. An anomaly detector aimed at novel
+attacks cannot be trained on the attacks of interest. This is the closed world
+problem raised in the introduction. Sommer and Paxson note that one then often
+trains the detector with the opposite of what it is supposed to find
+\citep{sommer2010outside}. A supervised detector learns the attack classes it has seen. The detectors of
+this thesis are supervised. The KDD data are labelled as normal
+or as a specific attack \citep{tavallaee2009kddcup99}, and the models of the
+benchmark are trained on such labels. One stress scenario reduces the number
+of labelled examples available for training. It tests how a supervised
+detector behaves under label scarcity.
+
+\subsection{Classical models used in NIDS: decision trees, Random Forest, XGBoost, SVM, kNN}
+\label{sec:classical-models}
+
+This subsection describes five classical models. How they were used on
+\gls{nids} data is the subject of \cref{ch:related-work}.
+
+A decision tree classifies an example by a sequence of tests on its
+attributes. \citet{quinlan1986induction} summarizes an approach to building
+decision trees from examples and describes one system, ID3, in detail. In our
+view a tree is close to a rule set, because each path from the root to a leaf
+reads as a condition and a class.
+
+A random forest combines many trees. \citet{breiman2001random} defines it as
+a combination of tree predictors in which each tree depends on a random
+vector, sampled independently and with the same distribution for all trees.
+As trees are added, the generalization error converges to a limit. The limit
+depends on the strength of the single trees and on the correlation among
+them. Selecting features at random at each split gives error rates that
+compare favourably with those of Adaboost, and the method is more robust to
+noise.
+
+XGBoost is a tree boosting system. \citet{chen2016xgboost} present it as a
+scalable end-to-end system. Their contributions are an algorithm that handles
+sparse data, a weighted quantile sketch for approximate tree learning, and
+insights on cache access patterns, data compression and sharding. The system
+scales beyond billions of examples with far fewer resources than existing
+systems.
+
+A support vector machine takes a different route. \citet{cortes1995supportvector}
+map the input vectors nonlinearly into a feature space of high dimension. A
+linear decision surface is built in that space. The authors extend the method
+to training data that cannot be separated without errors.
+
+The nearest neighbor rule assigns to a new point the class of the nearest of
+a set of points already classified. \citet{cover1967nearest} show that, in
+the large-sample limit, the error of the rule lies between the Bayes error and
+twice that value. The bound does not depend on the distribution of the data.
+
+The five models store different things. A tree and a forest keep tests on
+features, boosting adds trees one after the other, a support vector machine
+keeps a separating surface and the nearest neighbor rule keeps the
+classified points themselves. None of them has a place for a domain rule in
+its standard form. The conclusion is our own, and it marks the gap that the
+neurosymbolic approach addresses.
+
+\subsection{Bias-variance, generalization, regularization}
+\label{sec:bias-variance-generalization}
+
+A detector is useful only on traffic it has not seen. \citet{goodfellow2016deep}
+call this generalization, the ability to perform well on previously
+unobserved inputs. A model underfits when it cannot reach a low error on the
+training set. It overfits when the gap between the training error and the
+test error is large. The capacity of the model moves it from one case to the
+other.
+
+The same authors express the trade-off through the estimator. Bias is the
+expected deviation of the estimator from the true value. Variance is how much
+the estimator changes from one data sample to another. The mean squared error
+is the sum of the squared bias and the variance. Raising the capacity of a
+model usually lowers the bias and raises the variance, so the generalization
+error follows a U-shaped curve \citep{goodfellow2016deep}.
+
+Regularization covers the changes to a learning algorithm that aim to reduce
+the generalization error and not the training error. Weight decay is an
+example. It adds to the loss a penalty on the size of the weights
+\citep{goodfellow2016deep}.
+
+Two points follow for the benchmark. First, the settings that control
+capacity and regularization must be chosen without the test set. Arp et al.
+call the opposite practice data snooping, and recommend that test data stay
+apart until the final evaluation \citep{arp2022dosdonts}. Second, a fair
+comparison needs the same capacity on both sides, which is the
+matched-capacity requirement of the benchmark, and the same regularization.
+% FIXME(open): \cref{ch:benchmarking-methodology} (Chapter 8, Sec. 8.1.1 and 8.1.3) should be referenced here once it exists; matched capacity and test-set leakage are defined there.
+There is also a hypothesis to test. Domain axioms restrict what a model may
+learn, and they may therefore act like a regularizer. This is a hypothesis of
+the thesis and not a result, and the experiments test it.
+
+\subsection{Handling imbalance: resampling (SMOTE, SMOTE-NC), class weighting, focal loss}
+\label{sec:imbalance-handling}
+
+The effect of imbalance on evaluation was covered in \cref{sec:imbalance-leakage-bias}.
+Here the question is how a model can be trained on classes of very different
+size. Three families of methods exist.
+
+The first changes the data. \citet{chawla2002smote} propose SMOTE, which
+builds artificial examples of the minority class and does not only remove
+majority examples. For a minority example, SMOTE selects some of its nearest
+neighbors, takes the difference vector to each of them, multiplies it by a
+random number between 0 and 1 and adds it to the example. The new point lies
+on the segment between the two. The authors report that combining it with
+undersampling of the majority class gives better results than undersampling
+alone. The same combination also gives better results than a change of the
+loss ratio in Ripper or of the class priors in Naive Bayes. The classifiers of
+the evaluation are C4.5, Ripper and Naive Bayes, and performance is measured
+with ROC curves and the area under the curve.
+
+SMOTE-NC extends the method to data with nominal and continuous features. It
+adds a penalty to the Euclidean distance when nominal values differ. The
+penalty is the median of the standard deviations of the continuous features
+of the minority class. A new example takes the nominal value held by the
+majority of its $k$ nearest neighbors \citep{chawla2002smote}. Which of the benchmark datasets
+mix the two kinds of feature is described with the data preparation.
+% FIXME(open): add \cref{ch:implementation} (Chapter 9, Sec. 9.2) in the sentence above once that chapter exists; it states which datasets have nominal features.
+
+Two cautions are ours. A synthetic point is an interpolation and not an
+observed flow, so nothing guarantees that it respects the domain rules of
+\cref{ch:attacks-ddos}. And resampling must be fitted on the training split
+only. A synthetic point built from a test example would let test information
+reach training, which is the data snooping pitfall again
+\citep{arp2022dosdonts}.
+
+The second family changes the loss and leaves the data alone, so that errors
+on the minority class cost more. \citet{chawla2002smote} compare SMOTE with
+such an adjustment, the loss ratio in Ripper. For deep networks,
+\citet{johnson2019survey} group the methods for class imbalance into
+data-level, algorithm-level and hybrid ones. Algorithm-level methods are
+commonly implemented with a weight or cost schema, and the authors find that
+cost-sensitive learning remains applicable to deep learning. How the weights
+are set for the neural models is fixed in the benchmark design.
+
+The third family is the focal loss. \citet{lin2017focal} propose it for
+one-stage object detectors, where the many easy background examples overwhelm
+training. It changes the cross-entropy loss so that well-classified examples
+count less and training concentrates on the hard ones. The setting of the
+paper is object detection and not traffic analysis. Using the focal loss on
+flows is a choice that the benchmark has to justify.
+
+Resampling acts on the data, while class weighting and the focal loss act on
+the training objective. The \gls{ltn} approach of this thesis also acts
+through the training objective, as \cref{ch:ltn} shows.
+
+% ================================================================
+% 4.2 Deep learning
+% ================================================================
+\section{Deep learning}
+\label{sec:deep-learning}
+
+Deep learning builds a model by composing many layers. A feedforward network
+approximates a function as a chain of simpler functions, and its depth is the
+number of layers in the chain \citep{goodfellow2016deep}. This section covers
+the networks of the deep baselines, how they are trained, which architectures
+exist for sequential and unlabelled data, and where the paradigm is strong and
+weak.
+
+\subsection{MLP, backpropagation, optimizers, dropout, early stopping}
+\label{sec:mlp-training}
+
+A multilayer perceptron is a feedforward network. Each layer applies an affine
+transformation followed by a nonlinear activation function. The rectified
+linear unit, which returns the larger of zero and its input, is a common
+choice. The training data do not specify the output of the hidden layers, and
+the learning algorithm decides how to use them \citep{goodfellow2016deep}.
+
+The network is trained with an iterative, gradient-based optimizer that lowers
+a cost function. Unlike convex methods, this gives no guarantee of reaching a
+global minimum. In most modern networks the cost is the cross-entropy between
+the training data and the model distribution \citep{goodfellow2016deep}.
+Backpropagation computes the gradient that the optimizer needs. It is a
+method for computing the gradient and not a learning algorithm. It applies the
+chain rule through the computation graph and stores intermediate values, so
+its cost grows linearly with the number of edges of the graph
+\citep{goodfellow2016deep}.
+
+Computing the gradient on the whole training set is expensive. Stochastic
+gradient descent estimates it on random minibatches. Because the noise of the
+estimate never disappears, the learning rate has to decrease during training
+\citep{goodfellow2016deep}. Adam adapts the step of each parameter. Kingma
+and Ba base it on adaptive estimates of lower-order moments and describe it
+as simple, efficient and light on memory, suited to noisy or sparse gradients
+\citep{kingma2015adam}. The textbook treatment adds that it is fairly robust
+to the choice of its hyperparameters \citep{goodfellow2016deep}.
+
+Two techniques limit overfitting. Dropout removes units and their connections
+at random during training. This keeps units from co-adapting too much, and
+training samples from an exponentially large set of thinned networks. At test
+time a single unthinned network with smaller weights approximates the average
+of their predictions \citep{srivastava2014dropout}. Early stopping watches the error on a
+validation set during training and keeps the best parameters seen, so the
+number of training steps works as a control on capacity
+\citep{goodfellow2016deep}. It needs a validation set separate from the test
+set, which is one reason why the benchmark keeps three splits.
+
+\subsection{Architectures relevant to traffic: 1D-CNN, LSTM/GRU, autoencoders, transformers}
+\label{sec:dl-architectures}
+
+This subsection describes four families of architecture. \Cref{ch:related-work}
+reviews how they have been applied to network traffic.
+
+A convolutional layer scans the input with a small kernel and applies the same
+linear transformation at every position. It relies on three ideas. Interactions
+are sparse, the weights of the kernel are shared across positions, and the
+representation is equivariant to shifts of the input. Convolution also applies
+to one-dimensional data such as a time series \citep{goodfellow2016deep}. The
+features of a flow record are not a time series. They have no natural
+neighbourhood. A one-dimensional convolution over a feature vector therefore
+assumes an order that comes from the layout of the features, a limit we note
+for the 1D-CNN baseline.
+
+Recurrent networks read a sequence step by step. The long short-term memory
+unit is the standard gated variant. Greff et al. evaluate eight variants on
+speech recognition, handwriting recognition and music modelling. They find that
+none of the variants improves substantially on the standard unit and that the
+forget gate and the output activation function are its most critical
+components \citep{greff2015lstm}. The gated recurrent unit is a second gated
+design. Chung et al. compare gated units with plain tanh units on music and
+speech modelling. Both kinds of gated unit do better, and the gated recurrent
+unit performs comparably to the long short-term memory unit
+\citep{chung2014empirical}. The benchmark plan lists an MLP and a 1D-CNN as
+deep baselines and an LSTM as an optional extension.
+
+An autoencoder has an encoder that maps the input to a code and a decoder that
+rebuilds the input from the code. It is kept from copying its input exactly.
+When the code is smaller than the input the autoencoder is undercomplete, and
+with a linear decoder and a squared error loss it learns the same subspace as
+principal component analysis. A denoising autoencoder receives a corrupted
+input and rebuilds the clean one \citep{goodfellow2016deep}. The linear case
+connects to the PCA detectors of \cref{sec:statistical-anomaly-detection}. For
+detection, an autoencoder can be trained on normal traffic alone, and a large
+reconstruction error is then read as a deviation \citep{mirsky2018kitsune}.
+We state this as an option,
+and \cref{sec:deep-nids} reviews a detector built this way.
+
+The transformer is the newest of the four. Vaswani et al. propose an
+architecture that relies on attention alone and drops recurrence and
+convolution. They report that it parallelizes better and trains faster than
+the recurrent and convolutional models of the time on machine translation
+\citep{vaswani2017attention}.
+
+\subsection{Strengths (representation learning, scale) and weaknesses (data hunger, opacity, brittleness under shift, no constraint guarantees)}
+\label{sec:dl-strengths-weaknesses}
+
+Two strengths stand out. The first is representation learning. The hidden
+layers of a network are not specified by the data, so the model builds its own
+features \citep{goodfellow2016deep}. The lower-dimensional codes of an
+autoencoder can improve classification and reduce cost
+\citep{goodfellow2016deep}. The second is scale. Stochastic gradient descent
+makes training on large datasets practical, because the computation time of an
+update does not grow with the number of training examples
+\citep{goodfellow2016deep}. Attention-based models
+add parallel training \citep{vaswani2017attention}.
+
+The weaknesses matter more for this thesis, since each one points at a
+condition of the benchmark.
+
+\emph{Data hunger.} Srivastava et al. state that overfitting is a serious
+problem in networks with a large number of parameters
+\citep{srivastava2014dropout}. A model with many parameters needs many
+labelled examples to avoid it. We expect the effect to show under label
+scarcity, and the corresponding stress scenario tests this expectation.
+
+\emph{Opacity.} A deep network returns a score and no reason. Sommer and Paxson
+name the semantic gap between a detection and a report that an operator can
+act on \citep{sommer2010outside}. We judge that a network with many layers
+widens that gap.
+
+\emph{Brittleness under shift.} Arp et al. describe spurious correlations,
+where a model learns artifacts that have nothing to do with the security
+problem, and lab-only evaluation, which ignores that data change over time
+\citep{arp2022dosdonts}. A network fitted on one collection can carry the
+artifacts of that collection to the next. Cross-dataset transfer tests this in
+the benchmark.
+
+\emph{No constraint guarantees.} The loss measures how well the predictions
+fit the labels. Nothing in it forbids a prediction that breaks a domain rule,
+such as one of the candidate axioms of \cref{ch:attacks-ddos}. The domain-rule
+violation rate of \cref{sec:contributions} measures how often this happens.
+
+None of the four weaknesses is specific to network traffic, and none is
+proved here. Apart from the cited findings, the four readings are ours. They
+state what the benchmark has to check, and they are the reason why a model
+trained with explicit domain knowledge is worth comparing with a purely
+neural one.
+
+
+% ================================================================
+% 4.3 Symbolic AI
+% ================================================================
+\section{Symbolic AI}
+\label{sec:symbolic-ai}
+
+Symbolic AI represents knowledge in a formal and declarative form, based on
+rules and logic \citep{colelough2025neurosymbolic2024}. Colelough and Regli
+name DENDRAL and MYCIN among the early systems of this kind. In this thesis a
+symbolic system is one whose knowledge is stated as formulas that a program
+can reason over.
+
+\subsection{Propositional and first-order logic, Horn clauses, inference}
+\label{sec:logic-inference}
+
+Propositional logic builds formulas from atoms, each true or false, and from
+connectives such as and, or, not and implication. First-order logic adds
+objects, predicates over objects and quantifiers. Russell and Norvig give
+logical agents, first-order logic and inference in first-order logic a
+chapter each \citep{russell2020aima}.
+
+A Horn clause has at most one positive literal. Read as a rule, it says that
+a conjunction of atoms, the body, implies a single atom, the head. The SYN
+flood axiom of \cref{tab:candidate-axioms} has this form: a window with a SYN
+excess and incomplete connections implies DoS, the KDD family that includes
+DDoS. Two procedures apply such
+rules. Forward chaining starts from known facts and derives every head whose
+body holds. Backward chaining starts from a query and looks for rules whose
+head matches it.
+
+Inference is exact. If the facts and the rules are true, the derived
+conclusion is true. The rules of \cref{ch:attacks-ddos} do not meet this
+condition yet. Their predicates, such as a high rate, need a threshold before
+they are true or false, and the chapter left the thresholds open. This gap,
+as we see it, is the reason why \cref{ch:ltn} replaces truth values by degrees
+of truth.
+
+\subsection{Rule-based expert systems, description logics, ontologies, knowledge graphs}
+\label{sec:rules-ontologies-kg}
+
+A rule-based system keeps its rules in a knowledge base and applies them with
+a separate inference engine. We regard the signature rules of
+\cref{ch:foundations} as a narrow case of such a system. A Snort rule combines
+options by a logical AND \citep{roesch1999snort}.
+
+An ontology is a formal representation of what the terms of a domain mean
+\citep{hogan2021knowledge}. The Web Ontology Language is among the most
+popular languages for writing one, and it is a recommendation of the W3C
+\citep{hogan2021knowledge}. Description logics are a family of knowledge
+representation languages that are widely used to model ontologies, and they
+are one of the main foundations of the Web Ontology Language
+\citep{krotzsch2012primer}.
+
+Hogan et al. define a knowledge graph as a graph of data meant to accumulate
+and convey knowledge of the real world, where nodes stand for entities and
+edges for relations between them \citep{hogan2021knowledge}. In network
+security the nodes could be hosts, services or ATT\&CK techniques. The
+thesis uses ATT\&CK only as a label space. How a graph can enter a model is
+discussed later in this chapter.
+
+\subsection{Answer Set Programming and probabilistic logic programming}
+\label{sec:asp-plp}
+
+Answer Set Programming describes a problem by rules and asks for the sets of
+atoms that satisfy them. Brewka et al. present rules with a head and a body,
+default negation for incomplete information, and answer sets as the
+solutions \citep{brewka2011answer}. They name search and optimization
+problems as the target and stress the declarative style of the approach.
+
+Probabilistic logic programming extends languages such as Prolog with
+probabilities. De Raedt and Kimmig survey the concepts behind these languages
+and their execution mechanisms \citep{deraedt2015probabilistic}. In our own
+summary, a query to such a program returns a probability and not only true
+or false. Both families return later in this chapter as the symbolic half of
+neurosymbolic systems.
+
+\subsection{Strengths (interpretability, data efficiency, verifiability) and weaknesses (brittleness, knowledge acquisition bottleneck, no perception)}
+\label{sec:symbolic-strengths-weaknesses}
+
+Garcez and Lamb list the strengths of symbolic AI. It reasons in a
+sophisticated way, and it can give a trace of the steps that led to an
+outcome \citep{garcez2020thirdwave}. They also note that reasoning is often
+meant to be precise and not approximate. A rule base needs no training
+examples, because the knowledge comes from the expert. This remark on data
+efficiency is ours, and so is the observation that a rule can be checked
+against a case, since every conclusion has a derivation.
+
+The same authors name brittleness and computational complexity among the
+limits of symbolic systems \citep{garcez2020thirdwave}. The thesis uses the
+term knowledge acquisition bottleneck for the cost of obtaining the rules, a
+term that Kautz uses in his account of expert systems \citep{kautz2022third}.
+
+A third limit is the lack of perception. A symbolic system reasons over
+symbols and cannot read raw input. A flow record has to become predicates
+first, and the thresholds that do this are themselves a choice, as
+\cref{sec:logic-inference} showed. This limit is our reading and not a claim
+of the sources.
+
+Set against \cref{sec:dl-strengths-weaknesses}, the two paradigms fail in
+opposite places. A neural model needs data, hides its reasoning and ignores
+rules. A symbolic one needs no data and shows its reasoning, but it cannot
+read raw input. This contrast is ours, and the next section builds on it.
+
+% ================================================================
+% 4.4 Neurosymbolic AI
+% ================================================================
+\section{Neurosymbolic AI}
+\label{sec:neurosymbolic-ai}
+
+\subsection{Motivation: the complementarity argument (System 1 / System 2)}
+\label{sec:complementarity}
+
+The usual argument for combining the two paradigms draws on Kahneman. System 1
+is fast and intuitive and System 2 is slow and deliberate. Garcez and Lamb
+say that neural networks and symbolic reasoning can in principle be matched
+with the two systems, respectively, and they report that Kahneman said a
+symbolic System 2 layer is needed on top of deep learning
+\citep{garcez2020thirdwave}. Colelough and Regli use the same framework to
+justify the combination \citep{colelough2025neurosymbolic2024}.
+
+For traffic, we map the two systems as follows. The neural part reads the
+numbers of a flow and the symbolic part holds the rules of
+\cref{ch:attacks-ddos}.
+
+The analogy has a limit. It says what each part does well and not how the two
+are joined. It is a motivation and not evidence that a combined system
+detects better. The benchmark tests that question.
+
+\subsection{Kautz's taxonomy of neurosymbolic architectures (Type 1 \ldots{} Type 6)}
+\label{sec:kautz-taxonomy}
+
+Kautz describes six designs for joining neural and symbolic parts, and he
+gives each a short notation \citep{kautz2022third}. \Cref{tab:kautz-types}
+lists them with that notation and a paraphrase of his descriptions. Garcez and
+Lamb also report six types, one of which is capable of true symbolic reasoning
+inside a neural engine \citep{garcez2020thirdwave}.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Kautz's six types, with the notation of the original and a
+paraphrase of its descriptions \citep{kautz2022third}.}
+\label{tab:kautz-types}
+\begin{tabular}{@{}p{0.8cm}p{3.4cm}p{8.3cm}@{}}
+\toprule
+Type & Notation & Description \\
+\midrule
+1 & Symbolic Neuro symbolic
+  & Symbolic input goes through a neural network and the output is symbolic. \\
+2 & $\mathrm{Symbolic}[\mathrm{Neuro}]$
+  & A symbolic problem solver uses a neural network as a pattern-recognition subroutine. \\
+3 & $\mathrm{Neuro}\,|\,\mathrm{Symbolic}$
+  & A neural network turns non-symbolic input into a symbolic form on which a symbolic part reasons. \\
+4 & $\mathrm{Neuro}:\mathrm{Symbolic}\rightarrow\mathrm{Neuro}$
+  & A training regime based on symbolic rules shapes the network. \\
+5 & $\mathrm{Neuro}_{\mathrm{Symbolic}}$
+  & Symbolic rules become templates for structures inside the network. \\
+6 & $\mathrm{Neuro}[\mathrm{Symbolic}]$
+  & A symbolic reasoning engine is embedded in a neural system, which calls it when needed. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The accounts do not agree on every type. \citet{wan2024cognitive} list five
+paradigms and leave out the first. They describe the type with a symbolic
+training regime as rules that guide learning, with the knowledge compiled into
+the structure of the network. They describe the type with templates as rules
+mapped onto embeddings that act as soft constraints or regularizers. For the
+type with an embedded symbolic part they speak of explainability and
+robustness taken from symbolic reasoning, with attention to symbolic
+information. Their wording differs from that of \cref{tab:kautz-types}.
+
+Kautz names logic tensor networks as an example of the fifth type
+\citep{kautz2022third}, and \citet{wan2024cognitive} describe that type as
+soft constraints or regularizers. The models of this thesis are logic tensor
+networks, and a loss that contains the formulas of a knowledge base is such a
+constraint. We therefore read them as the fifth type. This is our judgment,
+and \cref{ch:ltn} keeps it with a reservation. The families of the next
+subsection differ in how the neural and the symbolic components are joined,
+which is what a type records.
+
+
+
+\subsection{Integration families}
+\label{sec:integration-families}
+
+The systems below differ in where the logic acts. It can act on the loss, inside
+a logic program, on a graph, on the structure of the network or on the
+output. The order of the subsections is not a ranking.
+
+\subsubsection{Logic as a loss / differentiable logic (LTN, Semantic Loss, DL2)}
+\label{sec:logic-as-loss}
+
+Logic Tensor Networks use Real Logic, a many-valued and end-to-end
+differentiable first-order logic. Badreddine et al. apply it to tasks such as
+multi-label classification, relational learning, query answering and
+semi-supervised learning, with an implementation in TensorFlow 2
+\citep{badreddine2022ltn}. The semantic loss of Xu et al. is a loss that
+connects the output vector of a network with logical constraints, and the
+authors show gains in semi-supervised classification and in the prediction of
+structured objects \citep{xu2018semantic}. DL2 lets the user state domain
+knowledge as declarative constraints that are enforced during training and
+translates them into loss terms for gradient-based optimization. The same
+system can query a trained model, and the authors claim a higher
+expressiveness than earlier approaches \citep{fischer2019dl2}.
+
+What the three share, in our summary, is that a formula becomes a
+differentiable term of the training objective. This places the family on the
+same side as the loss-level treatments of imbalance in
+\cref{sec:imbalance-handling}. We also note that a penalty makes a violation
+costly but does not forbid it, so the fourth weakness of
+\cref{sec:dl-strengths-weaknesses} is not removed. \Cref{ch:ltn}
+states why the thesis takes this family.
+
+\subsubsection{Neural predicates inside a probabilistic logic program (DeepProbLog, DeepStochLog, NeurASP)}
+\label{sec:neural-predicates}
+
+In DeepProbLog a neural predicate takes its probabilities from the softmax
+output of a network, so that the logic program treats the network as a source
+of probabilistic facts. Manhaeve et al. claim to be the first to integrate
+general-purpose neural networks with expressive probabilistic-logical
+modelling and reasoning \citep{manhaeve2018deepproblog}. DeepStochLog works
+with stochastic definite clause grammars, a kind of stochastic logic program,
+and adds neural grammar rules. Its authors report that inference and learning
+scale much better than in neural probabilistic logic programs
+\citep{winters2022deepstochlog}. NeurASP reads the outputs of a network as
+probability distributions over facts of an answer set program. It can use
+pre-trained networks for symbolic reasoning, and it can use the rules to
+improve the training of the network \citep{yang2020neurasp}.
+
+For traffic, we picture a network that scores predicates such as a high
+rate, and a program that derives the attack class from them. The three systems were presented on other tasks, and the
+sources read here do not report network traffic.
+
+\subsubsection{Knowledge-graph and embedding-based integration}
+\label{sec:kg-integration}
+
+DeLong et al. survey neurosymbolic reasoning over knowledge graphs and group
+the methods in three categories. Logically informed embeddings use symbolic
+inference to augment the graph before a neural embedding. Embeddings with
+logical constraints impose rules on the embedding space, on the loss or
+through separate logic embeddings. Rule learning approaches learn the rules
+themselves \citep{delong2024kgsurvey}. In security a graph could link hosts,
+services and ATT\&CK techniques. The thesis does not build such a graph.
+
+\subsubsection{Neural module networks and program synthesis}
+\label{sec:neural-modules}
+
+Andreas et al. assemble jointly trained neural modules into a network for
+each question about an image. They parse the question into a linguistic
+structure and use it to build the modular network from reusable components
+\citep{andreas2015neuralmodule}. The structure of the computation therefore
+comes from the input. A flow record carries no such structure, so we see no
+natural place for this family in the benchmark.
+
+Program synthesis is a neighbouring topic. Chaudhuri et al. survey
+neurosymbolic programming. There the learned functions are programs that can
+combine neural modules with symbolic primitives, and they are found by symbolic
+search together with gradient-based optimization
+\citep{chaudhuri2021neurosymbolic}. The benchmark starts from rules written in
+advance and does not search for a program, so we leave this family out.
+
+\subsubsection{Post-hoc symbolic verification of neural outputs}
+\label{sec:post-hoc-verification}
+
+Here the model is left as it is and checked afterwards. Katz et al. verify
+properties of trained networks with an extension of the simplex method to
+ReLU activations, and they report that it proves properties of networks an
+order of magnitude larger than the largest verified with existing methods
+\citep{katz2017reluplex}. Renkhoff et al.
+survey verification, validation and testing of neurosymbolic systems
+\citep{renkhoff2024survey}. The simplest form of the idea is to test every
+prediction against a rule and to flag the ones that break it. The domain-rule
+violation rate of \cref{sec:contributions} is such a check, applied to the
+outputs of every model, in our interpretation. The check measures a model and
+does not change how it is trained.
+
+\subsection{Comparative discussion: expressiveness, scalability, training cost, explainability, tooling maturity}
+\label{sec:integration-comparison}
+
+\Cref{tab:integration-systems} puts the systems side by side. It lists only
+what the sources read here state.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Integration systems, as described in the sources read for this section.}
+\label{tab:integration-systems}
+\begin{tabular}{@{}p{2.3cm}p{5.2cm}p{5.0cm}@{}}
+\toprule
+System & Symbolic part & Role of the network \\
+\midrule
+LTN & Real Logic, many-valued differentiable first-order logic
+  & Trained end to end together with the logic \\
+Semantic loss & Logical constraints
+  & Its output vector is tied to the constraints by the loss \\
+DL2 & Declarative constraints, also usable as queries
+  & Trained under a loss derived from the constraints \\
+DeepProbLog & Probabilistic logic program
+  & Neural predicates give the probabilities \\
+DeepStochLog & Stochastic definite clause grammars
+  & Neural grammar rules \\
+NeurASP & Answer set program
+  & Outputs act as distributions over facts \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sources do not use one scale, so the dimensions below are compared
+only where a source speaks.
+
+\emph{Expressiveness.} The authors of DL2 claim a higher expressiveness than
+earlier approaches, and the authors of DeepProbLog claim an expressive
+probabilistic-logical component. Each claim is the claim of its authors and
+rests on their own benchmarks. We do not rank the systems.
+
+\emph{Scalability.} The authors of DeepStochLog report that stochastic logic
+programs scale much better than neural probabilistic logic programs. No source
+read here compares the loss-based systems with the program-based ones.
+
+\emph{Training cost.} No source read here reports it for network traffic. We
+expect a logic loss to add the cost of evaluating the formulas at every
+step, and a logic program to add the cost of inference in that program. The
+benchmark measures training time directly.
+
+\emph{Explainability.} A logic program can show the derivation of a
+conclusion, in line with the trace that \citet{garcez2020thirdwave} count
+among the strengths of symbolic AI. A model trained with a logic loss is an
+ordinary network once training ends, unless the logic is kept at inference.
+This is our reading, and \cref{ch:ltn} checks it for LTN.
+
+\emph{Tooling maturity.} The only statement read here is that Logic Tensor
+Networks have an implementation in TensorFlow 2 \citep{badreddine2022ltn}.
+The maturity of the other tools has not been compared.
+% FIXME(open): tooling maturity is not compared for DeepProbLog, DeepStochLog, NeurASP, DL2 and semantic loss; compare their released implementations before Chapter 9.
+
+The choice of the thesis rests mainly on the data. The inputs are tabular flow
+features and the knowledge is a set of rules over predicates of flows
+(\cref{ch:attacks-ddos}). A logic loss fits a training pipeline like the one
+of the deep baselines, and we expect the cost at inference to stay close to
+that of the baseline. This is a hypothesis of the thesis, and the benchmark
+tests it.
+
+
+% ================================================================
+% 4.5 Comparison of the paradigms
+% ================================================================
+\section{Comparison of the paradigms}
+\label{sec:paradigm-comparison}
+
+\Cref{tab:paradigm-comparison} compares the four paradigms on seven
+dimensions. Every cell is an expectation of ours, drawn from
+the sections above, and none is a result. The last column describes a logic
+loss, the family of the thesis. Other families differ.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Our expectations for the four paradigms, not results. The benchmark
+tests the rows on data, cost and maintenance.}
+\label{tab:paradigm-comparison}
+\begin{tabular}{@{}p{2.4cm}p{2.5cm}p{2.5cm}p{2.5cm}p{2.5cm}@{}}
+\toprule
+ & Classical ML & Deep learning & Symbolic & NeSy, logic loss \\
+\midrule
+Data efficiency & Needs labels & Needs many labels & Needs rules, no labels & Labels and rules \\
+Interpretability & A tree is close to rules, other models less & Low
+  & Derivation of each conclusion & An ordinary network unless the logic is kept \\
+Constraint compliance & None & None & Exact & Soft, not guaranteed \\
+Training cost & Expected lower & Expected higher & Writing the rules & Deep cost plus the formulas \\
+Inference cost & Expected low & A forward pass & Inference in the program & Expected as deep, a hypothesis \\
+Maintenance cost & Retrain under shift & Retrain under shift & Edit the rules by hand & Retrain and edit the rules \\
+Maturity & Models cited date from 1967 to 2016 & Works cited date from 2014 to 2017
+  & Early systems such as DENDRAL and MYCIN & Logic-loss systems cited date from 2018 to 2022 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three points stand out to us. No paradigm wins on every row. The cost of a
+symbolic system is the work of writing the rules and not the machine time.
+The two learning paradigms need retraining when the data change, and
+\citet{arp2022dosdonts} note that data change over time.
+
+% ================================================================
+% 4.6 Explainable AI in this context
+% ================================================================
+\section{Explainable AI in this context}
+\label{sec:xai}
+
+\subsection{Post-hoc methods (SHAP, LIME) vs intrinsically structured explanations}
+\label{sec:posthoc-vs-intrinsic}
+
+Post-hoc methods explain a model that is already trained. LIME explains the
+prediction of any classifier by learning an interpretable model locally
+around the prediction \citep{ribeiro2016lime}. SHAP introduces a class of
+additive feature importance measures that unifies six earlier methods
+\citep{lundberg2017shap}. Both attribute a prediction to input features. For
+a flow record the answer is a list of features, such as a packet rate or a
+count of flags, with a weight each.
+
+Rudin argues that in high-stakes decisions one should not explain black box
+models after the fact and should use inherently interpretable models instead
+\citep{rudin2019stop}. A structured explanation is of the second kind. In a
+rule-based system it is the derivation that led to the conclusion, which
+Garcez and Lamb count among the strengths of symbolic AI
+\citep{garcez2020thirdwave}. Kalutharage et al. pair neurosymbolic learning
+with explanation driven by domain knowledge for the detection of attacks on
+IoT networks \citep{kalutharage2025neurosymbolic}.
+
+A model trained with a logic loss does not give a derivation by itself, as
+\cref{sec:integration-comparison} noted. It may need a post-hoc method as
+well, unless the rules are evaluated again at inference. We add this point
+ourselves.
+
+\subsection{What an operator actually needs in an alert}
+\label{sec:operator-needs}
+
+The semantic gap of Sommer and Paxson returns here from the side of the
+operator. The same authors stress the cost of errors, since a false positive
+takes the time of an analyst \citep{sommer2010outside}. We read four
+needs from this and from the defences of \cref{ch:attacks-ddos}. The alert
+should say what was seen, which flow, window or source. It should say why, in
+terms of features or rules. It should say how sure the detector is. It should
+name the traffic in fields that a filter can use, since filtering needs a
+description of the attack traffic. This list is ours.
+
+Besides the engineering effort, RQ4 asks what the approach returns in alerts
+that a human analyst can interpret and audit. A feature weight meets the second need only in part,
+because it does not say which condition of an attack held. A rule that fired
+does. Whether this difference matters to an analyst is an empirical question,
+and the usability measurements of the benchmark address it.
+% FIXME(open): the usability and explainability measurements are defined in Chapter 8 (Sec. 8.4, with the C5 metrics in Sec. 8.2); add \cref{ch:benchmarking-methodology} to the last sentence once that chapter exists.
+
+% ================================================================
+% 4.7 Summary
+% ================================================================
+\section{Summary}
+\label{sec:ch4-summary}
+
+The machine learning and deep learning models of the benchmark learn from
+labelled data, and they offer no place for domain rules. Symbolic AI holds rules and gives derivations, but
+it cannot read raw input and its rules are costly to obtain. Neurosymbolic AI
+joins the two, and the families differ in where the logic acts: on the loss,
+inside a logic program, on a graph, on the structure of the network or on the
+output. Kautz's taxonomy records how the parts are joined, and the thesis
+reads its models as the fifth type, which is its own judgment. The thesis
+uses a logic loss, which fits tabular flow features and rules over predicates
+of flows. The comparison
+of the paradigms is a set of expectations, and the benchmark tests those on
+data, cost and maintenance. Explanations are a further point on which the
+paradigms differ for an operator, and RQ4 asks about it.
