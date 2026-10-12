@@ -13,3 +13,4 @@ scipy
 pyyaml
 matplotlib
 psutil
+pytest
