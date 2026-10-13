@@ -1,4 +1,4 @@
-"""Architecture rule: no number or class name of a dataset in the code of models, metrics and runner."""
+"""No dataset-specific numbers or class names in models, metrics and runner."""
 import re
 from pathlib import Path
 

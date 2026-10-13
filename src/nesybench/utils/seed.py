@@ -1,4 +1,4 @@
-"""Global seeding, so that a run is fully determined by its configuration and seed."""
+"""Global seeding."""
 import os
 import random
 
@@ -6,11 +6,7 @@ import numpy as np
 
 
 def set_global_seed(seed: int, deterministic: bool = True) -> None:
-    """Seed Python, NumPy and TensorFlow.
-
-    deterministic=True also asks TensorFlow for deterministic kernels:
-    slower on GPU, but two runs with the same seed give the same numbers.
-    """
+    """Seed Python, NumPy and TensorFlow; optionally force deterministic ops."""
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)

@@ -1,7 +1,4 @@
-"""The runner, on a toy dataset and the smallest possible model.
-
-No real dataset and no TensorFlow: the seed function is replaced by a recorder.
-"""
+"""Runner on a toy dataset with a stub model; no TensorFlow."""
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -48,7 +45,7 @@ def env(monkeypatch, tmp_path):
     calls = {"fits": 0, "parts": [], "seeds": [], "config": None}
 
     class Majority:
-        """Satisfies the model contract and records what it was asked."""
+
 
         def fit(self, splits, config):
             calls["fits"] += 1

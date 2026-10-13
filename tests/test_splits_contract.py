@@ -1,4 +1,4 @@
-"""What models may rely on in Splits. Synthetic data: runs without the dataset."""
+"""Splits contract, on synthetic data."""
 import numpy as np
 import pandas as pd
 import pytest

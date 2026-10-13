@@ -1,13 +1,9 @@
-"""Wall-clock measurements shared by the runner and by every training loop."""
+"""Wall-clock timers."""
 from time import perf_counter
 
 
 class Stopwatch:
-    """Time a block: `with Stopwatch() as sw: ...` then `sw.seconds`.
-
-    With a dict and a key, the time is also stored there:
-    `with Stopwatch(timings, "fit_s"): ...`. It is recorded even if the block fails.
-    """
+    """Context manager; optionally writes the elapsed time to sink[key], also on error."""
 
     def __init__(self, sink: dict | None = None, key: str | None = None):
         self.seconds = 0.0
@@ -26,11 +22,7 @@ class Stopwatch:
 
 
 class EpochClock:
-    """Seconds per epoch, for a Keras callback or a custom loop alike.
-
-    Call begin() when an epoch starts and end() when it ends; `seconds` has
-    one value per epoch.
-    """
+    """Per-epoch durations, usable from a Keras callback or a custom loop."""
 
     def __init__(self):
         self.seconds: list[float] = []

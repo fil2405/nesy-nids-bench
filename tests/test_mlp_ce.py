@@ -1,8 +1,4 @@
-"""Specification of nesybench/models/mlp_ce.py: MLP trained with cross-entropy.
-
-Needs TensorFlow. The tests fail until the module is written. Data are
-Gaussian blobs that are already "preprocessed": no dataset needed.
-"""
+"""MLP-CE on synthetic Gaussian blobs."""
 import numpy as np
 import pytest
 

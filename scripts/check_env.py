@@ -1,10 +1,9 @@
-"""Check the environment before any experiment: versions, GPU, RAM, and that ltn works."""
+"""Print versions, GPU and RAM, and run a tiny ltn formula."""
 import os
 import platform
 import sys
 
-# ltn 2.1 is written for Keras 2 (tf.keras). TensorFlow >= 2.16 ships Keras 3 by default.
-# This variable, set BEFORE importing tensorflow, makes tf.keras point to the tf_keras package.
+# ltn 2.1 needs Keras 2; must be set before importing tensorflow.
 os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 
 
@@ -36,9 +35,8 @@ def main() -> int:
         )
         sat = Forall(x, P(x)).tensor.numpy()
         print(f"ltn         OK, test formula satisfaction = {sat:.3f}")
-    except Exception as exc:  # the point of this script is to see the error
+    except Exception as exc:
         print(f"ltn         FAILED: {type(exc).__name__}: {exc}")
-        print("            Likely a Keras 3 / tf.keras mismatch: report this output.")
         return 1
     return 0
 

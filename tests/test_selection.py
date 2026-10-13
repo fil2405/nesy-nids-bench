@@ -1,9 +1,4 @@
-"""Specification of nesybench/models/selection.py.
-
-This is the model-selection rule shared by MLP-CE, LTN-sup and LTN-full: early
-stopping on the macro-F1 of the validation part. The tests fail until the
-module is written.
-"""
+"""Early stopping on validation macro-F1."""
 import numpy as np
 import pytest
 
@@ -28,7 +23,7 @@ def _splits(y_val):
 
 
 class FakeModel:
-    """Stands in for a Keras model: returns fixed probabilities."""
+
 
     def __init__(self, proba):
         self.proba = np.asarray(proba)

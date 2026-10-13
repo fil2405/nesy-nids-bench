@@ -1,4 +1,4 @@
-"""Dataset registry: the only place that knows which datasets exist."""
+"""Dataset registry."""
 from . import nslkdd
 from .base import DatasetSpec
 

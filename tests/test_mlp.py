@@ -1,7 +1,4 @@
-"""Specification of nesybench/models/mlp.py: build_mlp, the network shared by MLP-CE, LTN-sup and LTN-full.
-
-Needs TensorFlow. The tests fail until the module is written.
-"""
+"""build_mlp, shared by MLP-CE, LTN-sup and LTN-full."""
 import numpy as np
 import pytest
 
@@ -43,7 +40,6 @@ def test_dropout_follows_every_hidden_layer():
 
 
 def test_network_is_not_compiled():
-    # every arm compiles it with its own objective
     assert getattr(_build(), "optimizer", None) is None
 
 

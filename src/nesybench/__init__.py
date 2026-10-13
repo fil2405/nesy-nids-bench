@@ -1,7 +1,7 @@
-"""nesybench: benchmark of LTN against matched ML/DL baselines for NIDS."""
+"""Benchmark of LTN against matched ML/DL baselines for NIDS."""
 import os
 
-# Must happen before any tensorflow import: ltn 2.1 needs Keras 2 (tf_keras).
+# Before any tensorflow import: ltn 2.1 needs Keras 2.
 os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")

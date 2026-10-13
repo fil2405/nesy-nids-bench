@@ -1,10 +1,8 @@
-"""Single entry point: one configuration and one seed give one result file.
+"""Run a config, one result file per seed.
 
-    python -m nesybench.run --config configs/example.yaml
-    python -m nesybench.run --config configs/example.yaml --seeds 0 1
+    python -m nesybench.run --config configs/example.yaml [--seeds 0 1]
 
-The test part is evaluated only when the configuration says `evaluate_test:
-true`, which is meant for final runs: tuning runs never touch it.
+The test part is scored only with `evaluate_test: true` (final runs).
 """
 import argparse
 from pathlib import Path
@@ -34,7 +32,6 @@ def load_config(path) -> dict:
 
 
 def _evaluate(model, splits, part: str, timings: dict):
-    """Metrics of one part; the shape of the probabilities is checked here."""
     _, y = splits.part(part)
     with Stopwatch(timings, f"predict_{part}_s"):
         proba = np.asarray(model.predict_proba(splits, part))
@@ -47,8 +44,7 @@ def _evaluate(model, splits, part: str, timings: dict):
 
 
 def run_one(config: dict, seed: int, results_dir, overwrite: bool = False):
-    """Run one seed; returns (path of the result file, metrics, timings)."""
-    model_class = get_model(config["model"])  # fails before any data is loaded
+    model_class = get_model(config["model"])  # fail fast, before loading data
     timings: dict = {}
     with Stopwatch(timings, "total_s"):
         set_global_seed(seed)
@@ -93,7 +89,7 @@ def main(argv=None) -> None:
     config = load_config(args.config)
     seeds = args.seeds if args.seeds is not None else config["seeds"]
 
-    if not args.overwrite:  # stop before spending time on any seed
+    if not args.overwrite:
         existing = [
             str(p) for p in (run_path(args.results_dir, config["run_id"], s) for s in seeds)
             if p.exists()

@@ -8,7 +8,7 @@ from sklearn.metrics import (
 
 
 def compute_metrics(y_true, y_pred, class_names) -> dict:
-    """Detection metrics; per-class arrays follow the order of class_names."""
+    """Per-class arrays follow class_names."""
     labels = list(range(len(class_names)))
     precision, recall, f1, support = precision_recall_fscore_support(
         y_true, y_pred, labels=labels, zero_division=0

@@ -10,12 +10,7 @@ PARTS = ("train", "val", "test")
 
 
 class Splits(NamedTuple):
-    """What every model receives.
-
-    Models read input size and number of classes from `feature_names` and
-    `class_names`, never from numbers written in their code. New fields are
-    added at the end, so build Splits by keyword and do not unpack it as a tuple.
-    """
+    """Build by keyword: new fields are appended."""
 
     X_train: np.ndarray
     X_val: np.ndarray
@@ -28,7 +23,7 @@ class Splits(NamedTuple):
     class_names: list[str]
 
     def part(self, name: str):
-        """(X, y) of one part: "train", "val" or "test"."""
+        """(X, y) for "train", "val" or "test"."""
         if name not in PARTS:
             raise ValueError(f"unknown part {name!r}, known: {list(PARTS)}")
         return getattr(self, f"X_{name}"), getattr(self, f"y_{name}")
@@ -40,7 +35,7 @@ def _split_xy(df, spec: DatasetSpec):
 
 
 def preprocess(train_df, val_df, test_df, spec: DatasetSpec):
-    """Fit the transformer on train only, then transform the three parts."""
+    """Transformer fitted on train only."""
     X_train, y_train = _split_xy(train_df, spec)
     X_val, y_val = _split_xy(val_df, spec)
     X_test, y_test = _split_xy(test_df, spec)

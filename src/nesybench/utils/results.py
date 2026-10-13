@@ -1,4 +1,4 @@
-"""Writing one JSON result file per run."""
+"""One JSON result file per run."""
 import json
 import platform
 import subprocess
@@ -22,8 +22,6 @@ def _git_commit() -> str:
 
 
 def _git_dirty() -> bool | None:
-    """True if the code had uncommitted changes: the commit alone does not
-    describe the code that produced the numbers."""
     status = _git("status", "--porcelain")
     return None if status is None else status != ""
 
@@ -40,7 +38,6 @@ def _versions() -> dict:
 
 
 def _jsonable(obj):
-    """Let json.dumps write NumPy arrays and scalars (metrics.py returns them)."""
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     if isinstance(obj, np.generic):
@@ -49,7 +46,6 @@ def _jsonable(obj):
 
 
 def run_path(results_dir: str, run_id: str, seed: int) -> Path:
-    """Where the result of one run is written."""
     return Path(results_dir) / f"{run_id}_seed{seed}.json"
 
 
@@ -64,14 +60,7 @@ def save_run(
     overwrite: bool = False,
     training: dict | None = None,
 ) -> Path:
-    """Save everything needed to trace a number in the thesis back to its run.
-
-    `metrics` maps a part ("val", "test") to its metrics, `timings` holds the
-    wall-clock seconds measured by the runner, `training` is what the model
-    reports about its own training (epochs, chosen epoch, parameters, ...).
-    An existing file is not replaced unless overwrite=True, so that a result
-    is never lost silently.
-    """
+    """`metrics` is keyed by part ("val", "test"). Refuses to overwrite by default."""
     path = run_path(results_dir, run_id, seed)
     if path.exists() and not overwrite:
         raise FileExistsError(f"{path} exists; pass overwrite=True to replace it")
