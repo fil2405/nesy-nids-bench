@@ -24,10 +24,12 @@ class _EarlyStopping(tf_keras.callbacks.Callback):
             score = validation_macro_f1(self.model, self.splits)
         self.val_score_seconds.append(watch.seconds)
         self.val_scores.append(score)
+        assert self.model is not None
         if self.stopper.update(score, self.model.get_weights()):
             self.model.stop_training = True
 
     def on_train_end(self, logs=None):
+        assert self.model is not None
         self.model.set_weights(self.stopper.best_weights)
 
 
@@ -61,7 +63,7 @@ class MLPCE:
             batch_size=self.batch_size,
             epochs=training["max_epochs"],
             shuffle=True,
-            verbose=0,
+            verbose=0, # type: ignore
             callbacks=[selection],
         )
 
@@ -77,4 +79,4 @@ class MLPCE:
 
     def predict_proba(self, splits, part):
         X, _ = splits.part(part)
-        return self.model.predict(X, batch_size=self.batch_size, verbose=0)
+        return self.model.predict(X, batch_size=self.batch_size, verbose=0) # type: ignore
