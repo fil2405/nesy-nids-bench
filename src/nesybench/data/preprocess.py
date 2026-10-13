@@ -6,6 +6,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .base import DatasetSpec, class_index
 
+PARTS = ("train", "val", "test")
+
 
 class Splits(NamedTuple):
     """What every model receives.
@@ -24,6 +26,12 @@ class Splits(NamedTuple):
     transformer: ColumnTransformer
     feature_names: list[str]
     class_names: list[str]
+
+    def part(self, name: str):
+        """(X, y) of one part: "train", "val" or "test"."""
+        if name not in PARTS:
+            raise ValueError(f"unknown part {name!r}, known: {list(PARTS)}")
+        return getattr(self, f"X_{name}"), getattr(self, f"y_{name}")
 
 
 def _split_xy(df, spec: DatasetSpec):

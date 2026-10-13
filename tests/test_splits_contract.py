@@ -68,3 +68,17 @@ def test_split_keeps_raw_rows():
     assert len(train) + len(val) == len(_toy())
     assert set(train.index).isdisjoint(val.index)
     assert "label" in val.columns
+
+
+def test_part_gives_aligned_x_and_y():
+    s = _run(_toy(), _toy())
+    for name in ("train", "val", "test"):
+        X, y = s.part(name)
+        assert len(X) == len(y)
+    assert s.part("val")[0] is s.X_val
+    assert s.part("test")[1] is s.y_test
+
+
+def test_unknown_part_is_an_error():
+    with pytest.raises(ValueError, match="train"):
+        _run(_toy(), _toy()).part("dev")

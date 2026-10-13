@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from nesybench.utils.results import save_run
+from nesybench.utils.results import run_path, save_run
 
 
 def test_numpy_values_are_saved(tmp_path):
@@ -25,3 +25,13 @@ def test_existing_run_is_not_overwritten(tmp_path):
     with pytest.raises(FileExistsError):
         save_run(str(tmp_path), "t", {}, 0, {}, {})
     save_run(str(tmp_path), "t", {}, 0, {}, {}, overwrite=True)
+
+
+def test_training_info_is_saved(tmp_path):
+    path = save_run(str(tmp_path), "t", {}, 0, {}, {}, training={"best_epoch": 7})
+    assert json.loads(path.read_text())["training"] == {"best_epoch": 7}
+
+
+def test_run_path_is_where_the_result_is_written(tmp_path):
+    path = save_run(str(tmp_path), "t", {}, 3, {}, {})
+    assert path == run_path(str(tmp_path), "t", 3)

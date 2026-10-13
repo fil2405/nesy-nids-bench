@@ -48,6 +48,11 @@ def _jsonable(obj):
     raise TypeError(f"Not JSON serialisable: {type(obj).__name__}")
 
 
+def run_path(results_dir: str, run_id: str, seed: int) -> Path:
+    """Where the result of one run is written."""
+    return Path(results_dir) / f"{run_id}_seed{seed}.json"
+
+
 def save_run(
     results_dir: str,
     run_id: str,
@@ -57,13 +62,17 @@ def save_run(
     timings: dict,
     kb_version: str | None = None,
     overwrite: bool = False,
+    training: dict | None = None,
 ) -> Path:
     """Save everything needed to trace a number in the thesis back to its run.
 
+    `metrics` maps a part ("val", "test") to its metrics, `timings` holds the
+    wall-clock seconds measured by the runner, `training` is what the model
+    reports about its own training (epochs, chosen epoch, parameters, ...).
     An existing file is not replaced unless overwrite=True, so that a result
     is never lost silently.
     """
-    path = Path(results_dir) / f"{run_id}_seed{seed}.json"
+    path = run_path(results_dir, run_id, seed)
     if path.exists() and not overwrite:
         raise FileExistsError(f"{path} exists; pass overwrite=True to replace it")
 
@@ -79,6 +88,7 @@ def save_run(
         "config": config,
         "metrics": metrics,
         "timings": timings,
+        "training": training,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(record, indent=2, default=_jsonable))

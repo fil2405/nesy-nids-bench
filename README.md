@@ -27,6 +27,22 @@ Another location can be set with the `NESYBENCH_DATA` environment variable.
 A dataset is added by writing its loader and `DatasetSpec` in
 `src/nesybench/data/` and registering it in `src/nesybench/data/__init__.py`.
 
+## Running
+    python -m nesybench.run --config configs/example.yaml
+    python -m nesybench.run --config configs/example.yaml --seeds 0 1
+
+Each seed writes `results/<run_id>_seed<seed>.json` (metrics per part, timings,
+training information, configuration, commit). Existing files are not replaced
+unless `--overwrite` is given. The test part is evaluated only if the
+configuration has `evaluate_test: true`.
+A model is added by writing its module in `src/nesybench/models/` and
+registering it in `src/nesybench/models/__init__.py`.
+
+## Tests
+    python -m pytest tests -v
+
+Tests that need a dataset are skipped when it is not in `data/raw/`.
+
 ## Setup
 Linux or WSL2 (tested on Debian), Python 3.11.
 
