@@ -27,7 +27,7 @@ class EarlyStopper:
 
 def validation_macro_f1(model, splits):
   
-    y_pred = model.predict(splits.X_val, verbose=0)
+    y_pred = model.predict(splits.X_val, verbose=0, batch_size=1024)
 
     y_pred = y_pred.argmax(axis=1)
 
