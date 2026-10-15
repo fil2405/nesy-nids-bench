@@ -3,6 +3,7 @@ import numpy as np
 
 from nesybench.models.mlp import build_mlp
 from nesybench.models.selection import EarlyStopper, validation_macro_f1
+from nesybench.models.weights import class_weights as class_weights_for
 from nesybench.timing import EpochClock, Stopwatch
 
 
@@ -64,14 +65,16 @@ class MLPCE:
 
         class_weights = None
 
+        power = None
+
         if imbalance == 'class_weight':
+            power = training.get("class_weight_power", 1.0)
             counts = np.bincount(splits.y_train, minlength=len(splits.class_names))
-            N = len(splits.y_train)
-            K = len(splits.class_names)
-            weight = N / (K * counts)
+            weight = class_weights_for(counts, power)
             class_weights = {i : float(weights) for i, weights in enumerate(weight)}
 
-        stopper = EarlyStopper(training["early_stopping_patience"])
+        window = training.get("selection_window", 1)
+        stopper = EarlyStopper(training["early_stopping_patience"], window)
         selection = _EarlyStopping(splits, stopper)
         self.model.fit(
             splits.X_train, splits.y_train,
@@ -87,11 +90,14 @@ class MLPCE:
             "n_parameters": self.model.count_params(),
             "epochs_run": len(selection.val_scores),
             "best_epoch": stopper.best_epoch,
-            "best_val_macro_f1": stopper.best_score,
+            "best_val_macro_f1": stopper.best_raw_score,  # raw score of the chosen epoch
+            "selection_score": stopper.best_score,        # the criterion: trailing mean
+            "selection_window": window,
             "val_macro_f1_history": selection.val_scores,
             "epoch_seconds": selection.clock.seconds,
             "val_score_seconds": selection.val_score_seconds,
-            "class_weights": class_weights
+            "class_weights": class_weights,
+            "class_weight_power": power,
         }
 
     def predict_proba(self, splits, part):

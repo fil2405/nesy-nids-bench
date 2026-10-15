@@ -81,3 +81,37 @@ def test_a_tie_is_not_an_improvement():
     stopper.update(0.5, "second")
     assert stopper.best_epoch == 1
     assert stopper.best_weights == "first"
+
+
+def test_window_one_is_the_raw_score():
+    stopper = EarlyStopper(patience=5, window=1)
+    for score in (0.1, 0.9, 0.2):
+        stopper.update(score, "w")
+    assert stopper.best_epoch == 2
+    assert stopper.best_score == stopper.best_raw_score == 0.9
+
+
+def test_a_lucky_epoch_is_not_picked_with_a_window():
+    # raw scores peak at epoch 3 (0.9), but epochs 5-6 are steadily better
+    scores = (0.5, 0.5, 0.9, 0.5, 0.8, 0.8)
+    raw = EarlyStopper(patience=10, window=1)
+    smooth = EarlyStopper(patience=10, window=2)
+    for epoch, score in enumerate(scores, start=1):
+        raw.update(score, f"w{epoch}")
+        smooth.update(score, f"w{epoch}")
+    assert raw.best_epoch == 3
+    assert smooth.best_epoch == 6
+    assert smooth.best_score == pytest.approx(0.8)
+    assert smooth.best_raw_score == 0.8
+    assert smooth.best_weights == "w6"
+
+
+def test_window_larger_than_history_averages_what_exists():
+    stopper = EarlyStopper(patience=5, window=5)
+    stopper.update(0.4, "w")
+    assert stopper.best_score == pytest.approx(0.4)
+
+
+def test_window_below_one_is_an_error():
+    with pytest.raises(ValueError, match="window"):
+        EarlyStopper(patience=5, window=0)

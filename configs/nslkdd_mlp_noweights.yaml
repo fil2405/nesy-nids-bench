@@ -1,0 +1,23 @@
+# MLP-CE without class weights. Same protocol as nslkdd_mlp_cw05.
+run_id: nslkdd_mlp_noweights
+dataset: nslkdd
+split: official_test_with_stratified_val
+split_params:          # passed to the split strategy
+  val_fraction: 0.15
+model: mlp_ce          # rule_only | rf | xgb | mlp_ce | ltn_sup | ltn_full | cnn1d
+kb: null               # e.g. kb/nslkdd_v1.yaml for ltn_full and rule_only
+evaluate_test: false   # true only for final runs; tuning runs never touch the test set
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # 10 seeds: Wilcoxon needs at least 6
+network:               # same keys for mlp_ce, ltn_sup and ltn_full
+  hidden_units: [128, 64]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 50
+  early_stopping_patience: 10   # monitored: macro-F1 of the validation set
+  selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
+  imbalance: none               # none | class_weight
+  # class_weight_power: 1.0     # only with class_weight: weight ~ count**-power (0 = none, 1 = balanced)
