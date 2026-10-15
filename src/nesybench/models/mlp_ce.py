@@ -1,4 +1,5 @@
 import tf_keras
+import numpy as np
 
 from nesybench.models.mlp import build_mlp
 from nesybench.models.selection import EarlyStopper, validation_macro_f1
@@ -38,6 +39,11 @@ class MLPCE:
     def fit(self, splits, config):
         network = config["network"]
         training = config["training"]
+
+        imbalance = training.get("imbalance", "none")
+        if imbalance not in ("none", "class_weight"):
+            raise ValueError(f"unsupported value in imbalance {imbalance!r}")
+
         if training["optimizer"] != "adam":
             raise ValueError(f"unsupported optimizer {training['optimizer']!r}")
 
@@ -56,6 +62,15 @@ class MLPCE:
             loss="sparse_categorical_crossentropy",
         )
 
+        class_weights = None
+
+        if imbalance == 'class_weight':
+            counts = np.bincount(splits.y_train, minlength=len(splits.class_names))
+            N = len(splits.y_train)
+            K = len(splits.class_names)
+            weight = N / (K * counts)
+            class_weights = {i : float(weights) for i, weights in enumerate(weight)}
+
         stopper = EarlyStopper(training["early_stopping_patience"])
         selection = _EarlyStopping(splits, stopper)
         self.model.fit(
@@ -65,6 +80,7 @@ class MLPCE:
             shuffle=True,
             verbose=0, # type: ignore
             callbacks=[selection],
+            class_weight=class_weights if imbalance == "class_weight" else None
         )
 
         return {
@@ -75,6 +91,7 @@ class MLPCE:
             "val_macro_f1_history": selection.val_scores,
             "epoch_seconds": selection.clock.seconds,
             "val_score_seconds": selection.val_score_seconds,
+            "class_weights": class_weights
         }
 
     def predict_proba(self, splits, part):

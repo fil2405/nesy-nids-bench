@@ -18,3 +18,4 @@ training:
   batch_size: 512
   max_epochs: 50
   early_stopping_patience: 5   # monitored: macro-F1 of the validation set
+  imbalance: none #[none | class_weight]
