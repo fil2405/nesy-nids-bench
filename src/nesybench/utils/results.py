@@ -3,6 +3,7 @@ import json
 import platform
 import subprocess
 from datetime import datetime, timezone
+from importlib import metadata
 from pathlib import Path
 
 import numpy as np
@@ -26,14 +27,24 @@ def _git_dirty() -> bool | None:
     return None if status is None else status != ""
 
 
+def _package_version(name: str) -> str | None:
+    try:
+        module = __import__(name)
+    except ImportError:
+        return None
+    version = getattr(module, "__version__", None)
+    if version is not None:
+        return str(version)
+    try:  # some packages (ltn) have no __version__; the install metadata does
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def _versions() -> dict:
     out: dict[str, str | None] = {"python": platform.python_version()}
     for name in ("tensorflow", "ltn", "numpy", "sklearn", "xgboost"):
-        try:
-            module = __import__(name)
-            out[name] = getattr(module, "__version__", "unknown")
-        except ImportError:
-            out[name] = None
+        out[name] = _package_version(name)
     return out
 
 

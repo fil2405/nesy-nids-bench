@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from nesybench.utils.results import run_path, save_run
+from nesybench.utils.results import _package_version, run_path, save_run
 
 
 def test_numpy_values_are_saved(tmp_path):
@@ -35,3 +35,18 @@ def test_training_info_is_saved(tmp_path):
 def test_run_path_is_where_the_result_is_written(tmp_path):
     path = save_run(str(tmp_path), "t", {}, 3, {}, {})
     assert path == run_path(str(tmp_path), "t", 3)
+
+
+def test_version_falls_back_to_install_metadata(tmp_path, monkeypatch):
+    package = tmp_path / "fakepkg_nover"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    info = tmp_path / "fakepkg_nover-1.2.3.dist-info"
+    info.mkdir()
+    (info / "METADATA").write_text("Metadata-Version: 2.1\nName: fakepkg_nover\nVersion: 1.2.3\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    assert _package_version("fakepkg_nover") == "1.2.3"
+
+
+def test_missing_package_has_no_version():
+    assert _package_version("surely_not_installed_pkg") is None
