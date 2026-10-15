@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+.pytest_cache/
 # notebooks and editors
 .ipynb_checkpoints/
 .vscode/
@@ -26,5 +27,6 @@ thesis/**/*.fls
 thesis/**/*.fdb_latexmk
 thesis/**/*.synctex.gz
 thesis/main.pdf
+/main.pdf
 # Windows download marks
 *:Zone.Identifier
