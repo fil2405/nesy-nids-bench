@@ -6,6 +6,9 @@ class EarlyStopper:
     The validation set has few rare-class examples, so the raw macro-F1 moves
     by about 0.01 between epochs. Selecting on the mean of the last `window`
     epochs keeps a lucky epoch from being picked. window=1 is the raw score.
+
+    An epoch is a candidate only once `window` scores exist: a mean over fewer
+    epochs is noisier and would favour the first epochs. Patience starts then.
     """
 
     def __init__(self, patience, window=1):
@@ -24,8 +27,9 @@ class EarlyStopper:
     def update(self, score, weights):
         self.epoch += 1
         self.scores.append(score)
-        recent = self.scores[-self.window:]
-        smoothed = sum(recent) / len(recent)
+        if len(self.scores) < self.window:
+            return False
+        smoothed = sum(self.scores[-self.window:]) / self.window
 
         if smoothed > self.best_score:
             self.best_score = smoothed
@@ -37,6 +41,14 @@ class EarlyStopper:
             self.counter += 1
 
         return(self.counter >= self.patience)
+
+    def close(self, weights):
+        """Training ended before `window` epochs: keep the last epoch."""
+        if self.best_epoch == 0 and self.scores:
+            self.best_score = sum(self.scores) / len(self.scores)
+            self.best_raw_score = self.scores[-1]
+            self.best_weights = weights
+            self.best_epoch = self.epoch
 
 
 

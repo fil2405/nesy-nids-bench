@@ -103,10 +103,22 @@ def test_fit_reports_selection_with_a_window():
     config["training"]["selection_window"] = 3
     info = get_model("mlp_ce")().fit(splits, config)
     history = info["val_macro_f1_history"]
-    smoothed = [np.mean(history[max(0, i - 2):i + 1]) for i in range(len(history))]
+    smoothed = [np.mean(history[i - 2:i + 1]) for i in range(2, len(history))]
+    best = 2 + int(np.argmax(smoothed))  # the first two epochs are not candidates
     assert info["selection_window"] == 3
+    assert info["best_epoch"] == best + 1
     assert info["selection_score"] == pytest.approx(max(smoothed))
-    assert info["best_val_macro_f1"] == pytest.approx(history[int(np.argmax(smoothed))])
+    assert info["best_val_macro_f1"] == pytest.approx(history[best])
+
+
+def test_training_shorter_than_the_window_keeps_the_last_epoch():
+    splits = _splits(spread=1.0)
+    config = _config(max_epochs=2, patience=100)
+    config["training"]["selection_window"] = 5
+    model = get_model("mlp_ce")()
+    info = model.fit(splits, config)
+    assert info["best_epoch"] == 2
+    assert _val_macro_f1(model, splits) == pytest.approx(info["val_macro_f1_history"][-1])
 
 
 def test_class_weight_power_is_used_and_reported():

@@ -32,6 +32,7 @@ class _EarlyStopping(tf_keras.callbacks.Callback):
 
     def on_train_end(self, logs=None):
         assert self.model is not None
+        self.stopper.close(self.model.get_weights())
         self.model.set_weights(self.stopper.best_weights)
 
 
