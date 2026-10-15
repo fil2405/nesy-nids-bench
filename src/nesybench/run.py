@@ -77,7 +77,7 @@ def run_one(config: dict, seed: int, results_dir, overwrite: bool = False):
 
 
 def main(argv=None) -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0]) #type: ignore
     parser.add_argument("--config", required=True, help="YAML configuration")
     parser.add_argument("--seeds", type=int, nargs="+",
                         help="seeds to run; default: `seeds` of the configuration")
