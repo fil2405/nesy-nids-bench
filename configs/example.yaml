@@ -21,4 +21,3 @@ training:
   selection_window: 5          # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
   imbalance: none              # none | class_weight
   # class_weight_power: 1.0    # only with class_weight: weight ~ count**-power (0 = none, 1 = balanced)
-  imbalance: none #[none | class_weight]
