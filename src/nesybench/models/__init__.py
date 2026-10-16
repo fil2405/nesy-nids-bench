@@ -11,6 +11,7 @@ _MODELS: dict[str, str | type] = {
     "mlp_ce": "nesybench.models.mlp_ce:MLPCE",
     "rf": "nesybench.models.trees:RandomForest",
     "xgb": "nesybench.models.trees:XGBoost",
+    "ltn_sup": "nesybench.models.ltn_sup:LTNSup"
 }
 
 
