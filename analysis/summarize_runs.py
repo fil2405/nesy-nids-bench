@@ -45,9 +45,11 @@ def summarize(runs, baseline):
             p, r_ = zip(*(class_pr(r, name) for r in recs))
             (pm, ps), (rm, rs) = mean_std(p), mean_std(r_)
             print(f"  {name}  P {pm:.3f} +- {ps:.3f}  R {rm:.3f} +- {rs:.3f}")
-        ep = [r["training"]["best_epoch"] for r in recs]
-        em, es = mean_std(ep)
-        print(f"  best epoch  {em:.1f} +- {es:.1f}  [{min(ep)}-{max(ep)}]")
+        for key, label in (("best_epoch", "best epoch"), ("best_round", "best round")):
+            if key in recs[0]["training"]:  # rf has neither
+                ep = [r["training"][key] for r in recs]
+                em, es = mean_std(ep)
+                print(f"  {label}  {em:.1f} +- {es:.1f}  [{min(ep)}-{max(ep)}]")
         if run_id != baseline:
             common = sorted(set(by_seed) & set(runs[baseline]))
             diff = [macro_f1(runs[baseline][k]) - macro_f1(by_seed[k]) for k in common]
