@@ -4,7 +4,9 @@ from sklearn.metrics import (
     f1_score,
     matthews_corrcoef,
     precision_recall_fscore_support,
+    average_precision_score
 )
+import numpy as np
 
 
 def compute_metrics(y_true, y_pred, class_names) -> dict:
@@ -26,3 +28,14 @@ def compute_metrics(y_true, y_pred, class_names) -> dict:
         "support": support,
         "confusion_matrix": confusion_matrix(y_true, y_pred, labels=labels),
     }
+
+
+def pr_auc_per_class(y_true, proba, class_names):
+    """One-vs-rest average precision; nan for a class with no examples."""
+    y_true = np.asarray(y_true)
+    out = np.full(len(class_names), np.nan)
+    for c in range(len(class_names)):
+        positive = y_true == c
+        if positive.any():
+            out[c] = average_precision_score(positive, proba[:, c])
+    return out
