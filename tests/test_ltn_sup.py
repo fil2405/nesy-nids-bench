@@ -77,3 +77,10 @@ def test_class_weights_are_refused():
 
 def test_fit_never_reads_the_test_part():
     get_model("ltn_sup")().fit(_splits(test=False), _config(max_epochs=3))
+
+
+def test_same_seed_same_history():
+    a = get_model("ltn_sup")().fit(_splits(), _config(max_epochs=6))
+    b = get_model("ltn_sup")().fit(_splits(), _config(max_epochs=6))
+    assert a["train_loss_history"] == pytest.approx(b["train_loss_history"], rel=1e-4)
+    assert a["val_macro_f1_history"] == pytest.approx(b["val_macro_f1_history"], abs=1e-3)
