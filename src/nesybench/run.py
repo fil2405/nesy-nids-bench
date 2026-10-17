@@ -14,7 +14,7 @@ from nesybench.data import get_spec, load_dataset
 from nesybench.data.base import REPO_ROOT
 from nesybench.data.preprocess import preprocess
 from nesybench.data.splits import split_data
-from nesybench.metrics import compute_metrics
+from nesybench.metrics import compute_metrics, operator_metrics, pr_auc_per_class
 from nesybench.models import get_model
 from nesybench.timing import Stopwatch
 from nesybench.utils.results import run_path, save_run
@@ -40,7 +40,11 @@ def _evaluate(model, splits, part: str, timings: dict):
         raise ValueError(
             f"predict_proba({part!r}) returned shape {proba.shape}, expected {expected}"
         )
-    return compute_metrics(y, proba.argmax(axis=1), splits.class_names)
+    
+    metrics = compute_metrics(y, proba.argmax(axis=1), splits.class_names)
+    metrics["pr_auc"] = pr_auc_per_class(y, proba, splits.class_names)
+    metrics.update(operator_metrics(y, proba))
+    return metrics
 
 
 def run_one(config: dict, seed: int, results_dir, overwrite: bool = False):

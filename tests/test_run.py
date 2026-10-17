@@ -176,3 +176,11 @@ def test_missing_config_key_is_an_error(tmp_path):
     path.write_text("run_id: x\n")
     with pytest.raises(ValueError, match="dataset"):
         run.load_config(path)
+
+
+def test_record_has_ranking_and_operator_metrics(env):
+    _main(env, "--seeds", "0")
+    m = _record(env, 0)["metrics"]["val"]
+    assert len(m["pr_auc"]) == 3
+    assert set(m["fpr_at_tpr"]) == {"0.9", "0.95", "0.99"}
+    assert set(m["tpr_at_fpr"]) == {"0.001", "0.01"}
