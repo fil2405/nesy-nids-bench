@@ -4,7 +4,8 @@ from sklearn.metrics import (
     f1_score,
     matthews_corrcoef,
     precision_recall_fscore_support,
-    average_precision_score
+    average_precision_score,
+    roc_curve
 )
 import numpy as np
 
@@ -39,3 +40,18 @@ def pr_auc_per_class(y_true, proba, class_names):
         if positive.any():
             out[c] = average_precision_score(positive, proba[:, c])
     return out
+
+
+def operator_metrics(y_true, proba, benign=0,
+                     tpr_levels=(0.90, 0.95, 0.99), fpr_levels=(1e-3, 1e-2)):
+    """Attack vs benign, scored by 1 - P(benign): FPR at fixed TPR, TPR at fixed FPR."""
+    y_attack = np.asarray(y_true) != benign
+    if y_attack.all() or not y_attack.any():
+        return {"fpr_at_tpr": {f"{t:g}": float("nan") for t in tpr_levels},
+                "tpr_at_fpr": {f"{f:g}": float("nan") for f in fpr_levels}}
+    fpr, tpr, _ = roc_curve(y_attack, 1.0 - proba[:, benign])
+    return {
+        "fpr_at_tpr": {f"{t:g}": float(fpr[np.searchsorted(tpr, t)]) for t in tpr_levels},
+        "tpr_at_fpr": {f"{f:g}": float(tpr[np.searchsorted(fpr, f, side="right") - 1])
+                       for f in fpr_levels},
+    }

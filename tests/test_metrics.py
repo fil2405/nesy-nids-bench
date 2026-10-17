@@ -1,6 +1,6 @@
 import numpy as np
 
-from nesybench.metrics import compute_metrics, pr_auc_per_class
+from nesybench.metrics import compute_metrics, pr_auc_per_class, operator_metrics
 
 NAMES = ["Normal", "DoS", "Probe", "R2L", "U2R"]
 
@@ -54,3 +54,30 @@ def test_pr_auc_of_a_class_without_examples_is_nan():
     out = pr_auc_per_class(y, np.full((4, 3), 1 / 3), ["a", "b", "c"])
     assert np.isnan(out[2])
     assert not np.isnan(out[:2]).any()
+
+
+def _scored(attack, normal):
+    y = np.array([1] * len(attack) + [0] * len(normal))
+    s = np.array(attack + normal)
+    return y, np.column_stack([1 - s, s])
+
+
+def test_operator_metrics_on_a_hand_computed_ranking():
+    y, proba = _scored([.9, .8, .7, .3], [.6, .2, .1, .05])
+    m = operator_metrics(y, proba, tpr_levels=(0.75, 1.0), fpr_levels=(0.2, 0.25))
+    assert m["fpr_at_tpr"] == {"0.75": 0.0, "1": 0.25}
+    assert m["tpr_at_fpr"] == {"0.2": 0.75, "0.25": 1.0}
+
+
+def test_operator_metrics_ignore_which_attack_class():
+    y = np.array([0, 0, 1, 2])
+    proba = np.array([[.9, .05, .05], [.8, .1, .1], [.1, .1, .8], [.1, .8, .1]])
+    m = operator_metrics(y, proba, tpr_levels=(1.0,), fpr_levels=(0.0,))
+    assert m["fpr_at_tpr"]["1"] == 0.0
+    assert m["tpr_at_fpr"]["0"] == 1.0
+
+
+def test_operator_metrics_are_nan_without_both_sides():
+    m = operator_metrics(np.array([1, 1]), np.array([[.2, .8], [.1, .9]]))
+    assert all(np.isnan(v) for v in m["fpr_at_tpr"].values())
+    assert all(np.isnan(v) for v in m["tpr_at_fpr"].values())
