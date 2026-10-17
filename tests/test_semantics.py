@@ -26,3 +26,13 @@ def test_gradient_reaches_the_probabilities():
     with tf.GradientTape() as tape:
         loss = 1 - sat_agg(axiom_degrees(P, y, 5)).tensor
     assert tape.gradient(loss, P) is not None
+
+
+def test_empty_class_is_nan_and_poisons_sat_agg():
+    P, y = _batch()
+    y = np.where(y == 4, 0, y)  # class 4 has no examples
+    degrees = axiom_degrees(tf.constant(P), y, 5)
+    values = [float(d.tensor) for d in degrees]
+    assert np.isnan(values[4])
+    assert np.all(np.isfinite(values[:4]))
+    assert np.isnan(float(sat_agg(degrees).tensor))  # why the sampler keeps every class in every batch
