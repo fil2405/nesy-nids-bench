@@ -7,7 +7,7 @@ Status: under construction.
 
 ## Layout
 - `configs/`  one YAML file per experiment run
-- `kb/`       versioned knowledge bases (axiom sets), one per dataset
+- `kb/`       versioned knowledge bases, one per dataset
 - `data/`     `raw/` original datasets, `interim/` cleaned copies of large
               datasets (both not committed). Splits are not stored: they
               are rebuilt from the seed.
