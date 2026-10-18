@@ -1,6 +1,7 @@
 from typing import NamedTuple
 
 import numpy as np
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -21,12 +22,24 @@ class Splits(NamedTuple):
     transformer: ColumnTransformer
     feature_names: list[str]
     class_names: list[str]
+    raw_train: pd.DataFrame | None = None  # untransformed rows, same order as X
+    raw_val: pd.DataFrame | None = None
+    raw_test: pd.DataFrame | None = None
 
     def part(self, name: str):
         """(X, y) for "train", "val" or "test"."""
         if name not in PARTS:
             raise ValueError(f"unknown part {name!r}, known: {list(PARTS)}")
         return getattr(self, f"X_{name}"), getattr(self, f"y_{name}")
+
+    def raw(self, name: str) -> pd.DataFrame:
+        """Raw rows of a part, for the rules and C5."""
+        if name not in PARTS:
+            raise ValueError(f"unknown part {name!r}, known: {list(PARTS)}")
+        frame = getattr(self, f"raw_{name}")
+        if frame is None:
+            raise ValueError("these splits were built without raw rows")
+        return frame
 
 
 def _split_xy(df, spec: DatasetSpec):
@@ -62,4 +75,7 @@ def preprocess(train_df, val_df, test_df, spec: DatasetSpec):
         transformer=transformer,
         feature_names=list(transformer.get_feature_names_out()),
         class_names=list(spec.classes),
+        raw_train=train_df.reset_index(drop=True),
+        raw_val=val_df.reset_index(drop=True),
+        raw_test=test_df.reset_index(drop=True),
     )

@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from nesybench.data import get_spec
+from nesybench.data.base import class_index
 from nesybench.data.preprocess import preprocess
 from nesybench.data.splits import split_data
 
@@ -82,3 +83,35 @@ def test_part_gives_aligned_x_and_y():
 def test_unknown_part_is_an_error():
     with pytest.raises(ValueError, match="train"):
         _run(_toy(), _toy()).part("dev")
+
+
+def test_raw_rows_align_with_x_and_y():
+    s = _run(_toy(), _toy())
+    for name in ("train", "val", "test"):
+        X, y = s.part(name)
+        raw = s.raw(name)
+        assert len(raw) == len(X)
+        assert (raw.index == np.arange(len(raw))).all()
+        assert np.array_equal(class_index(raw, SPEC).to_numpy(), y)
+
+
+def test_raw_rows_are_not_transformed():
+    s = _run(_toy(), _toy())
+    assert s.raw("train")["src_bytes"].max() > 10      # a scaled column is near 0
+    assert set(s.raw("train")["flag"]) == {"SF", "S0"}  # not one-hot encoded
+    assert "label" in s.raw("val").columns              # non-features are kept
+
+
+def test_raw_follows_the_split():
+    train, val, test = split_data(SPLIT, _toy(), _toy(), SPEC, seed=0)
+    s = preprocess(train, val, test, SPEC)
+    assert s.raw("val")["duration"].tolist() == val["duration"].tolist()
+
+
+def test_raw_missing_or_unknown_part_is_an_error():
+    s = _run(_toy(), _toy())
+    with pytest.raises(ValueError, match="train"):
+        s.raw("dev")
+    bare = s._replace(raw_val=None)
+    with pytest.raises(ValueError, match="raw rows"):
+        bare.raw("val")
