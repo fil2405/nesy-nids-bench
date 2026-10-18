@@ -1,0 +1,27 @@
+# group: domain | ddos | dataset   origin: mechanism | data | internship
+# s stays null until kb.py picks it on the train
+version: nslkdd_v1
+axioms:
+  - id: A1
+    group: ddos
+    origin: mechanism
+    target: DoS
+    train: {support: 0.695, confidence: 0.999, benign_hit: 0}
+    all:
+      - {col: flag, op: eq, value: S0}
+      - {col: count, op: gt, tau: 30, s: null}
+      - {col: dst_host_diff_srv_rate, op: le, tau: 0.95, s: null}
+  - id: A2
+    group: dataset
+    origin: mechanism
+    target: Probe
+    train: {support: 0.194, confidence: 0.960, benign_hit: 68}
+    all:
+      - {col: dst_host_diff_srv_rate, op: gt, tau: 0.95, s: null}
+  - id: A3
+    group: dataset
+    origin: data
+    target: Probe
+    train: {support: 0.187, confidence: 0.900, benign_hit: 146}
+    all:
+      - {col: flag, op: eq, value: RSTR}
