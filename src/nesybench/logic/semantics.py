@@ -19,6 +19,17 @@ def axiom_degrees(P, y, n_classes):
     return degrees
 
 
+def domain_degrees(P, antecedents, targets):
+    """forall x (antecedent_j(x) -> class targets[j](x)), Reichenbach, over every row."""
+    x = ltn.Variable("x", P)
+    degrees = []
+    for j, c in enumerate(targets):
+        a = antecedents[:, j]
+        implied = 1.0 - a + a * P[:, int(c)]
+        degrees.append(_forall(x, Formula(implied, ["x"])))
+    return degrees
+
+
 def sat_agg(degrees):
     agg = ltn.Wrapper_Formula_Aggregator(ltn.fuzzy_ops.Aggreg_pMeanError())
     return agg(degrees)

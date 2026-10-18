@@ -1,0 +1,26 @@
+# LTN-full: LTN-sup plus the domain axioms of the KB, same network, sampler and selection rule.
+run_id: nslkdd_ltn_full
+dataset: nslkdd
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+model: ltn_full
+kb: kb/nslkdd_v1.yaml
+evaluate_test: false
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+network:
+  hidden_units: [128, 64]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 50
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: none
+  sampling_power: 0.0
+  min_per_class: 2
+  domain_weight: 0.25   # loss = 1 - ((1 - w) * SatAgg_sup + w * SatAgg_domain)
+  crisp: false          # true = hard thresholds, s ignored
