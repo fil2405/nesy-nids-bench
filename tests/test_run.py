@@ -208,6 +208,7 @@ def test_c5_report_is_written_when_a_kb_is_given(env, tmp_path):
     assert c5["kb_version"] == "toy_v1"
     assert t1["n_covered"] > 0
     assert t1["violation_rate"] == 1.0  # the stub always answers one class, not C
+    assert t1["rule_precision"] > 0.9  # x1 > 4.5 is almost only class C
 
 
 def test_no_c5_report_without_a_kb(env):

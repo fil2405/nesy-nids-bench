@@ -75,3 +75,18 @@ def test_graded_antecedent_below_threshold_is_not_covered(kb):
     r = axiom_report(kb, df, proba, NAMES)["axioms"]["A2"]
     assert r["n_covered"] == 2
     assert r["violation_rate"] == 1.0
+
+
+def test_rule_precision_is_the_share_of_covered_rows_with_the_target_class(kb):
+    df = pd.DataFrame({"flag": ["S0", "S0", "S0", "SF"], "rate": [0.0] * 4})
+    proba = np.array([[.1, .8, .1]] * 4)
+    y = np.array([1, 1, 0, 2])
+    r = axiom_report(kb, df, proba, NAMES, y_true=y)["axioms"]["A1"]
+    assert r["rule_precision"] == pytest.approx(2 / 3)
+    assert r["violation_rate"] == 0.0
+
+
+def test_rule_precision_is_nan_without_labels(kb):
+    df = pd.DataFrame({"flag": ["S0"], "rate": [0.0]})
+    r = axiom_report(kb, df, np.array([[.1, .8, .1]]), NAMES)["axioms"]["A1"]
+    assert np.isnan(r["rule_precision"])

@@ -57,7 +57,7 @@ def _evaluate(model, splits, part: str, timings: dict, kb=None):
     metrics.update(operator_metrics(y, proba))
     if kb is not None:  # crisp: a rule fires when every condition holds at its tau
         metrics["c5"] = axiom_report(kb, splits.raw(part), proba, splits.class_names,
-                                     crisp=True)
+                                     crisp=True, y_true=y)
     return metrics
 
 

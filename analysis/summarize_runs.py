@@ -82,9 +82,10 @@ def print_c5(recs, part):
         n = np.mean([x["n_covered"] for x in rows])
         v, vs, vk = mean_std_finite([x["violation_rate"] for x in rows])
         sat, ss, sk = mean_std_finite([x["satisfaction"] for x in rows])
+        prec = mean_std_finite([x.get("rule_precision", float("nan")) for x in rows])[0]
         print(f"  C5 {ident}  covered {n:.0f}  violation {v:.3f} +- {vs:.3f}"
               f"{seeds_note(vk, len(recs))}  satisfaction {sat:.3f} +- {ss:.3f}"
-              f"{seeds_note(sk, len(recs))}")
+              f"{seeds_note(sk, len(recs))}  rule precision {prec:.3f}")
 
 
 def summarize(runs, baseline, part):
