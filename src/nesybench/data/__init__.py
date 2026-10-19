@@ -1,9 +1,10 @@
 """Dataset registry."""
-from . import nslkdd
+from . import cicids2017, nslkdd
 from .base import DatasetSpec
 
 _DATASETS = {
     "nslkdd": (nslkdd.SPEC, nslkdd.load_nslkdd),
+    "cicids2017": (cicids2017.SPEC, cicids2017.load_cicids2017),
 }
 
 
