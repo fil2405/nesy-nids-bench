@@ -5,7 +5,7 @@ import tf_keras
 from nesybench.logic.semantics import axiom_degrees, check_p, sat_agg
 from nesybench.models.mlp import build_mlp
 from nesybench.models.sampling import sample_batches
-from nesybench.models.selection import EarlyStopper, validation_macro_f1
+from nesybench.models.selection import EarlyStopper, predict_batches, validation_macro_f1
 from nesybench.timing import EpochClock, Stopwatch
 
 
@@ -95,4 +95,4 @@ class LTNSup:
 
     def predict_proba(self, splits, part):
         X, _ = splits.part(part)
-        return self.model.predict(X, batch_size=self.batch_size, verbose=0)  # type: ignore
+        return predict_batches(self.model, X, self.batch_size)

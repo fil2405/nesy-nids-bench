@@ -143,3 +143,17 @@ def test_class_weight_power_defaults_to_balanced():
     info = get_model("mlp_ce")().fit(splits, config)
     assert info["class_weight_power"] == 1.0
     assert list(info["class_weights"].values()) == pytest.approx([1.0, 1.0, 1.0])
+
+
+def test_predict_batches_matches_predict():
+    from nesybench.models.selection import predict_batches
+
+    splits = _splits(spread=2.0)
+    model = get_model("mlp_ce")()
+    model.fit(splits, {"seed": 0, "network": {"hidden_units": [8], "dropout": 0.0, "activation": "relu"},
+                       "training": {"optimizer": "adam", "learning_rate": 1e-2, "batch_size": 32,
+                                    "max_epochs": 2, "early_stopping_patience": 5, "selection_window": 1}})
+    X = splits.X_val
+    expected = model.model.predict(X, batch_size=64, verbose=0)
+    assert np.allclose(predict_batches(model.model, X, batch_size=64), expected, atol=1e-6)
+    assert np.allclose(predict_batches(model.model, X, batch_size=7), expected, atol=1e-6)

@@ -1,3 +1,5 @@
+import numpy as np
+
 from nesybench.metrics import compute_metrics
 
 class EarlyStopper:
@@ -52,9 +54,17 @@ class EarlyStopper:
 
 
 
+def predict_batches(model, X, batch_size=1024):
+    """Plain batched forward pass; model.predict rebuilds a dataset on the GPU at every call."""
+    return np.concatenate([
+        np.asarray(model(X[i:i + batch_size], training=False))
+        for i in range(0, len(X), batch_size)
+    ])
+
+
 def validation_macro_f1(model, splits):
 
-    y_pred = model.predict(splits.X_val, verbose=0, batch_size=1024)
+    y_pred = predict_batches(model, splits.X_val)
 
     y_pred = y_pred.argmax(axis=1)
 

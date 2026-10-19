@@ -2,7 +2,7 @@ import tf_keras
 import numpy as np
 
 from nesybench.models.mlp import build_mlp
-from nesybench.models.selection import EarlyStopper, validation_macro_f1
+from nesybench.models.selection import EarlyStopper, predict_batches, validation_macro_f1
 from nesybench.models.weights import class_weights as class_weights_for
 from nesybench.timing import EpochClock, Stopwatch
 
@@ -103,4 +103,4 @@ class MLPCE:
 
     def predict_proba(self, splits, part):
         X, _ = splits.part(part)
-        return self.model.predict(X, batch_size=self.batch_size, verbose=0) # type: ignore
+        return predict_batches(self.model, X, self.batch_size)
