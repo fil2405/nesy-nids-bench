@@ -74,6 +74,19 @@ def print_operator(recs, part):
                   f"{seeds_note(k, len(recs))}")
 
 
+def print_c5(recs, part):
+    if any("c5" not in r["metrics"][part] for r in recs):
+        return
+    for ident in recs[0]["metrics"][part]["c5"]["axioms"]:
+        rows = [r["metrics"][part]["c5"]["axioms"][ident] for r in recs]
+        n = np.mean([x["n_covered"] for x in rows])
+        v, vs, vk = mean_std_finite([x["violation_rate"] for x in rows])
+        sat, ss, sk = mean_std_finite([x["satisfaction"] for x in rows])
+        print(f"  C5 {ident}  covered {n:.0f}  violation {v:.3f} +- {vs:.3f}"
+              f"{seeds_note(vk, len(recs))}  satisfaction {sat:.3f} +- {ss:.3f}"
+              f"{seeds_note(sk, len(recs))}")
+
+
 def summarize(runs, baseline, part):
     if baseline not in runs:
         raise SystemExit(f"baseline run_id not found: {baseline}")
@@ -93,6 +106,7 @@ def summarize(runs, baseline, part):
             print(f"  {name}  P {pm:.3f} +- {ps:.3f}  R {rm:.3f} +- {rs:.3f}")
         print_pr_auc(recs, part)
         print_operator(recs, part)
+        print_c5(recs, part)
         for key, label in (("best_epoch", "best epoch"), ("best_round", "best round")):
             if key in recs[0]["training"]:  # rf has neither
                 ep = [r["training"][key] for r in recs]

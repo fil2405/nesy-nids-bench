@@ -14,6 +14,8 @@ from nesybench.data import get_spec, load_dataset
 from nesybench.data.base import REPO_ROOT
 from nesybench.data.preprocess import preprocess
 from nesybench.data.splits import split_data
+from nesybench.logic.c5 import axiom_report
+from nesybench.logic.kb import load_kb
 from nesybench.metrics import compute_metrics, operator_metrics, pr_auc_per_class
 from nesybench.models import get_model
 from nesybench.timing import Stopwatch
@@ -31,7 +33,16 @@ def load_config(path) -> dict:
     return config
 
 
-def _evaluate(model, splits, part: str, timings: dict):
+def _load_c5_kb(config: dict):
+    """KB for the C5 report: `c5_kb`, else `kb`. Not the same as using it to train."""
+    path = config.get("c5_kb") or config.get("kb")
+    if not path:
+        return None
+    path = Path(path)
+    return load_kb(path if path.is_absolute() else REPO_ROOT / path)
+
+
+def _evaluate(model, splits, part: str, timings: dict, kb=None):
     _, y = splits.part(part)
     with Stopwatch(timings, f"predict_{part}_s"):
         proba = np.asarray(model.predict_proba(splits, part))
@@ -44,11 +55,15 @@ def _evaluate(model, splits, part: str, timings: dict):
     metrics = compute_metrics(y, proba.argmax(axis=1), splits.class_names)
     metrics["pr_auc"] = pr_auc_per_class(y, proba, splits.class_names)
     metrics.update(operator_metrics(y, proba))
+    if kb is not None:  # crisp: a rule fires when every condition holds at its tau
+        metrics["c5"] = axiom_report(kb, splits.raw(part), proba, splits.class_names,
+                                     crisp=True)
     return metrics
 
 
 def run_one(config: dict, seed: int, results_dir, overwrite: bool = False):
     model_class = get_model(config["model"])  # fail fast, before loading data
+    kb = _load_c5_kb(config)
     timings: dict = {}
     with Stopwatch(timings, "total_s"):
         set_global_seed(seed)
@@ -69,9 +84,9 @@ def run_one(config: dict, seed: int, results_dir, overwrite: bool = False):
         with Stopwatch(timings, "fit_s"):
             training = model.fit(splits, {**config, "seed": seed})
 
-        metrics = {"val": _evaluate(model, splits, "val", timings)}
+        metrics = {"val": _evaluate(model, splits, "val", timings, kb)}
         if config.get("evaluate_test", False):
-            metrics["test"] = _evaluate(model, splits, "test", timings)
+            metrics["test"] = _evaluate(model, splits, "test", timings, kb)
 
     path = save_run(
         str(results_dir), config["run_id"], config, seed, metrics, timings,

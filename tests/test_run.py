@@ -184,3 +184,40 @@ def test_record_has_ranking_and_operator_metrics(env):
     assert len(m["pr_auc"]) == 3
     assert set(m["fpr_at_tpr"]) == {"0.9", "0.95", "0.99"}
     assert set(m["tpr_at_fpr"]) == {"0.001", "0.01"}
+
+
+TOY_KB = """
+version: toy_v1
+axioms:
+  - id: T1
+    group: dataset
+    origin: data
+    target: C
+    all:
+      - {col: x1, op: gt, tau: 4.5, s: 0.5}
+"""
+
+
+def test_c5_report_is_written_when_a_kb_is_given(env, tmp_path):
+    kb_path = tmp_path / "kb.yaml"
+    kb_path.write_text(TOY_KB)
+    env.config["c5_kb"] = str(kb_path)
+    _main(env, "--seeds", "0")
+    c5 = _record(env, 0)["metrics"]["val"]["c5"]
+    t1 = c5["axioms"]["T1"]
+    assert c5["kb_version"] == "toy_v1"
+    assert t1["n_covered"] > 0
+    assert t1["violation_rate"] == 1.0  # the stub always answers one class, not C
+
+
+def test_no_c5_report_without_a_kb(env):
+    _main(env, "--seeds", "0")
+    assert "c5" not in _record(env, 0)["metrics"]["val"]
+
+
+def test_c5_falls_back_to_the_training_kb_key(env, tmp_path):
+    kb_path = tmp_path / "kb.yaml"
+    kb_path.write_text(TOY_KB)
+    env.config["kb"] = str(kb_path)
+    _main(env, "--seeds", "0")
+    assert "c5" in _record(env, 0)["metrics"]["val"]
