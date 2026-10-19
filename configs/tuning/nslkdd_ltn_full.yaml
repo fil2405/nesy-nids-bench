@@ -1,0 +1,17 @@
+# LTN-full; as LTN-sup plus the domain weight and the width of the graded conditions.
+# Same budget in every arm: 20 trials x 3 seeds, Latin hypercube, validation macro-F1 only.
+tuning_id: tune_nslkdd_ltn_full
+base: configs/nslkdd_ltn_full.yaml
+trials: 20
+search_seed: 0
+seeds: [100, 101, 102]   # not among the 10 final seeds
+space:
+  network.hidden_units: {choice: [[64, 32], [128, 64], [256, 128]]}
+  network.dropout: {choice: [0.1, 0.2, 0.3]}
+  training.learning_rate: {loguniform: [3.0e-4, 3.0e-3]}
+  training.batch_size: {choice: [256, 512, 1024]}
+  training.sampling_power: {uniform: [0.0, 0.5]}
+  training.min_per_class: {choice: [2, 4, 8, 16]}
+  training.p: {choice: [1, 2, 4, 6]}
+  training.domain_weight: {choice: [0.1, 0.25, 0.5]}
+  training.s_scale: {loguniform: [0.5, 2.0]}   # multiplies every s of the KB

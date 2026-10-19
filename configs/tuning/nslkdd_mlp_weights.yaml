@@ -1,0 +1,16 @@
+# MLP-CE with class weights; the power is part of the search.
+# Same budget in every arm: 20 trials x 3 seeds, Latin hypercube, validation macro-F1 only.
+tuning_id: tune_nslkdd_mlp_weights
+base: configs/nslkdd_mlp_cw10.yaml
+final_run_id: nslkdd_mlp_weights_tuned
+trials: 20
+search_seed: 0
+seeds: [100, 101, 102]   # not among the 10 final seeds
+set:
+  training.imbalance: class_weight
+space:
+  network.hidden_units: {choice: [[64, 32], [128, 64], [256, 128]]}
+  network.dropout: {choice: [0.1, 0.2, 0.3]}
+  training.learning_rate: {loguniform: [3.0e-4, 3.0e-3]}
+  training.batch_size: {choice: [256, 512, 1024]}
+  training.class_weight_power: {uniform: [0.25, 1.0]}
