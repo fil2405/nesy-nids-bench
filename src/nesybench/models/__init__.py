@@ -9,6 +9,7 @@ import importlib
 
 _MODELS: dict[str, str | type] = {
     "mlp_ce": "nesybench.models.mlp_ce:MLPCE",
+    "rule_only": "nesybench.models.rules:RuleOnly",
     "rf": "nesybench.models.trees:RandomForest",
     "xgb": "nesybench.models.trees:XGBoost",
     "ltn_sup": "nesybench.models.ltn_sup:LTNSup",
