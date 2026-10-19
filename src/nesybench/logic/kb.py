@@ -87,8 +87,9 @@ def load_kb(path) -> KB:
     return KB(str(raw["version"]), axioms)
 
 
-def condition_degree(df, cond: Condition, crisp: bool = False) -> np.ndarray:
-    """Degree in [0, 1] per row. Graded: sigmoid of the distance to tau over s."""
+def condition_degree(df, cond: Condition, crisp: bool = False,
+                     s_scale: float = 1.0) -> np.ndarray:
+    """Degree in [0, 1] per row. Graded: sigmoid of the distance to tau over s * s_scale."""
     x = df[cond.col]
     if cond.op == "eq":
         return (x == cond.value).to_numpy(dtype=float)
@@ -99,18 +100,20 @@ def condition_degree(df, cond: Condition, crisp: bool = False) -> np.ndarray:
         raise ValueError(f"{cond.col} {cond.op} {cond.tau}: s not set, "
                          "set it in the KB or ask for crisp")
     d = v - cond.tau if cond.op == "gt" else cond.tau - v
-    return expit(d / cond.s)
+    return expit(d / (cond.s * s_scale))
 
 
-def antecedents(kb: KB, df, crisp: bool = False) -> np.ndarray:
+def antecedents(kb: KB, df, crisp: bool = False, s_scale: float = 1.0) -> np.ndarray:
     """(n_rows, n_axioms): product of the condition degrees of each axiom."""
+    if s_scale <= 0:
+        raise ValueError(f"s_scale must be > 0, got {s_scale}")
     cols = {c.col for a in kb.axioms for c in a.conditions}
     missing = sorted(cols - set(df.columns))
     if missing:
         raise KeyError(f"columns not in the data: {missing}")
     out = np.empty((len(df), len(kb.axioms)))
     for j, axiom in enumerate(kb.axioms):
-        out[:, j] = np.prod([condition_degree(df, c, crisp) for c in axiom.conditions],
+        out[:, j] = np.prod([condition_degree(df, c, crisp, s_scale) for c in axiom.conditions],
                             axis=0)
     return out
 

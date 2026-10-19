@@ -84,3 +84,16 @@ def test_same_seed_same_history():
     b = get_model("ltn_sup")().fit(_splits(), _config(max_epochs=6))
     assert a["train_loss_history"] == pytest.approx(b["train_loss_history"], rel=1e-4)
     assert a["val_macro_f1_history"] == pytest.approx(b["val_macro_f1_history"], abs=1e-3)
+
+
+def test_p_is_reported_and_changes_the_loss():
+    splits = _splits()
+    default = get_model("ltn_sup")().fit(splits, _config(max_epochs=3))
+    p4 = get_model("ltn_sup")().fit(splits, _config(max_epochs=3, p=4))
+    assert default["p"] == 2 and p4["p"] == 4
+    assert default["train_loss_history"] != pytest.approx(p4["train_loss_history"], rel=1e-3)
+
+
+def test_p_below_one_is_refused():
+    with pytest.raises(ValueError, match="p of the aggregator"):
+        get_model("ltn_sup")().fit(_splits(), _config(p=0.5))

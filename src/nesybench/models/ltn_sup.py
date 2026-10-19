@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import tf_keras
 
-from nesybench.logic.semantics import axiom_degrees, sat_agg
+from nesybench.logic.semantics import axiom_degrees, check_p, sat_agg
 from nesybench.models.mlp import build_mlp
 from nesybench.models.sampling import sample_batches
 from nesybench.models.selection import EarlyStopper, validation_macro_f1
@@ -26,6 +26,7 @@ class LTNSup:
         self.batch_size = training["batch_size"]
         power = training.get("sampling_power", 0.0)
         min_per_class = training.get("min_per_class", 2)
+        p = check_p(training.get("p", 2))
 
         self.model = build_mlp(
             input_dim=splits.X_train.shape[1],
@@ -41,7 +42,7 @@ class LTNSup:
         def step(x, y):
             with tf.GradientTape() as tape:
                 probs = self.model(x, training=True)  # one forward pass, all axioms read it
-                loss = 1.0 - sat_agg(axiom_degrees(probs, y, n_classes)).tensor
+                loss = 1.0 - sat_agg(axiom_degrees(probs, y, n_classes, p), p).tensor
             grads = tape.gradient(loss, self.model.trainable_variables)
             optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
             return loss
@@ -87,6 +88,7 @@ class LTNSup:
             "val_score_seconds": val_score_seconds,
             "sampling_power": power,
             "min_per_class": min_per_class,
+            "p": p,
             "class_weights": None,
             "class_weight_power": None,
         }

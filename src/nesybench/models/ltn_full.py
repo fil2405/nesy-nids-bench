@@ -6,7 +6,7 @@ import tf_keras
 
 from nesybench.data.base import REPO_ROOT
 from nesybench.logic.kb import antecedents, load_kb, target_index
-from nesybench.logic.semantics import axiom_degrees, domain_degrees, sat_agg
+from nesybench.logic.semantics import axiom_degrees, check_p, domain_degrees, sat_agg
 from nesybench.models.mlp import build_mlp
 from nesybench.models.sampling import sample_batches
 from nesybench.models.selection import EarlyStopper, validation_macro_f1
@@ -35,13 +35,15 @@ class LTNFull:
         min_per_class = training.get("min_per_class", 2)
         weight = float(training.get("domain_weight", 0.25))
         crisp = bool(training.get("crisp", False))
+        s_scale = float(training.get("s_scale", 1.0))
+        p = check_p(training.get("p", 2))
         if not 0.0 <= weight <= 1.0:
             raise ValueError(f"domain_weight must be in [0, 1], got {weight}")
 
         kb_path = Path(config["kb"])
         kb = load_kb(kb_path if kb_path.is_absolute() else REPO_ROOT / kb_path)
         targets = target_index(kb, splits.class_names)
-        A_train = antecedents(kb, splits.raw("train"), crisp=crisp).astype("float32")
+        A_train = antecedents(kb, splits.raw("train"), crisp=crisp, s_scale=s_scale).astype("float32")
 
         self.model = build_mlp(
             input_dim=splits.X_train.shape[1],
@@ -57,8 +59,8 @@ class LTNFull:
         def step(x, y, a):
             with tf.GradientTape() as tape:
                 probs = self.model(x, training=True)  # one forward pass, all axioms read it
-                sat_sup = sat_agg(axiom_degrees(probs, y, n_classes)).tensor
-                sat_dom = sat_agg(domain_degrees(probs, a, targets)).tensor
+                sat_sup = sat_agg(axiom_degrees(probs, y, n_classes, p), p).tensor
+                sat_dom = sat_agg(domain_degrees(probs, a, targets, p), p).tensor
                 loss = 1.0 - ((1.0 - weight) * sat_sup + weight * sat_dom)
             grads = tape.gradient(loss, self.model.trainable_variables)
             optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
@@ -107,12 +109,14 @@ class LTNFull:
             "val_score_seconds": val_score_seconds,
             "sampling_power": power,
             "min_per_class": min_per_class,
+            "p": p,
             "class_weights": None,
             "class_weight_power": None,
             "kb_version": kb.version,
             "kb_ids": kb.ids,
             "domain_weight": weight,
             "crisp": crisp,
+            "s_scale": s_scale,
             "antecedent_mean_train": A_train.mean(axis=0).tolist(),
         }
 

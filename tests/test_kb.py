@@ -68,6 +68,25 @@ def test_graded_half_at_tau(df):
     assert d[0] > 0.99 and d[3] < 0.01
 
 
+def test_s_scale_widens_the_sigmoid_and_keeps_tau(df):
+    cond = Condition("count", "gt", tau=30.0, s=5.0)
+    base, wide = condition_degree(df, cond), condition_degree(df, cond, s_scale=4.0)
+    assert wide[1] == pytest.approx(0.5)      # still half at tau
+    assert wide[0] < base[0] and wide[3] > base[3]
+    assert np.allclose(condition_degree(df, cond, s_scale=1.0), base)
+
+
+def test_s_scale_is_ignored_when_crisp(df):
+    cond = Condition("count", "gt", tau=30.0)
+    assert (condition_degree(df, cond, crisp=True, s_scale=7.0)
+            == condition_degree(df, cond, crisp=True)).all()
+
+
+def test_s_scale_must_be_positive(kb, df):
+    with pytest.raises(ValueError, match="s_scale"):
+        antecedents(kb, df, s_scale=0.0)
+
+
 def test_graded_tends_to_crisp(df):
     gt = Condition("count", "gt", tau=30.0, s=1e-3)
     assert np.allclose(condition_degree(df, gt)[[0, 2, 3]], [1, 1, 0])

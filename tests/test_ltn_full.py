@@ -142,3 +142,25 @@ def test_a_rare_class_gives_finite_losses(kb_path):
 
 def test_fit_never_reads_the_test_part(kb_path):
     get_model("ltn_full")().fit(_splits(test=False), _config(kb_path, max_epochs=3))
+
+
+def test_p_and_s_scale_are_reported_and_change_the_loss(kb_path):
+    splits = _splits()
+    base = get_model("ltn_full")().fit(splits, _config(kb_path, max_epochs=3))
+    other = get_model("ltn_full")().fit(
+        splits, _config(kb_path, max_epochs=3, p=4, s_scale=3.0))
+    assert (base["p"], base["s_scale"]) == (2, 1.0)
+    assert (other["p"], other["s_scale"]) == (4, 3.0)
+    assert base["train_loss_history"] != pytest.approx(other["train_loss_history"], rel=1e-3)
+
+
+def test_s_scale_moves_the_antecedents(kb_path):
+    splits = _splits()
+    base = get_model("ltn_full")().fit(splits, _config(kb_path, max_epochs=1))
+    wide = get_model("ltn_full")().fit(splits, _config(kb_path, max_epochs=1, s_scale=4.0))
+    assert base["antecedent_mean_train"] != pytest.approx(wide["antecedent_mean_train"], rel=1e-3)
+
+
+def test_s_scale_must_be_positive(kb_path):
+    with pytest.raises(ValueError, match="s_scale"):
+        get_model("ltn_full")().fit(_splits(), _config(kb_path, s_scale=0.0))

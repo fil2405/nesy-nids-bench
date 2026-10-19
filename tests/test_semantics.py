@@ -21,6 +21,25 @@ def test_ltn_degree_matches_the_hand_formula():
         assert float(degrees[c].tensor) == pytest.approx(class_degree(P, y, c), abs=1e-3)
 
 
+def test_p_changes_the_degree_and_matches_the_hand_formula():
+    P, y = _batch()
+    for p in (1, 4):
+        degrees = axiom_degrees(tf.constant(P), y, 5, p)
+        for c in range(5):
+            assert float(degrees[c].tensor) == pytest.approx(class_degree(P, y, c, p), abs=1e-3)
+    d2 = float(axiom_degrees(tf.constant(P), y, 5)[0].tensor)
+    d4 = float(axiom_degrees(tf.constant(P), y, 5, 4)[0].tensor)
+    assert d2 != pytest.approx(d4, abs=1e-3)
+
+
+def test_p_below_one_is_refused():
+    P, y = _batch()
+    with pytest.raises(ValueError, match="p of the aggregator"):
+        axiom_degrees(tf.constant(P), y, 5, 0.5)
+    with pytest.raises(ValueError, match="p of the aggregator"):
+        sat_agg([], 0)
+
+
 def test_gradient_reaches_the_probabilities():
     P, y = _batch()
     P = tf.Variable(P)
