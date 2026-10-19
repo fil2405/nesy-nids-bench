@@ -7,7 +7,20 @@ from sklearn.model_selection import train_test_split
 from .base import class_index
 
 
-def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fraction=0.15):
+def _keep_train_fraction(train, spec, fraction, seed):
+    """Stratified subsample of the train part only; validation and test stay whole."""
+    if not 0 < fraction <= 1:
+        raise ValueError(f"train_fraction must be in (0, 1], got {fraction}")
+    if fraction == 1:
+        return train
+    kept, _ = train_test_split(
+        train, train_size=fraction, stratify=class_index(train, spec), random_state=seed
+    )
+    return kept
+
+
+def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fraction=0.15,
+                                      train_fraction=1.0):
     """Official test file; validation stratified from train."""
     if test_df is None:
         raise ValueError(f"{spec.name} has no official test file")
@@ -17,11 +30,11 @@ def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fractio
         stratify=class_index(train_df, spec),
         random_state=seed,
     )
-    return train_part, val_part, test_df
+    return _keep_train_fraction(train_part, spec, train_fraction, seed), val_part, test_df
 
 
 def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
-                      test_fraction=0.2, test_seed=0):
+                      test_fraction=0.2, test_seed=0, train_fraction=1.0):
     """One frame cut into train, validation and test, stratified by class.
 
     The test cut uses test_seed, so every run sees the same test; only the
@@ -41,7 +54,7 @@ def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
         stratify=class_index(rest, spec),
         random_state=seed,
     )
-    return train, val, test
+    return _keep_train_fraction(train, spec, train_fraction, seed), val, test
 
 
 STRATEGIES = {
