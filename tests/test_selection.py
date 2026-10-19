@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from nesybench.data.preprocess import Splits
-from nesybench.models.selection import EarlyStopper, validation_macro_f1
+from nesybench.models.selection import EarlyStopper, predict_batches, validation_macro_f1
 
 
 def _splits(y_val):
@@ -27,11 +27,15 @@ class FakeModel:
 
     def __init__(self, proba):
         self.proba = np.asarray(proba)
-        self.seen = None
+        self.seen = []
+        self.pos = 0
 
-    def predict(self, X, *args, **kwargs):
-        self.seen = X
-        return self.proba
+    def __call__(self, X, training=False):
+        assert training is False
+        self.seen.append(X)
+        out = self.proba[self.pos:self.pos + len(X)]
+        self.pos += len(X)
+        return out
 
 
 Y_VAL = [0, 0, 1, 1, 2, 2]
@@ -52,7 +56,7 @@ def test_the_model_sees_the_validation_part():
     splits = _splits(Y_VAL)
     model = FakeModel(np.eye(3)[Y_VAL])
     validation_macro_f1(model, splits)
-    assert np.array_equal(model.seen, splits.X_val)
+    assert np.array_equal(np.concatenate(model.seen), splits.X_val)
 
 
 def test_best_epoch_and_weights_are_those_of_the_best_score():
@@ -143,3 +147,11 @@ def test_close_does_nothing_once_an_epoch_was_chosen():
 def test_window_below_one_is_an_error():
     with pytest.raises(ValueError, match="window"):
         EarlyStopper(patience=5, window=0)
+
+
+def test_batches_cover_the_part_in_order():
+    splits = _splits(Y_VAL)
+    model = FakeModel(np.eye(3)[Y_VAL])
+    out = predict_batches(model, splits.X_val, batch_size=4)
+    assert [len(x) for x in model.seen] == [4, 2]
+    assert np.array_equal(out, np.eye(3)[Y_VAL])
