@@ -81,3 +81,10 @@ def test_operator_metrics_are_nan_without_both_sides():
     m = operator_metrics(np.array([1, 1]), np.array([[.2, .8], [.1, .9]]))
     assert all(np.isnan(v) for v in m["fpr_at_tpr"].values())
     assert all(np.isnan(v) for v in m["tpr_at_fpr"].values())
+
+def test_operator_metrics_keep_the_order_of_tiny_benign_probabilities():
+    y = np.array([1, 1, 0, 0])
+    p_normal = np.array([1e-11, 1e-12, 1e-9, 0.5], dtype=np.float32)
+    proba = np.column_stack([p_normal, 1 - p_normal]).astype(np.float32)
+    m = operator_metrics(y, proba, tpr_levels=(1.0,), fpr_levels=(0.5,))
+    assert m["fpr_at_tpr"]["1"] == 0.0
