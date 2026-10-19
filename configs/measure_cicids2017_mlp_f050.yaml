@@ -1,0 +1,25 @@
+# Cost measurement on CIC-IDS2017 for the compute plan, not a result. MLP-CE without class weights.
+run_id: measure_cicids2017_mlp_f050
+dataset: cicids2017
+split: stratified_random
+split_params:          # test cut is fixed by test_seed; train/validation follow the run seed
+  val_fraction: 0.2
+  test_fraction: 0.2
+  test_seed: 0
+  train_fraction: 0.5   # stratified share of the train part
+model: mlp_ce          # rule_only | rf | xgb | mlp_ce | ltn_sup | ltn_full | cnn1d
+kb: null
+evaluate_test: false   # true only for final runs; tuning runs never touch the test set
+seeds: [0]
+network:               # same keys for mlp_ce, ltn_sup and ltn_full
+  hidden_units: [128, 64]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 50
+  early_stopping_patience: 10   # monitored: macro-F1 of the validation set
+  selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
+  imbalance: none               # none | class_weight
