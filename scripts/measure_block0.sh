@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Cost measurements for the compute plan (not results). Run: nohup bash scripts/measure_block0.sh &
+# Cost measurements for the compute plan (not results). Run: nohup bash scripts/measure_block0.sh [names] &
+# With names (e.g. M3_mlp_f050 M4_mlp_seed2) only those measures run.
 # Logs, time -v and GPU samples go to $OUT; the repo is not touched while it runs.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 OUT="${OUT:-$HOME/tmp_results/measure}"
+ONLY="$*"
 mkdir -p "$OUT/results"
 
 measure() {  # name config [extra args for nesybench.run]
     local name=$1 config=$2; shift 2
+    if [ -n "${ONLY:-}" ] && [[ " $ONLY " != *" $name "* ]]; then return; fi
     echo "$(date +%T) start $name"
     nvidia-smi dmon -s um -d 5 > "$OUT/$name.dmon" 2>/dev/null &
     local dmon=$!
