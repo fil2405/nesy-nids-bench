@@ -7,7 +7,7 @@ from nesybench.logic.c5 import THRESHOLD
 from nesybench.logic.kb import antecedents, load_kb, target_index
 from nesybench.data.base import REPO_ROOT
 
-DEFAULT_CLASS = 0  # Normal, when no rule fires
+DEFAULT_CLASS = 0  # benign class, when no rule fires
 
 
 class RuleOnly:
