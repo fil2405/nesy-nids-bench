@@ -131,3 +131,14 @@ def test_load_builds_both_days_once(tmp_path, monkeypatch):
     assert (tmp_path / "interim" / "report.json").exists()
     with pytest.raises(ValueError, match="splits"):
         ddos.load_cicddos2019("val")
+
+
+def test_mixed_type_metadata_column_becomes_text(tmp_path, monkeypatch):
+    def spoil(df):
+        df["SimillarHTTP"] = df["SimillarHTTP"].astype(object)
+        df.loc[50, "SimillarHTTP"] = "http://x"
+        return df
+    monkeypatch.setattr(ddos, "CHUNK", 10)
+    df, _ = ddos.read_day(_zip(tmp_path / "d.zip", extra=spoil), cap=1000)
+    assert df["SimillarHTTP"].map(type).eq(str).all()
+    assert "http://x" in set(df["SimillarHTTP"])

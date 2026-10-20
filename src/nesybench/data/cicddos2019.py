@@ -156,6 +156,9 @@ def read_day(zip_path, cap: int, seed: int = SAMPLE_SEED, day: str = "") -> tupl
     df = df[~dup].reset_index(drop=True)
     report["rows_with_conflicting_labels"] = int(df.duplicated(subset=feats, keep=False).sum())
     df[numeric] = df[numeric].astype("float32")
+    # chunks parsed as numbers or text give mixed columns, which Parquet refuses
+    for column in [c for c in SPEC.non_features if c in df and df[c].dtype == object]:
+        df[column] = df[column].astype(str)
     report["class_counts"] = _counts(df[CLASS_COL])
     report["label_counts"] = _counts(df[LABEL_COL])
     return df, report
