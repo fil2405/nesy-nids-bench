@@ -64,3 +64,30 @@ def test_subsample_follows_the_seed(name, strategy, official):
 def test_bad_fractions_are_refused(fraction):
     with pytest.raises(ValueError, match="train_fraction"):
         _split("cicids2017", "stratified_random", False, train_fraction=fraction)
+
+
+@pytest.mark.parametrize("name, strategy, official", CASES)
+def test_thinned_class_loses_rows_in_train_only(name, strategy, official):
+    spec, (whole, whole_val, whole_test) = _split(name, strategy, official)
+    _, (train, val, test) = _split(name, strategy, official,
+                                   train_class_fractions={"Normal": 0.25})
+    counts = lambda df: df["class"].value_counts()
+    assert counts(train)["Normal"] == pytest.approx(0.25 * counts(whole)["Normal"], abs=1)
+    for other in spec.classes:
+        if other != "Normal":
+            assert counts(train)[other] == counts(whole)[other]
+    assert val.index.equals(whole_val.index) and test.index.equals(whole_test.index)
+
+
+@pytest.mark.parametrize("name, strategy, official", CASES)
+def test_thinning_depends_on_the_seed_and_keeps_order(name, strategy, official):
+    _, (a, *_) = _split(name, strategy, official, seed=1, train_class_fractions={"Normal": 0.5})
+    _, (b, *_) = _split(name, strategy, official, seed=1, train_class_fractions={"Normal": 0.5})
+    assert a.index.equals(b.index)
+
+
+@pytest.mark.parametrize("fractions", [{"Nope": 0.5}, {"Normal": 0.0}, {"Normal": 1.5}])
+def test_bad_class_fractions_are_refused(fractions):
+    with pytest.raises(ValueError, match="train_class_fractions"):
+        _split("nslkdd", "official_test_with_stratified_val", True,
+               train_class_fractions=fractions)
