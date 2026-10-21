@@ -286,3 +286,78 @@ def test_cli(env, tmp_path):
     path.write_text(yaml.safe_dump(env.tuning))
     tune.main(["--tuning", str(path), "--results-dir", str(env.results)])
     assert (env.results / "tune_toy_best.yaml").exists()
+
+
+def _run_workers(env, n):
+    for w in range(n):
+        assert tune.tune(env.tuning, env.results, log=lambda *_: None, worker=w, workers=n) is None
+
+
+def test_workers_split_the_trials_and_finalize_matches_the_sequential_search(env, tmp_path):
+    _run_workers(env, 3)
+    assert env.calls["fits"] == 6 * 2
+    assert not (env.results / "tune_toy.json").exists()
+    assert not (env.results / "tune_toy_best.yaml").exists()
+    parallel = tune.finalize(env.tuning, env.results, log=lambda *_: None)
+    assert (env.results / "tune_toy_best.yaml").exists()
+
+    other = tmp_path / "sequential"
+    sequential = tune.tune(env.tuning, other, log=lambda *_: None)
+    assert parallel["best"] == sequential["best"]
+    assert [t["mean"] for t in parallel["trials"]] == [t["mean"] for t in sequential["trials"]]
+
+
+def test_each_worker_runs_only_its_trials(env):
+    tune.tune(env.tuning, env.results, log=lambda *_: None, worker=1, workers=3)
+    done = sorted(int(p.name.split("_t")[-1][:2]) for p in env.results.glob("tune_toy_t*_seed100.json"))
+    assert done == [1, 4]
+
+
+def test_finalize_names_the_unfinished_trials(env):
+    tune.tune(env.tuning, env.results, log=lambda *_: None, worker=0, workers=2)
+    with pytest.raises(RuntimeError, match=r"not finished: \[1, 3, 5\]"):
+        tune.finalize(env.tuning, env.results, log=lambda *_: None)
+
+
+def test_finalize_refuses_trials_of_another_search(env):
+    _run_workers(env, 2)
+    changed = {**env.tuning, "space": {**SPACE, "params.quality": {"choice": [0.1, 0.4, 0.7]}}}
+    with pytest.raises(ValueError, match="another search"):
+        tune.finalize(changed, env.results, log=lambda *_: None)
+
+
+def test_a_failed_trial_of_a_worker_reaches_the_summary(env):
+    env.tuning["space"] = {**SPACE, "params.boom": {"choice": [False, True]}}
+    _run_workers(env, 2)
+    summary = tune.finalize(env.tuning, env.results, log=lambda *_: None)
+    assert any(t["status"] == "failed" for t in summary["trials"])
+    assert summary["best"]["trial"] not in {t["trial"] for t in summary["trials"] if t["status"] == "failed"}
+
+
+def test_worker_outside_the_range_is_refused(env):
+    with pytest.raises(ValueError, match="outside"):
+        tune.tune(env.tuning, env.results, worker=3, workers=3)
+
+
+def test_dry_run_with_a_worker_lists_only_its_trials(env):
+    lines = []
+    tune.tune(env.tuning, env.results, dry_run=True, log=lines.append, worker=0, workers=3)
+    assert len(lines) == 2
+
+
+def test_cli_workers_then_finalize(env, tmp_path):
+    path = tmp_path / "tuning.yaml"
+    path.write_text(yaml.safe_dump(env.tuning))
+    for w in range(2):
+        tune.main(["--tuning", str(path), "--results-dir", str(env.results),
+                   "--worker", str(w), "--workers", "2"])
+    assert not (env.results / "tune_toy_best.yaml").exists()
+    tune.main(["--tuning", str(path), "--results-dir", str(env.results), "--finalize"])
+    assert (env.results / "tune_toy_best.yaml").exists()
+
+
+def test_cli_worker_without_workers_is_refused(env, tmp_path):
+    path = tmp_path / "tuning.yaml"
+    path.write_text(yaml.safe_dump(env.tuning))
+    with pytest.raises(SystemExit):
+        tune.main(["--tuning", str(path), "--worker", "0"])
