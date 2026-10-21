@@ -56,7 +56,7 @@ Le tre colonne di ogni fase sono indipendenti tra loro. Le frecce tra le fasi so
 
 | Fase | Script | Run previste | Input | Output atteso |
 |---|---|---|---|---|
-| install | `install.sh` | - | `repo.bundle`, `data_interim.tar`, `requirements.lock` | `~/nesy-nids-bench` con checkout pulito, `.venv`, `data/interim/*.parquet` |
+| install | `install.sh` | - | `repo.bundle`, `data.tar`, `requirements.lock` | `~/nesy-nids-bench` con checkout pulito, `.venv`, `data/raw/nsl-kdd` e `data/interim/*.parquet` |
 | smoke | `00_smoke.sh` | 6 (1 per tipo, seed 0, solo validation) | config `nslkdd_*` | 6 JSON in `results/server/smoke/`, ultima riga `smoke OK`; ogni JSON con `git_commit` diverso da `unknown` e `git_dirty: false` |
 | scaling | `01_scaling.sh` | 4 config x (1+2+4+8) processi | `configs/measure_cicids2017_*.yaml` | `results/server/scaling/<config>/summary.tsv` con P, tempo di parete, speed-up, tempo di `fit`, epoche, RAM, core, GPU |
 | tuning | `02_tune.sh DS` | 360 per dataset (6 bracci x 20 prove x 3 seed) | `configs/tuning/DS_ARM.yaml` | per braccio: 60 file `tune_DS_ARM_tNN_seedS.json` (seed 100-102), 20 file `tune_DS_ARM_trialNN.json`, `tune_DS_ARM.json` (riepilogo), `tune_DS_ARM_best.yaml` |

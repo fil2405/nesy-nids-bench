@@ -10,7 +10,7 @@ DEST="${1:-$HOME/nesy-nids-bench}"
 [ -e "$DEST" ] && { echo "ERRORE: $DEST esiste gia'" >&2; exit 1; }
 git clone "$PKG/repo.bundle" "$DEST"
 cd "$DEST"
-[ -f "$PKG/data_interim.tar" ] && tar -xf "$PKG/data_interim.tar" -C data
+[ -f "$PKG/data.tar" ] && tar -xf "$PKG/data.tar" -C data
 python3 -m venv .venv
 .venv/bin/pip install -r "$PKG/requirements.lock"
 .venv/bin/pip install -e . --no-deps
