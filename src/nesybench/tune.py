@@ -5,6 +5,9 @@
 Each trial is scored on the validation macro-F1, averaged over the tuning
 seeds. The test part is never scored. Finished runs are reused, so an
 interrupted search resumes where it stopped.
+
+In parallel: start `--worker i --workers n` for i in 0..n-1 (worker i takes the
+trials with index % n == i), then one `--finalize` writes summary and best config.
 """
 import argparse
 import copy
@@ -174,32 +177,14 @@ def _summary(tuning: dict, base_path, trials: list[dict]) -> dict:
     }
 
 
-def tune(tuning: dict, results_dir, overwrite: bool = False, dry_run: bool = False,
-         log=print) -> dict | None:
-    base_path = Path(tuning["base"])
-    base_path = base_path if base_path.is_absolute() else REPO_ROOT / base_path
-    base = load_config(base_path)
-    params_list = sample_trials(tuning["space"], tuning["trials"], tuning["search_seed"])
-    configs = [trial_config(base, tuning, i, p) for i, p in enumerate(params_list)]
+def trial_path(results_dir, tuning_id: str, index: int) -> Path:
+    return Path(results_dir) / f"{tuning_id}_trial{index:02d}.json"
 
-    if dry_run:
-        for i, params in enumerate(params_list):
-            log(f"trial {i:02d} {params}")
-        return None
 
-    results_dir = Path(results_dir)
-    summary_path = results_dir / f"{tuning['tuning_id']}.json"
-    trials = []
-    for i, (config, params) in enumerate(zip(configs, params_list)):
-        trial = run_trial(config, params, i, results_dir, overwrite)
-        trials.append(trial)
-        _write_atomic(summary_path, json.dumps(_summary(tuning, base_path, trials), indent=2))
-        if trial["status"] == "ok":
-            log(f"trial {i + 1}/{len(configs)}: val macro-F1 {trial['mean']:.4f} "
-                f"+- {trial['std']:.4f}, fit {trial['fit_s_mean']:.1f} s")
-        else:
-            log(f"trial {i + 1}/{len(configs)}: failed ({trial['error']})")
-
+def _finish(tuning: dict, base: dict, base_path, trials: list[dict], results_dir: Path,
+            log) -> dict:
+    summary = _summary(tuning, base_path, trials)
+    _write_atomic(results_dir / f"{tuning['tuning_id']}.json", json.dumps(summary, indent=2))
     best = pick_best(trials)
     if best is None:
         raise RuntimeError(f"{tuning['tuning_id']}: every trial failed")
@@ -207,7 +192,68 @@ def tune(tuning: dict, results_dir, overwrite: bool = False, dry_run: bool = Fal
     _write_atomic(results_dir / f"{tuning['tuning_id']}_best.yaml",
                   yaml.safe_dump(best_config, sort_keys=False))
     log(f"best: trial {best['trial']}, val macro-F1 {best['mean']:.4f}, {best['params']}")
-    return _summary(tuning, base_path, trials)
+    return summary
+
+
+def _prepare(tuning: dict):
+    base_path = Path(tuning["base"])
+    base_path = base_path if base_path.is_absolute() else REPO_ROOT / base_path
+    base = load_config(base_path)
+    params_list = sample_trials(tuning["space"], tuning["trials"], tuning["search_seed"])
+    return base, base_path, params_list
+
+
+def tune(tuning: dict, results_dir, overwrite: bool = False, dry_run: bool = False,
+         log=print, worker: int | None = None, workers: int = 1) -> dict | None:
+    """Run the search. With `worker`, run only that share of the trials and write no summary."""
+    if worker is not None and not 0 <= worker < workers:
+        raise ValueError(f"worker {worker} outside 0..{workers - 1}")
+    base, base_path, params_list = _prepare(tuning)
+    configs = [trial_config(base, tuning, i, p) for i, p in enumerate(params_list)]
+    mine = [i for i in range(len(configs)) if worker is None or i % workers == worker]
+
+    if dry_run:
+        for i in mine:
+            log(f"trial {i:02d} {params_list[i]}")
+        return None
+
+    results_dir = Path(results_dir)
+    trials = []
+    for i in mine:
+        trial = run_trial(configs[i], params_list[i], i, results_dir, overwrite)
+        trials.append(trial)
+        _write_atomic(trial_path(results_dir, tuning["tuning_id"], i), json.dumps(trial, indent=2))
+        if worker is None:
+            _write_atomic(results_dir / f"{tuning['tuning_id']}.json",
+                          json.dumps(_summary(tuning, base_path, trials), indent=2))
+        if trial["status"] == "ok":
+            log(f"trial {i + 1}/{len(configs)}: val macro-F1 {trial['mean']:.4f} "
+                f"+- {trial['std']:.4f}, fit {trial['fit_s_mean']:.1f} s")
+        else:
+            log(f"trial {i + 1}/{len(configs)}: failed ({trial['error']})")
+
+    if worker is not None:
+        return None
+    return _finish(tuning, base, base_path, trials, results_dir, log)
+
+
+def finalize(tuning: dict, results_dir, log=print) -> dict:
+    """Summary and best config from the trial files the workers wrote."""
+    base, base_path, params_list = _prepare(tuning)
+    results_dir = Path(results_dir)
+    trials, missing = [], []
+    for i, params in enumerate(params_list):
+        path = trial_path(results_dir, tuning["tuning_id"], i)
+        if not path.exists():
+            missing.append(i)
+            continue
+        trial = json.loads(path.read_text())
+        if trial["params"] != json.loads(json.dumps(params)):
+            raise ValueError(f"{path} was made with another search; pass the same tuning file")
+        trials.append(trial)
+    if missing:
+        raise RuntimeError(f"{tuning['tuning_id']}: trials not finished: {missing}")
+    return _finish(tuning, base, base_path, trials, results_dir, log)
 
 
 def main(argv=None) -> None:
@@ -218,8 +264,21 @@ def main(argv=None) -> None:
                         help="rerun trials whose result files already exist")
     parser.add_argument("--dry-run", action="store_true",
                         help="print the trials and stop")
+    parser.add_argument("--worker", type=int, help="index of this worker (needs --workers)")
+    parser.add_argument("--workers", type=int, default=1, help="number of workers")
+    parser.add_argument("--finalize", action="store_true",
+                        help="write summary and best config from the finished trials")
     args = parser.parse_args(argv)
-    tune(load_tuning(args.tuning), args.results_dir, args.overwrite, args.dry_run)
+    if args.finalize and (args.worker is not None or args.dry_run):
+        parser.error("--finalize does not combine with --worker or --dry-run")
+    if (args.worker is None) != (args.workers == 1):
+        parser.error("--worker and --workers go together (workers > 1)")
+    tuning = load_tuning(args.tuning)
+    if args.finalize:
+        finalize(tuning, args.results_dir)
+    else:
+        tune(tuning, args.results_dir, args.overwrite, args.dry_run,
+             worker=args.worker, workers=args.workers)
 
 
 if __name__ == "__main__":
