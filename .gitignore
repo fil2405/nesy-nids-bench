@@ -31,3 +31,5 @@ thesis/main.pdf
 /main.pdf
 # Windows download marks
 *:Zone.Identifier
+# creati dagli script di server/
+dist/
