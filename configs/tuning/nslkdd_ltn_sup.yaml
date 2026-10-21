@@ -5,11 +5,12 @@ base: configs/nslkdd_ltn_sup.yaml
 trials: 20
 search_seed: 0
 seeds: [100, 101, 102]   # not among the 10 final seeds
+set:
+  network.hidden_units: [256, 128]
+  network.dropout: 0.2
+  training.batch_size: 256
 space:
-  network.hidden_units: {choice: [[64, 32], [128, 64], [256, 128]]}
-  network.dropout: {choice: [0.1, 0.2, 0.3]}
   training.learning_rate: {loguniform: [3.0e-4, 3.0e-3]}
-  training.batch_size: {choice: [256, 512, 1024]}
   training.sampling_power: {uniform: [0.0, 0.5]}
   training.min_per_class: {choice: [2, 4, 8, 16]}
   training.p: {choice: [1, 2, 4, 6]}

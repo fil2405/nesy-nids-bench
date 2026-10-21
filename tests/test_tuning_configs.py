@@ -11,8 +11,7 @@ from nesybench.run import load_config
 
 CONFIGS = sorted((REPO_ROOT / "configs" / "tuning").glob("*.yaml"))
 NEURAL = ("mlp_ce", "ltn_sup", "ltn_full")
-NETWORK_KEYS = ("network.hidden_units", "network.dropout",
-                "training.learning_rate", "training.batch_size")
+COMMON = ("network.hidden_units", "network.dropout", "training.batch_size")
 PACKAGE = Path(nesybench.__file__).parent
 
 
@@ -62,12 +61,16 @@ def test_same_budget_in_every_arm_of_a_dataset():
         assert len(set(arms.values())) == 1, f"{dataset}: {arms}"
 
 
-def test_neural_arms_search_the_same_network():
-    spaces = {}
+def test_neural_arms_share_a_fixed_network():
+    fixed, lr = {}, {}
     for path in CONFIGS:
         tuning, base = _load(path)
-        if base["model"] in NEURAL:
-            spaces[path.stem] = {k: tuning["space"].get(k) for k in NETWORK_KEYS}
-    assert len(spaces) >= 2
-    assert all(None not in s.values() for s in spaces.values())
-    assert all(s == next(iter(spaces.values())) for s in spaces.values())
+        if base["model"] not in NEURAL:
+            continue
+        assert not set(COMMON) & set(tuning["space"]), path.stem
+        fixed[path.stem] = {k: tuning.get("set", {}).get(k) for k in COMMON}
+        lr[path.stem] = str(tuning["space"].get("training.learning_rate"))
+    assert len(fixed) >= 2
+    assert all(None not in s.values() for s in fixed.values())
+    assert all(s == next(iter(fixed.values())) for s in fixed.values())
+    assert "None" not in lr.values() and len(set(lr.values())) == 1
