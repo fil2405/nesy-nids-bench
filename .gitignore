@@ -10,7 +10,6 @@ __pycache__/
 .venv/
 *.egg-info/
 .pytest_cache/
-.vibe-wise/
 # notebooks and editors
 .ipynb_checkpoints/
 .vscode/
