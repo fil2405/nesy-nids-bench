@@ -42,7 +42,7 @@ def blocked(ds, arm, phase):
             return f"manca configs/tuning/{ds}_{arm}.yaml"
         space = tuning.get("space", {})
         if phase == "tune" and spec["kind"] == "neural" and "network.hidden_units" in space:
-            return None  # gira, ma D6 non applicata (vedi table)
+            return None  # gira
     elif not (ROOT / "configs" / f"{ds}_rules.yaml").exists():
         return f"manca configs/{ds}_rules.yaml"
     return None
@@ -69,7 +69,7 @@ def cmd_table(_):
     for ds in PLAN["datasets"]:
         ta, tr, fa, fr = counts(ds)
         notes = [f"{a}: {blocked(ds, a, 'tune')}" for a in PLAN["arms"] if blocked(ds, a, "tune")]
-        notes += [f"{a}: spazio con rete/batch per braccio (D6 da applicare)"
+        notes += [f"{a}: spazio con rete/batch per braccio, da rivedere"
                   for a in PLAN["arms"] if d6_pending(ds, a)]
         print(f"{ds:12} {tr:>6}/{ta:<7} {fr:>5}/{fa:<6}   {'; '.join(notes)}")
     print("\nstress                      run (bracci x livelli x seed)   da fare prima")

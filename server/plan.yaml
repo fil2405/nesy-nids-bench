@@ -24,12 +24,12 @@ stress:
     datasets: [nslkdd]
     arms: [ltn_full]
     levels: 4
-    needs: [kb.exclude (non esiste nel codice), gruppo conoscenza debole (D4)]
+    needs: [kb.exclude (non esiste nel codice), gruppo conoscenza debole]
   E7:
     what: label scarcity e dimensione del training
     datasets: [nslkdd, cicids2017, cicddos2019]
     arms: [mlp_noweights, mlp_weights, ltn_sup, ltn_full, rf, xgb]
-    levels: 5   # 3 o 5 frazioni, decide Filippo
+    levels: 5   # 3 o 5 frazioni
     needs: [config E7 (train_fraction e train_class_fractions esistono)]
   E9:
     what: attacchi mai visti e transfer
@@ -41,7 +41,7 @@ stress:
     what: conoscenza degradata (soglie spostate, target scambiato)
     datasets: [nslkdd]
     arms: [ltn_full]
-    levels: null   # da fissare (D2)
+    levels: null   # da fissare
     needs: [kb.perturbation (non esiste)]
   E13:
     what: costo contro numero di assiomi (copie fino a K = 8-10)

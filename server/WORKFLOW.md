@@ -23,7 +23,7 @@ flowchart TD
 
     T1 & T2 & T3 --> F1["worker per prova, poi --finalize<br/>scrive riepilogo e _best.yaml per braccio"]
     F1 --> C1["05_collect.sh tune_DATASET<br/>tar.gz con JSON, best.yaml, log"]
-    C1 --> R1{{"FILIPPO guarda:<br/>tetto di epoche (epoch_cap_report.py)<br/>prove ai bordi dello spazio<br/>fissa la config di ogni braccio"}}
+    C1 --> R1{{"Controllo dei risultati:<br/>tetto di epoche, prove ai bordi dello spazio<br/>scelta della config di ogni braccio"}}
 
     R1 --> N1 & N2 & N3
 
@@ -35,7 +35,7 @@ flowchart TD
     end
 
     N1 & N2 & N3 --> A["plan.py audit: git_dirty falso<br/>05_collect.sh final_DATASET"]
-    A --> R2{{"FILIPPO controlla le run finali"}}
+    A --> R2{{"Controllo delle run finali"}}
     R2 --> X1 & X2 & X3 & X4
 
     subgraph FASE3["FASE 3 - stress, 04_stress.sh (seed 0-9, stessa config delle finali)"]
@@ -61,7 +61,7 @@ Le tre colonne di ogni fase sono indipendenti tra loro. Le frecce tra le fasi so
 | scaling | `01_scaling.sh` | 4 config x (1+2+4+8) processi | `configs/measure_cicids2017_*.yaml` | `results/server/scaling/<config>/summary.tsv` con P, tempo di parete, speed-up, tempo di `fit`, epoche, RAM, core, GPU |
 | tuning | `02_tune.sh DS` | 360 per dataset (6 bracci x 20 prove x 3 seed) | `configs/tuning/DS_ARM.yaml` | per braccio: 60 file `tune_DS_ARM_tNN_seedS.json` (seed 100-102), 20 file `tune_DS_ARM_trialNN.json`, `tune_DS_ARM.json` (riepilogo), `tune_DS_ARM_best.yaml` |
 | finali | `03_final.sh DS` | 10 per braccio: 70 su NSL-KDD, 50 sui CIC una volta scritti i config di tuning (70 con la KB) | `results/tuning/*_best.yaml` | per braccio 10 file `<run_id>_seed0..9.json` con `metrics.val`, `metrics.test`, `c5` dove c'è una KB, `git_dirty: false` |
-| stress | `04_stress.sh E..` | vedi `plan.py table` (al massimo E7 900, E9 120, E3 40, E13 100; E11 da fissare) | `configs/stress/E*_*.yaml` (da scrivere) | come le finali, un `run_id` per livello |
+| stress | `04_stress.sh E..` | vedi `plan.py table` (al massimo E7 900, E9 120, E3 40, E13 100; E11 da fissare) | `configs/stress/E*_*.yaml` | come le finali, un `run_id` per livello |
 | ritorno | `05_collect.sh NOME` | - | `results/` | `results/server/out/NOME_data.tar.gz` e `.sha256`, `MANIFEST.txt` (commit, macchina, run non citabili) |
 
 NSL-KDD: RF e XGBoost hanno già il tuning (primo giro, non dipende dalla rete), ma i risultati stanno sul portatile. Restano da rifare 240 run (4 bracci neurali): `bash server/02_tune.sh nslkdd mlp_noweights mlp_weights ltn_sup ltn_full`. Senza i nomi dei bracci lo script fa tutti e sei, RF e XGBoost compresi (costano poco).
@@ -98,7 +98,7 @@ CIC-DDoS2019: tuning non misurato. NSL-KDD: tempo di `fit` per seed nel tuning 2
 
 ## 5. Cosa torna indietro
 
-Dopo ogni fase il tar.gz di `05_collect.sh`: JSON delle run, `_best.yaml`, config finali (`results/final_configs/`), log e `failed.txt`. Il commit e la macchina stanno in `MANIFEST.txt`. Pesi dei modelli e dati non entrano. Per lo streaming servono i pesi e il preprocessamento delle finali di CIC-IDS2017: il runner oggi non li salva (TODO, fase 4).
+Dopo ogni fase il tar.gz di `05_collect.sh`: JSON delle run, `_best.yaml`, config finali (`results/final_configs/`), log e `failed.txt`. Il commit e la macchina stanno in `MANIFEST.txt`. Pesi dei modelli e dati non entrano. Per lo streaming serviranno anche pesi e preprocessamento delle finali di CIC-IDS2017: li aggiungiamo dopo, a batch finito.
 
 ## 6. Come si capisce se è andata bene
 
@@ -107,24 +107,15 @@ Dopo ogni fase il tar.gz di `05_collect.sh`: JSON delle run, `_best.yaml`, confi
 - `python server/plan.py audit` finisce con `0 run non citabili`.
 - Un lavoro interrotto si rilancia identico: le run già finite non si rifanno e nessuna viene sovrascritta.
 
-## 7. Cosa non è pronto
+## 7. Cosa ci serve da voi
 
-Stato esatto: `python server/plan.py table`. Oggi:
-- Config di tuning dei CIC: non esistono. Vanno scritti per i sei bracci (spazi da NSL-KDD, con il sottocampione dei Normal su CIC-IDS2017 solo per il tuning, D1).
-- KB per CIC-IDS2017 e CIC-DDoS2019: senza, `ltn_full` e `rule_only` non girano sui CIC.
-- Rete comune ai bracci neurali (D6): `tune.py` e i config di tuning cercano ancora rete e batch per braccio.
-- Config degli stress: `configs/stress/` non esiste. Mancano nel codice `kb.exclude`, `kb.perturbation`, lo split per giorni di CIC-IDS2017, le copie di un assioma, lo script di latenza.
-- Salvataggio di pesi e preprocessamento per le finali di CIC-IDS2017.
-- Ambiente: `install.sh` usa `requirements.lock` (TensorFlow 2.21). Se driver e CUDA del server non vanno, serve un'immagine o un altro lock.
-- Limite fisso di VRAM per processo: oggi c'è solo `TF_FORCE_GPU_ALLOW_GROWTH`. Se nel test di scaling i processi si pestano, si aggiunge.
+1. Versione del driver NVIDIA e di CUDA del server (`install.sh` installa TensorFlow 2.21 dal lock file).
+2. Come si lancia un lavoro lungo: coda, scheduler o a mano.
+3. Se `git` e Python 3.11 sono già installati.
+4. Dopo il test di scaling (fase 0): quante istanze, di che tipo e per quanto tempo.
 
-## 8. Da decidere prima di lanciare
+## 8. Note
 
-1. Tetto di 50 epoche (`claude/coerenza_e_aperti.md` punto 21): `python analysis/epoch_cap_report.py` sul tuning di NSL-KDD dice quante prove lo toccano. Va deciso prima del tuning dei CIC.
-2. D6 sui CIC: la rete comune vale anche lì. Si riusa quella scelta su NSL-KDD o se ne sceglie una per dataset?
-3. Frazioni di E7 (3 o 5) e livelli di E11.
-4. Istanze, durata e date: le dà il correlatore dopo la fase 0.
-
-## 9. Run citabili senza checkout
-
-Il pacchetto porta un bundle git: `install.sh` fa `git clone`, quindi `git_commit` e `git_dirty` sono veri. Gli script scrivono solo in `results/` e `data/interim/`, ignorate da git. `03_final.sh` e `04_stress.sh` si rifiutano di partire se `git status` non è vuoto. Alternativa, se non si vuole la storia nel pacchetto: file COMMIT letto da `results.py` (punto 22 di `coerenza_e_aperti.md`, decide Filippo).
+- La fase 3 (stress) parte dopo le finali; i suoi config arrivano in una seconda fornitura.
+- Il pacchetto porta la storia git: `install.sh` fa `git clone`, quindi ogni risultato registra la versione esatta del codice e se era modificata.
+- Le run finali girano tutte sulla stessa macchina, perché a parità di seed i risultati sono identici solo sulla stessa macchina e gli stessi tempi si confrontano solo lì.
