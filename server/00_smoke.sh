@@ -5,7 +5,11 @@ source "$(dirname "$0")/common.sh"
 OUT="$SRV/smoke"; rm -rf "$OUT"; mkdir -p "$OUT"
 
 echo "== ambiente"; python scripts/check_env.py || die "check_env.py fallito"
-nvidia-smi 2>&1 | head -15 || echo "nvidia-smi non disponibile"
+if command -v nvidia-smi >/dev/null && nvidia-smi -L; then
+    nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
+else
+    echo "nvidia-smi non disponibile"
+fi
 echo "cpu: $(nproc)  ram: $(free -g 2>/dev/null | awk '/Mem:/{print $2" GB"}')  disco libero: $(df -h . | awk 'NR==2{print $4}')"
 [ "${SMOKE_TESTS:-0}" = 1 ] && { python -m pytest -q || die "pytest fallito"; }
 
