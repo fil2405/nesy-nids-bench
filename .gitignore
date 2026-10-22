@@ -30,5 +30,8 @@ thesis/main.pdf
 /main.pdf
 # Windows download marks
 *:Zone.Identifier
-# creati dagli script di server/
+# local build output
 dist/
+# tune.sh outputs
+logs/
+risultati_*.tar.gz
