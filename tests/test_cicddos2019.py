@@ -58,8 +58,17 @@ def archive(tmp_path):
 def test_spec():
     spec = get_spec("cicddos2019")
     assert spec.classes == ("Normal", "DDoS") and spec.fixed_test
-    for col in ("Source IP", "Destination IP", "Timestamp", "Flow ID", "day"):
+    for col in ("Source IP", "Destination IP", "Timestamp", "Flow ID", "day", "Inbound"):
         assert col in spec.non_features
+
+
+def test_inbound_stays_in_the_data_but_is_not_an_input(tmp_path):
+    def add(df):
+        df["Inbound"] = np.arange(len(df)) % 2
+        return df
+
+    df, _ = ddos.read_day(_zip(tmp_path / "d.zip", extra=add), cap=1000, day="train")
+    assert "Inbound" in df and "Inbound" in get_spec("cicddos2019").non_features
 
 
 def test_class_comes_from_the_label_and_the_names_are_unified(archive):

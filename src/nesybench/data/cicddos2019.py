@@ -31,12 +31,13 @@ ATTACKS = ("DrDoS_DNS", "DrDoS_LDAP", "DrDoS_MSSQL", "DrDoS_NTP", "DrDoS_NetBIOS
            "LDAP", "MSSQL", "NetBIOS", "Portmap", "UDP")
 META = ("Unnamed: 0", "Flow ID", "Source IP", "Source Port", "Destination IP",
         "Destination Port", "Timestamp", "SimillarHTTP")
+CAPTURE = ("Inbound",)  # capture direction, not traffic: kept in the data, never a model input
 
 SPEC = DatasetSpec(
     name="cicddos2019",
     classes=("Normal", "DDoS"),
     categorical=("Protocol",),
-    non_features=(LABEL_COL, CLASS_COL, "day", *META),
+    non_features=(LABEL_COL, CLASS_COL, "day", *META, *CAPTURE),
     fixed_test=True,
 )
 
@@ -143,7 +144,7 @@ def read_day(zip_path, cap: int, seed: int = SAMPLE_SEED, day: str = "") -> tupl
 
     df["Timestamp"] = pd.to_datetime(df["Timestamp"])
     df["Protocol"] = df["Protocol"].map(lambda p: PROTOCOLS.get(p, str(p)))
-    feats = [c for c in df.columns if c not in SPEC.non_features]
+    feats = [c for c in df.columns if c not in SPEC.non_features or c in CAPTURE]
     numeric = [c for c in feats if c not in SPEC.categorical]
     text = [c for c in numeric if not pd.api.types.is_numeric_dtype(df[c])]
     if text:
