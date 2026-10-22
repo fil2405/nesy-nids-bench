@@ -1,0 +1,24 @@
+# MLP-CE with class weights, power 0.5. Same protocol as cicddos2019_mlp_noweights.
+run_id: cicddos2019_mlp_cw10
+dataset: cicddos2019
+split: official_test_with_stratified_val
+split_params:          # passed to the split strategy
+  val_fraction: 0.15
+model: mlp_ce          # rule_only | rf | xgb | mlp_ce | ltn_sup | ltn_full | cnn1d
+kb: null
+c5_kb: null   # no KB for this dataset yet
+evaluate_test: false   # true only for final runs; tuning runs never touch the test set
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # 10 seeds: Wilcoxon needs at least 6
+network:               # same keys for mlp_ce, ltn_sup and ltn_full
+  hidden_units: [128, 64]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 50
+  early_stopping_patience: 10   # monitored: macro-F1 of the validation set
+  selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
+  imbalance: class_weight       # one point of the weight grid; the final power is tuned on validation
+  class_weight_power: 1

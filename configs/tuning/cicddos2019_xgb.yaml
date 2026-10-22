@@ -1,0 +1,16 @@
+# XGBoost; the class weight power is part of the search (0 = no weights).
+# Same budget in every arm: 20 trials x 3 seeds, Latin hypercube, validation macro-F1 only.
+tuning_id: tune_cicddos2019_xgb
+base: configs/cicddos2019_xgb.yaml
+trials: 20
+search_seed: 0
+seeds: [100, 101, 102]   # not among the 10 final seeds
+set:
+  training.imbalance: class_weight
+space:
+  params.learning_rate: {loguniform: [0.03, 0.3]}
+  params.max_depth: {int: [3, 10]}
+  params.min_child_weight: {loguniform: [1.0, 10.0]}
+  params.subsample: {uniform: [0.6, 1.0]}
+  params.colsample_bytree: {uniform: [0.5, 1.0]}
+  training.class_weight_power: {uniform: [0.0, 1.0]}
