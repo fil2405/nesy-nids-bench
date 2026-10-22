@@ -9,6 +9,7 @@ set:
   network.hidden_units: [256, 128]
   network.dropout: 0.2
   training.batch_size: 256
+  training.max_epochs: 100
 space:
   training.learning_rate: {loguniform: [3.0e-4, 3.0e-3]}
   training.sampling_power: {uniform: [0.0, 0.5]}

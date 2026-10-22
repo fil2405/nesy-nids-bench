@@ -11,7 +11,8 @@ from nesybench.run import load_config
 
 CONFIGS = sorted((REPO_ROOT / "configs" / "tuning").glob("*.yaml"))
 NEURAL = ("mlp_ce", "ltn_sup", "ltn_full")
-COMMON = ("network.hidden_units", "network.dropout", "training.batch_size")
+COMMON = ("network.hidden_units", "network.dropout", "training.batch_size",
+          "training.max_epochs")
 PACKAGE = Path(nesybench.__file__).parent
 
 
