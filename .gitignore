@@ -35,3 +35,5 @@ dist/
 # tune.sh outputs
 logs/
 risultati_*.tar.gz
+# final runs outputs
+modelli_*.tar
