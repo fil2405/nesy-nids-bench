@@ -1,0 +1,17 @@
+# Random Forest; the class weight power is part of the search (0 = no weights).
+# Same budget in every arm: 20 trials x 3 seeds, Latin hypercube, validation macro-F1 only.
+tuning_id: tune_cicids2017_rf
+base: configs/cicids2017_rf.yaml
+trials: 20
+search_seed: 0
+seeds: [100, 101, 102]   # not among the 10 final seeds
+trial_set:               # tuning trials only, the final runs keep the whole train
+  split_params.train_class_fractions: {Normal: 0.25}
+set:
+  training.imbalance: class_weight
+space:
+  params.n_estimators: {choice: [100, 300, 500]}
+  params.max_depth: {choice: [null, 10, 20, 30]}
+  params.min_samples_leaf: {choice: [1, 2, 5]}
+  params.max_features: {choice: [sqrt, log2, 0.3]}
+  training.class_weight_power: {uniform: [0.0, 1.0]}
