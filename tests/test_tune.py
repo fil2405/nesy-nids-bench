@@ -361,3 +361,19 @@ def test_cli_worker_without_workers_is_refused(env, tmp_path):
     path.write_text(yaml.safe_dump(env.tuning))
     with pytest.raises(SystemExit):
         tune.main(["--tuning", str(path), "--worker", "0"])
+
+
+def test_a_seed_saved_by_another_worker_meanwhile_is_read(env, monkeypatch):
+    real = tune.run_one
+    state = {"raced": False}
+
+    def racing(config, seed, results_dir, overwrite=False):
+        if not state["raced"]:
+            state["raced"] = True
+            real(config, seed, results_dir)  # the other worker finishes first
+        return real(config, seed, results_dir, overwrite=overwrite)
+
+    monkeypatch.setattr(tune, "run_one", racing)
+    summary = tune.tune({**env.tuning, "trials": 1}, env.results, log=lambda *_: None)
+    assert state["raced"]
+    assert summary["trials"][0]["status"] == "ok"

@@ -117,13 +117,16 @@ def _normal(config: dict) -> dict:
 
 def _run_seed(config: dict, seed: int, results_dir: Path, overwrite: bool) -> dict:
     path = run_path(str(results_dir), config["run_id"], seed)
-    if path.exists() and not overwrite:
-        record = json.loads(path.read_text())
-        if record["config"] != _normal(config):
-            raise ValueError(f"{path} was made with another config; pass --overwrite")
-        return record
-    run_one(config, seed, results_dir, overwrite=overwrite)
-    return json.loads(path.read_text())
+    if overwrite or not path.exists():
+        try:
+            run_one(config, seed, results_dir, overwrite=overwrite)
+        except FileExistsError:  # another worker saved this seed while this one trained
+            if overwrite or not path.exists():
+                raise
+    record = json.loads(path.read_text())
+    if record["config"] != _normal(config):
+        raise ValueError(f"{path} was made with another config; pass --overwrite")
+    return record
 
 
 def run_trial(config: dict, params: dict, index: int, results_dir: Path,
