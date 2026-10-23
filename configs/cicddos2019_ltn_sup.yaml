@@ -17,7 +17,7 @@ training:
   optimizer: adam
   learning_rate: 1.0e-3
   batch_size: 512
-  max_epochs: 50
+  max_epochs: 100
   early_stopping_patience: 10   # monitored: macro-F1 of the validation set
   selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
   imbalance: none               # none | class_weight
