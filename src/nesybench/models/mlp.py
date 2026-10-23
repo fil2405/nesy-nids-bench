@@ -1,4 +1,11 @@
+from pathlib import Path
+
 import tf_keras
+
+
+def save_mlp(model, directory):
+    model.save(Path(directory) / "model.keras")
+
 
 def _initializer(seed, layer_index):
     if seed is None:

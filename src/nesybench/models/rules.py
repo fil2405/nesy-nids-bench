@@ -1,4 +1,6 @@
 """Rule-only arm: the KB axioms alone, nothing is learned."""
+import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +18,8 @@ class RuleOnly:
         if not config.get("kb"):
             raise ValueError("rule_only needs a kb path in the config")
         path = Path(config["kb"])
-        self.kb = load_kb(path if path.is_absolute() else REPO_ROOT / path)
+        self.kb_path = path if path.is_absolute() else REPO_ROOT / path
+        self.kb = load_kb(self.kb_path)
         self.n_classes = len(splits.class_names)
         self.targets = target_index(self.kb, splits.class_names)
         fired = self._fired(splits.raw("train"))
@@ -36,6 +39,16 @@ class RuleOnly:
         out = np.zeros((len(pred), self.n_classes))
         out[np.arange(len(pred)), pred] = 1.0
         return out
+
+    def save(self, directory):
+        directory = Path(directory)
+        shutil.copy(self.kb_path, directory / "kb.yaml")
+        rules = {
+            "kb_version": self.kb.version,
+            "default_class": DEFAULT_CLASS,
+            "targets": [int(t) for t in self.targets],
+        }
+        (directory / "rules.json").write_text(json.dumps(rules, indent=2))
 
     def _fired(self, raw):
         return antecedents(self.kb, raw, crisp=True) >= THRESHOLD

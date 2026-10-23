@@ -1,4 +1,7 @@
 """Random Forest and XGBoost behind the common model interface."""
+from pathlib import Path
+
+import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
@@ -54,6 +57,9 @@ class RandomForest:
         out = np.zeros((len(X), self.n_classes))
         out[:, self.model.classes_] = self.model.predict_proba(X)  # absent class stays 0
         return out
+
+    def save(self, directory):
+        joblib.dump(self.model, Path(directory) / "model.joblib", compress=3)
 
 
 class XGBoost:
@@ -141,3 +147,7 @@ class XGBoost:
 
         X, _ = splits.part(part)
         return self.booster.predict(xgb.DMatrix(X), iteration_range=(0, self.best_round))
+
+    def save(self, directory):
+        self.booster.set_attr(best_round=str(self.best_round))  # rounds kept at predict time
+        self.booster.save_model(str(Path(directory) / "model.json"))

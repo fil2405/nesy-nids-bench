@@ -1,7 +1,8 @@
 """Model registry.
 
 Interface: fit(splits, config) -> dict saved under "training";
-predict_proba(splits, part) -> (n_examples, n_classes).
+predict_proba(splits, part) -> (n_examples, n_classes);
+save(directory) writes the files of the fitted model (final runs only).
 Entries are "module:Class" strings, imported lazily to keep TensorFlow out
 of light imports.
 """

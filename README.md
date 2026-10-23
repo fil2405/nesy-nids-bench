@@ -34,7 +34,11 @@ A dataset is added by writing its loader and `DatasetSpec` in
 Each seed writes `results/<run_id>_seed<seed>.json` (metrics per part, timings,
 training information, configuration, commit). Existing files are not replaced
 unless `--overwrite` is given. The test part is evaluated only if the
-configuration has `evaluate_test: true`.
+configuration has `evaluate_test: true` or `--evaluate-test` is given.
+`--resume` skips the seeds that already have a result file (same configuration
+required); `--save-model-dir DIR` writes the model and the preprocessing of each
+run under `DIR/<run_id>_seed<seed>/`.
+
 A model is added by writing its module in `src/nesybench/models/` and
 registering it in `src/nesybench/models/__init__.py`.
 

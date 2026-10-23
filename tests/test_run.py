@@ -222,3 +222,79 @@ def test_c5_falls_back_to_the_training_kb_key(env, tmp_path):
     env.config["kb"] = str(kb_path)
     _main(env, "--seeds", "0")
     assert "c5" in _record(env, 0)["metrics"]["val"]
+
+
+def test_evaluate_test_flag_scores_the_test_part(env):
+    _main(env, "--seeds", "0", "--evaluate-test")
+    rec = _record(env, 0)
+    assert set(rec["metrics"]) == {"val", "test"}
+    assert rec["config"]["evaluate_test"] is True
+
+
+def test_resume_skips_the_seeds_already_done(env):
+    _main(env, "--seeds", "0")
+    fits = env.calls["fits"]
+    _main(env, "--seeds", "0", "1", "--resume")
+    assert env.calls["fits"] == fits + 1
+    assert sorted(p.name for p in env.results.glob("*.json")) == [
+        "toy_run_seed0.json", "toy_run_seed1.json"]
+
+
+def test_resume_with_everything_done_runs_nothing(env):
+    _main(env)
+    fits = env.calls["fits"]
+    _main(env, "--resume")
+    assert env.calls["fits"] == fits
+
+
+def test_resume_refuses_results_of_another_config(env):
+    _main(env, "--seeds", "0")
+    with pytest.raises(ValueError, match="another config"):
+        _main(env, "--seeds", "0", "--resume", "--evaluate-test")
+
+
+def test_resume_and_overwrite_exclude_each_other(env):
+    with pytest.raises(SystemExit):
+        _main(env, "--resume", "--overwrite")
+
+
+def _saving_model(monkeypatch):
+    base = models._MODELS["majority"]
+
+    class Saving(base):
+        def save(self, directory):
+            (Path(directory) / "model.txt").write_text("x")
+
+    monkeypatch.setitem(models._MODELS, "majority", Saving)
+
+
+def test_model_and_preprocessing_are_saved_when_asked(env, tmp_path, monkeypatch):
+    _saving_model(monkeypatch)
+    root = tmp_path / "models"
+    _main(env, "--seeds", "0", "--save-model-dir", str(root))
+    folder = root / "toy_run_seed0"
+    meta = json.loads((folder / "meta.json").read_text())
+    assert meta["class_names"] == ["A", "B", "C"]
+    assert (folder / "preprocessing.joblib").is_file()
+    artifacts = _record(env, 0)["artifacts"]
+    assert artifacts["directory"] == "toy_run_seed0"
+    assert set(artifacts["files"]) == {"model.txt", "preprocessing.joblib", "meta.json"}
+    assert artifacts["files"]["model.txt"] == 1
+    assert _record(env, 0)["timings"]["save_s"] >= 0
+
+
+def test_nothing_is_saved_by_default(env):
+    _main(env, "--seeds", "0")
+    assert _record(env, 0)["artifacts"] is None
+
+
+def test_a_model_without_save_is_an_error(env, tmp_path):
+    with pytest.raises(ValueError, match="save"):
+        _main(env, "--seeds", "0", "--save-model-dir", str(tmp_path / "models"))
+    assert not list(env.results.glob("*.json"))
+
+
+def test_resume_wants_the_saved_model_when_saving(env, tmp_path):
+    _main(env, "--seeds", "0")
+    with pytest.raises(ValueError, match="no saved model"):
+        _main(env, "--seeds", "0", "--resume", "--save-model-dir", str(tmp_path / "m"))
