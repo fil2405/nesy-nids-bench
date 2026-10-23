@@ -1,0 +1,13 @@
+# Rule-only: the KB axioms alone, no learning. Same split and seeds as the other arms.
+run_id: cicids2017_rules_slow
+dataset: cicids2017
+split: stratified_random
+split_params:          # test cut is fixed by test_seed; train/validation follow the run seed
+  val_fraction: 0.2
+  test_fraction: 0.2
+  test_seed: 0
+model: rule_only
+kb: kb/cicids2017_v1_slow.yaml
+evaluate_test: false
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+training: {}           # nothing to train

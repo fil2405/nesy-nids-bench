@@ -1,0 +1,36 @@
+# group: domain | ddos | dataset   origin: mechanism | data | internship
+# Found with a depth-3 tree on train + validation (seed 0), checked on the other half; test never read.
+# Train stats are over the whole of train + validation (1372272 flows).
+# s: width of the sigmoid around tau, a hyperparameter of the logic
+version: cicids2017_v1_slow
+axioms:
+  - id: A1
+    group: dataset
+    origin: data
+    target: DDoS
+    train: {support: 0.995, confidence: 1.000, benign_hit: 0}
+    all:
+      - {col: Total Length of Fwd Packet, op: le, tau: 21, s: 1}
+      - {col: Fwd Packet Length Max, op: gt, tau: 19.5, s: 1}
+      - {col: Bwd Segment Size Avg, op: gt, tau: 1644.15, s: 80}
+  - id: A2
+    group: dataset
+    origin: data
+    target: DoS
+    # fires on Hulk and GoldenEye (HTTP floods), not on Slowloris or Slowhttptest
+    train: {support: 0.963, confidence: 0.997, benign_hit: 451}
+    all:
+      - {col: Bwd Packet Length Std, op: gt, tau: 1302.36, s: 65}
+      - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
+      - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}
+  - id: S1
+    group: ddos
+    origin: mechanism
+    target: DoS
+    # Slow DoS (Ch. 3): long and slow flow. Cuts fixed before looking at attacks: Flow Duration above the
+    # 95th and Flow Packets/s at or below the 10th percentile of Normal (train + validation).
+    # It does not hold on the data: 30839 of its 31079 hits are Normal. Variant for the degraded-knowledge test.
+    train: {support: 0.002, confidence: 0.008, benign_hit: 30839}
+    all:
+      - {col: Flow Duration, op: gt, tau: 116011844, s: 5800000}
+      - {col: Flow Packets/s, op: le, tau: 0.382333, s: 0.02}
