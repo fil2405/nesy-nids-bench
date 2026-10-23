@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from nesybench.data import get_spec
 from nesybench.data.base import REPO_ROOT
 from nesybench.logic.kb import (Condition, antecedents, condition_degree, load_kb,
                                 target_index)
@@ -149,3 +150,12 @@ def test_bad_group_and_duplicates(tmp_path):
 def test_shipped_kb_parses():
     kb = load_kb(REPO_ROOT / "kb" / "nslkdd_v1.yaml")
     assert target_index(kb, ["Normal", "DoS", "Probe", "R2L", "U2R"]).min() >= 0
+
+
+@pytest.mark.parametrize("name, dataset", [("nslkdd_v1", "nslkdd"), ("cicddos2019_v1", "cicddos2019")])
+def test_shipped_kb_fits_its_dataset(name, dataset):
+    spec = get_spec(dataset)
+    kb = load_kb(REPO_ROOT / "kb" / f"{name}.yaml")
+    assert target_index(kb, list(spec.classes)).min() >= 0
+    used = {c.col for a in kb.axioms for c in a.conditions}
+    assert not used & set(spec.non_features)  # never a column the models do not see

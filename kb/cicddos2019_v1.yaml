@@ -1,0 +1,21 @@
+# group: domain | ddos | dataset   origin: mechanism | data | internship
+# Chosen on the training day only. Train stats are over the whole training day (340560 flows).
+# s: width of the sigmoid around tau, a hyperparameter of the logic
+version: cicddos2019_v1
+axioms:
+  - id: A1
+    group: ddos
+    origin: mechanism
+    target: DDoS
+    train: {support: 0.902, confidence: 0.999, benign_hit: 305}
+    all:
+      - {col: Protocol, op: eq, value: udp}
+      - {col: Total Backward Packets, op: le, tau: 0.5, s: 0.1}
+  - id: A2
+    group: dataset
+    origin: data
+    target: DDoS
+    # stats measured at tau 0.182802
+    train: {support: 0.039, confidence: 0.967, benign_hit: 387}
+    all:
+      - {col: Flow Packets/s, op: le, tau: 0.1828, s: 0.05}

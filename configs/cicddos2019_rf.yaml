@@ -6,7 +6,7 @@ split_params:          # passed to the split strategy
   val_fraction: 0.15
 model: rf              # rule_only | rf | xgb | mlp_ce | ltn_sup | ltn_full | cnn1d
 kb: null
-c5_kb: null   # no KB for this dataset yet
+c5_kb: kb/cicddos2019_v1.yaml   # axioms for the C5 report only
 evaluate_test: false   # true only for final runs; tuning runs never touch the test set
 seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # 10 seeds: Wilcoxon needs at least 6
 params:                # starting values, moved by the tuning

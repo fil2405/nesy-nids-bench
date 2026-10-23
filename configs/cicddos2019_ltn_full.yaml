@@ -1,0 +1,26 @@
+# LTN-full: LTN-sup plus the domain axioms of the KB, same network, sampler and selection rule.
+run_id: cicddos2019_ltn_full
+dataset: cicddos2019
+split: official_test_with_stratified_val
+split_params:          # passed to the split strategy
+  val_fraction: 0.15
+model: ltn_full
+kb: kb/cicddos2019_v1.yaml
+evaluate_test: false   # true only for final runs; tuning runs never touch the test set
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # 10 seeds: Wilcoxon needs at least 6
+network:               # same keys for mlp_ce, ltn_sup and ltn_full
+  hidden_units: [128, 64]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 50
+  early_stopping_patience: 10   # monitored: macro-F1 of the validation set
+  selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
+  imbalance: none               # none | class_weight
+  sampling_power: 0.0           # batch quota ~ count**(1 - power); 0 = as the data
+  min_per_class: 2              # examples per class in every batch
+  domain_weight: 0.25   # loss = 1 - ((1 - w) * SatAgg_sup + w * SatAgg_domain)
+  crisp: false          # true = hard thresholds, s ignored
