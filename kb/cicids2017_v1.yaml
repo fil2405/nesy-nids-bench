@@ -1,0 +1,25 @@
+# group: domain | ddos | dataset   origin: mechanism | data | internship
+# Found with a depth-3 tree on train + validation (seed 0), checked on the other half; test never read.
+# Train stats are over the whole of train + validation (1372272 flows).
+# s: width of the sigmoid around tau, a hyperparameter of the logic
+version: cicids2017_v1
+axioms:
+  - id: A1
+    group: dataset
+    origin: data
+    target: DDoS
+    train: {support: 0.995, confidence: 1.000, benign_hit: 0}
+    all:
+      - {col: Total Length of Fwd Packet, op: le, tau: 21, s: 1}
+      - {col: Fwd Packet Length Max, op: gt, tau: 19.5, s: 1}
+      - {col: Bwd Segment Size Avg, op: gt, tau: 1644.15, s: 80}
+  - id: A2
+    group: dataset
+    origin: data
+    target: DoS
+    # fires on Hulk and GoldenEye (HTTP floods), not on Slowloris or Slowhttptest
+    train: {support: 0.963, confidence: 0.997, benign_hit: 451}
+    all:
+      - {col: Bwd Packet Length Std, op: gt, tau: 1302.36, s: 65}
+      - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
+      - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}

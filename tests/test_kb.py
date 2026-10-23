@@ -152,7 +152,8 @@ def test_shipped_kb_parses():
     assert target_index(kb, ["Normal", "DoS", "Probe", "R2L", "U2R"]).min() >= 0
 
 
-@pytest.mark.parametrize("name, dataset", [("nslkdd_v1", "nslkdd"), ("cicddos2019_v1", "cicddos2019")])
+@pytest.mark.parametrize("name, dataset", [("nslkdd_v1", "nslkdd"), ("cicddos2019_v1", "cicddos2019"),
+                                         ("cicids2017_v1", "cicids2017"), ("cicids2017_v1_r2l", "cicids2017")])
 def test_shipped_kb_fits_its_dataset(name, dataset):
     spec = get_spec(dataset)
     kb = load_kb(REPO_ROOT / "kb" / f"{name}.yaml")
