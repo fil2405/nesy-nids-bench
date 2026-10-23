@@ -17,6 +17,8 @@ from nesybench.data import get_spec, load_dataset
 from nesybench.data.base import CLASS_COL, LABEL_COL
 
 ARMS = ("mlp_noweights", "mlp_weights", "ltn_sup", "ltn_full", "rf", "xgb")
+NAMED = ("R2L", "U2R")
+MIN_ROWS = 10
 
 
 def seen_flags(train, test):
@@ -59,20 +61,25 @@ def predict(run_dir, arm, X):
 def recall_tables(test, spec, seen, models_dir, seeds):
     X = test.drop(columns=[c for c in spec.non_features if c in test.columns])
     y = test[CLASS_COL].map({c: i for i, c in enumerate(spec.classes)}).to_numpy()
-    out = []
+    out, names = [], {}
     for arm in ARMS:
         runs = sorted(Path(models_dir).glob(f"nslkdd_{arm}_tuned_seed*"))
         runs = [r for r in runs if int(r.name.rsplit("seed", 1)[1]) in seeds]
         if not runs:
             print(f"{arm}: no saved model found")
             continue
-        acc = {}
+        acc, by_name = {}, {}
         for r in runs:
             try:
                 pred = predict(r, arm, X)
             except Exception as exc:
                 print(f"{arm} {r.name}: {type(exc).__name__}: {exc}")
                 break
+            for name in test.loc[test[CLASS_COL].isin(NAMED), LABEL_COL].unique():
+                m = (test[LABEL_COL] == name).to_numpy()
+                if m.sum() >= MIN_ROWS:
+                    i = y[m][0]
+                    by_name.setdefault((arm, spec.classes[i], name, int(m.sum())), []).append((pred[m] == i).mean())
             for i, cls in enumerate(spec.classes):
                 for name, mask in (("seen", seen), ("unseen", ~seen)):
                     m = (y == i) & mask
@@ -80,10 +87,17 @@ def recall_tables(test, spec, seen, models_dir, seeds):
                         acc.setdefault((cls, name), []).append((pred[m] == i).mean())
         for (cls, name), v in acc.items():
             out.append((arm, cls, name, len(v), float(np.mean(v)), float(np.std(v, ddof=1)) if len(v) > 1 else 0.0))
+        names.update(by_name)
     if out:
         tab = pd.DataFrame(out, columns=["arm", "class", "label_in_train", "seeds", "recall", "sd"])
         print("\nrecall of the saved models, split by whether the attack name appears in train:")
         print(tab.pivot(index=["arm", "class"], columns="label_in_train", values="recall")
+              .to_string(float_format="{:.3f}".format))
+    if names:
+        rows = [(cls, name, n, arm, float(np.mean(v))) for (arm, cls, name, n), v in names.items()]
+        tab = pd.DataFrame(rows, columns=["class", "label", "test_rows", "arm", "recall"])
+        print("\nrecall by attack name (R2L and U2R, names with enough test rows):")
+        print(tab.pivot(index=["class", "label", "test_rows"], columns="arm", values="recall")
               .to_string(float_format="{:.3f}".format))
 
 
