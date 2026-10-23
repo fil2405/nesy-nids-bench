@@ -162,6 +162,14 @@ def test_trial_config_never_scores_the_test_part(env):
     assert env.base["params"]["quality"] == 0.5 and "mode" not in env.base["training"]
 
 
+def test_trial_set_reaches_the_trials_and_not_the_final_config(env):
+    tuning = {**env.tuning, "trial_set": {"split_params.train_class_fractions": {"Normal": 0.25}}}
+    trial = tune.trial_config(env.base, tuning, 0, {})
+    final = tune.tuned_config(env.base, tuning, {})
+    assert trial["split_params"]["train_class_fractions"] == {"Normal": 0.25}
+    assert "train_class_fractions" not in final.get("split_params", {})
+
+
 def test_base_with_evaluate_test_is_refused(env):
     with pytest.raises(ValueError, match="test part"):
         tune.trial_config({**env.base, "evaluate_test": True}, env.tuning, 0, {})

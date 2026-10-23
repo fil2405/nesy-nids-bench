@@ -62,6 +62,16 @@ def test_same_budget_in_every_arm_of_a_dataset():
         assert len(set(arms.values())) == 1, f"{dataset}: {arms}"
 
 
+def test_same_thinning_in_every_arm_of_a_dataset():
+    thinning = {}
+    for path in CONFIGS:
+        tuning, base = _load(path)
+        assert not [k for k in tuning.get("set", {}) if "class_fractions" in k], path.stem
+        thinning.setdefault(base["dataset"], {})[path.stem] = repr(tuning.get("trial_set", {}))
+    for dataset, arms in thinning.items():
+        assert len(set(arms.values())) == 1, f"{dataset}: {arms}"
+
+
 def test_neural_arms_share_a_fixed_network():
     fixed, lr = {}, {}
     for path in CONFIGS:

@@ -86,9 +86,10 @@ def set_dotted(config: dict, key: str, value) -> None:
     node[last] = value
 
 
-def _apply(base: dict, tuning: dict, params: dict) -> dict:
+def _apply(base: dict, tuning: dict, params: dict, only_trials: bool = False) -> dict:
     config = copy.deepcopy(base)
-    for key, value in {**tuning.get("set", {}), **params}.items():
+    fixed = {**tuning.get("set", {}), **(tuning.get("trial_set", {}) if only_trials else {})}
+    for key, value in {**fixed, **params}.items():
         set_dotted(config, key, copy.deepcopy(value))
     return config
 
@@ -96,7 +97,7 @@ def _apply(base: dict, tuning: dict, params: dict) -> dict:
 def trial_config(base: dict, tuning: dict, index: int, params: dict) -> dict:
     if base.get("evaluate_test"):
         raise ValueError("base config scores the test part, tuning never does")
-    config = _apply(base, tuning, params)
+    config = _apply(base, tuning, params, only_trials=True)  # trial_set never reaches the final runs
     config["evaluate_test"] = False
     config["c5_kb"] = None  # not needed to choose hyperparameters
     config["run_id"] = f"{tuning['tuning_id']}_t{index:02d}"
@@ -173,6 +174,7 @@ def _summary(tuning: dict, base_path, trials: list[dict]) -> dict:
         "search_seed": tuning["search_seed"],
         "seeds": tuning["seeds"],
         "set": tuning.get("set", {}),
+        "trial_set": tuning.get("trial_set", {}),
         "space": tuning["space"],
         "done": len(trials),
         "trials": trials,
