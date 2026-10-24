@@ -8,7 +8,7 @@ from nesybench.logic.kb import load_kb
 KB_YAML = """
 version: test_v1
 axioms:
-  - {id: A1, group: ddos, origin: mechanism, target: DoS,
+  - {id: A1, group: dos, origin: mechanism, target: DoS,
      all: [{col: flag, op: eq, value: S0}, {col: count, op: gt, tau: 250, s: 5}]}
   - {id: A2, group: dataset, origin: data, target: Probe,
      all: [{col: rate, op: le, tau: 0.5, s: 0.1}]}
@@ -45,7 +45,7 @@ def test_exclude_unknown_or_everything(kb):
     with pytest.raises(ValueError, match="matches no axiom"):
         edit_kb(kb, {"exclude": ["A9"]})
     with pytest.raises(ValueError, match="every axiom"):
-        edit_kb(kb, {"exclude": ["group:ddos", "group:dataset"]})
+        edit_kb(kb, {"exclude": ["group:dos", "group:dataset"]})
 
 
 def test_unknown_key(kb):

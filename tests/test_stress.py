@@ -5,7 +5,7 @@ from nesybench import stress
 KB_YAML = """
 version: toy_v1
 axioms:
-  - {id: A1, group: ddos, origin: mechanism, target: DoS,
+  - {id: A1, group: dos, origin: mechanism, target: DoS,
      all: [{col: count, op: gt, tau: 30, s: 5}]}
   - {id: A2, group: dataset, origin: data, target: Probe,
      all: [{col: rate, op: gt, tau: 0.9, s: 0.1}]}
@@ -28,7 +28,7 @@ def test_e3_one_per_axiom_and_group(tmp_path):
     stress.main(["--base", str(_base(tmp_path)), "--experiment", "e3", "--out", str(out)])
     names = sorted(p.stem for p in out.glob("*.yaml"))
     assert names == ["toy_ltn_full_e3_no_A1", "toy_ltn_full_e3_no_A2",
-                     "toy_ltn_full_e3_no_gdataset", "toy_ltn_full_e3_no_gddos"]
+                     "toy_ltn_full_e3_no_gdataset", "toy_ltn_full_e3_no_gdos"]
     cfg = yaml.safe_load((out / "toy_ltn_full_e3_no_A1.yaml").read_text())
     assert cfg["kb_edit"] == {"exclude": ["A1"]}
     assert cfg["seeds"] == [0, 1] and "trial_set" not in cfg and cfg["evaluate_test"] is False

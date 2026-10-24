@@ -1,4 +1,4 @@
-# group: domain | ddos | dataset   origin: mechanism | data | internship
+# group: domain | dos | dataset   origin: mechanism | data | internship
 # Found with a depth-3 tree on train + validation (seed 0), checked on the other half; test never read.
 # Train stats are over the whole of train + validation (1372272 flows).
 # s: width of the sigmoid around tau, a hyperparameter of the logic

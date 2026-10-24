@@ -3,7 +3,7 @@
 Config, applied to the KB a model trains on; C5 keeps reading the original file.
 
     kb_edit:
-      exclude: [A1, group:ddos]        # ids or group:<name>
+      exclude: [A1, group:dos]         # ids or group:<name>
       swap_target: {A2: DoS}           # id -> new target class
       tau_shift: {axioms: [A1], by: 0.05}   # percentile points of the train column
       copies: {axiom: A1, n: 6, spread: 0.1}

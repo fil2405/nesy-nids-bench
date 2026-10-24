@@ -7,7 +7,7 @@ import yaml
 from scipy.special import expit
 
 OPS = ("eq", "gt", "le")
-GROUPS = ("domain", "ddos", "dataset")
+GROUPS = ("domain", "dos", "dataset")
 ORIGINS = ("mechanism", "data", "internship")
 
 

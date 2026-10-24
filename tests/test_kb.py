@@ -11,7 +11,7 @@ KB_YAML = """
 version: test_v1
 axioms:
   - id: A1
-    group: ddos
+    group: dos
     origin: mechanism
     target: DoS
     train: {support: 0.5, confidence: 0.9}
@@ -131,7 +131,7 @@ def test_target_index(kb):
     ("op: gt, tau: 1, s: 0", "s must be"),
 ])
 def test_bad_condition(tmp_path, bad, match):
-    text = ("version: v\naxioms:\n  - {id: X, group: ddos, origin: data, target: DoS,\n"
+    text = ("version: v\naxioms:\n  - {id: X, group: dos, origin: data, target: DoS,\n"
             f"     all: [{{col: c, {bad}}}]}}\n")
     with pytest.raises(ValueError, match=match):
         load_kb(write(tmp_path, text))
@@ -142,7 +142,7 @@ def test_bad_group_and_duplicates(tmp_path):
     with pytest.raises(ValueError, match="group"):
         load_kb(write(tmp_path, f"version: v\naxioms: [{one % 'nope'}]\n"))
     with pytest.raises(ValueError, match="duplicate"):
-        load_kb(write(tmp_path, f"version: v\naxioms: [{one % 'ddos'}, {one % 'ddos'}]\n"))
+        load_kb(write(tmp_path, f"version: v\naxioms: [{one % 'dos'}, {one % 'dos'}]\n"))
 
 
 @pytest.mark.skipif(not (REPO_ROOT / "kb" / "nslkdd_v1.yaml").exists(),

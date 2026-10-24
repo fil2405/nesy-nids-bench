@@ -11,7 +11,7 @@ KB_YAML = """
 version: test_v1
 axioms:
   - id: A1
-    group: ddos
+    group: dos
     origin: mechanism
     target: DoS
     all:

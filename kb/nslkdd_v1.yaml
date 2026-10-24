@@ -1,9 +1,9 @@
-# group: domain | ddos | dataset   origin: mechanism | data | internship
+# group: domain | dos | dataset   origin: mechanism | data | internship
 # s: width of the sigmoid around tau, a hyperparameter of the logic
 version: nslkdd_v1
 axioms:
   - id: A1
-    group: ddos
+    group: dos
     origin: mechanism
     target: DoS
     train: {support: 0.695, confidence: 0.999, benign_hit: 0}

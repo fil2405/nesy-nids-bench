@@ -102,7 +102,7 @@ def test_rule_only_saves_its_kb(folder):
     kb.write_text(
         "version: t_v1\n"
         "axioms:\n"
-        "  - {id: A1, group: ddos, origin: mechanism, target: B,\n"
+        "  - {id: A1, group: dos, origin: mechanism, target: B,\n"
         "     all: [{col: flag, op: eq, value: S0}]}\n")
     out = folder / "out"
     out.mkdir()

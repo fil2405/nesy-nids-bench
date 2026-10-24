@@ -14,7 +14,7 @@ NAMES = ["Normal", "DoS", "Probe"]
 KB_YAML = """
 version: test_v1
 axioms:
-  - {id: A1, group: ddos, origin: mechanism, target: DoS,
+  - {id: A1, group: dos, origin: mechanism, target: DoS,
      all: [{col: flag, op: eq, value: S0}]}
   - {id: A2, group: dataset, origin: data, target: Probe,
      all: [{col: rate, op: gt, tau: 0.5}]}

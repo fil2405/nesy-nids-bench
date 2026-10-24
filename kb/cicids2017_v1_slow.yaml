@@ -1,4 +1,4 @@
-# group: domain | ddos | dataset   origin: mechanism | data | internship
+# group: domain | dos | dataset   origin: mechanism | data | internship
 # Found with a depth-3 tree on train + validation (seed 0), checked on the other half; test never read.
 # Train stats are over the whole of train + validation (1372272 flows).
 # s: width of the sigmoid around tau, a hyperparameter of the logic
@@ -24,7 +24,7 @@ axioms:
       - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
       - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}
   - id: S1
-    group: ddos
+    group: dos
     origin: mechanism
     target: DoS
     # Slow DoS (Ch. 3): long and slow flow. Cuts fixed before looking at attacks: Flow Duration above the
