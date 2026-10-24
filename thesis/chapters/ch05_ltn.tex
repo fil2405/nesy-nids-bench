@@ -346,10 +346,11 @@ $a<1$, so the stable conjunction is no longer a t-norm
 \citep{badreddine2022ltn}. The authors report that the stable operators
 improve numerical stability in their experiments. We take the stable product
 configuration, with the Reichenbach implication and $A_{pME}$ for every
-universal quantifier. Whether the distortion changes the satisfaction degrees
-that the benchmark reports is a question for the experiments, and $\epsilon$ is
-kept small for that reason.
-% FIXME(open): a sensitivity check of the results to p and epsilon is not yet planned in the experiments; decide in Ch. 7 whether it belongs there.
+universal quantifier. In the implementation the stable projections act in the aggregator only; the
+conjunction of the conditions and the Reichenbach implication are computed in their
+plain form. $\epsilon$ is kept small and fixed, and it is not varied in the experiments. The
+sensitivity experiment E4 varies the exponent $p$ and the crispness of the
+conditions (\cref{sec:kb-versions}).
 
 The exponent $p$ decides where the gradient goes. The derivative of $A_{pME}$
 with respect to $a_i$ contains the factor $(1-a_i)^{p-1}$
@@ -516,8 +517,7 @@ its parameters during training. At inference the network is called as a plain
 multilayer perceptron, with the same number of parameters and the same forward
 pass as the baseline. The condition predicates and the axioms are not part of
 the prediction. This is our reading of the sources for our design, and the
-latency experiment E12 is meant to test it.
-% FIXME(open): E12 (cost of an LTN-trained MLP at inference against the baseline) is defined in Ch. 7, \cref{ch:usecases-design}; check the wording there.
+latency experiment E12, defined in \cref{sec:symbolic-placement}, is meant to test it.
 It has a limit. The rules are not enforced at inference. A unit that violates
 an axiom is still classified by the network, which is why the satisfaction on
 test data is a result and not a property. Keeping a symbolic component in the
