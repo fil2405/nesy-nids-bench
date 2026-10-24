@@ -1,11 +1,9 @@
-from pathlib import Path
-
 import numpy as np
 import tensorflow as tf
 import tf_keras
 
-from nesybench.data.base import REPO_ROOT
-from nesybench.logic.kb import antecedents, load_kb, target_index
+from nesybench.logic.edit import load_run_kb
+from nesybench.logic.kb import antecedents, target_index
 from nesybench.logic.semantics import axiom_degrees, check_p, domain_degrees, sat_agg
 from nesybench.models.mlp import build_mlp, save_mlp
 from nesybench.models.sampling import sample_batches
@@ -40,8 +38,7 @@ class LTNFull:
         if not 0.0 <= weight <= 1.0:
             raise ValueError(f"domain_weight must be in [0, 1], got {weight}")
 
-        kb_path = Path(config["kb"])
-        kb = load_kb(kb_path if kb_path.is_absolute() else REPO_ROOT / kb_path)
+        kb = load_run_kb(config, splits.raw("train"))
         targets = target_index(kb, splits.class_names)
         A_train = antecedents(kb, splits.raw("train"), crisp=crisp, s_scale=s_scale).astype("float32")
 
@@ -114,6 +111,7 @@ class LTNFull:
             "class_weight_power": None,
             "kb_version": kb.version,
             "kb_ids": kb.ids,
+            "kb_edit": config.get("kb_edit"),
             "domain_weight": weight,
             "crisp": crisp,
             "s_scale": s_scale,

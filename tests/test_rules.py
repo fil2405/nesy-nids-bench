@@ -64,3 +64,20 @@ def test_conflict_goes_to_the_first_axiom_and_is_counted(cfg):
 def test_needs_a_kb():
     with pytest.raises(ValueError, match="kb"):
         RuleOnly().fit(_splits(pd.DataFrame()), {})
+
+
+def test_kb_edit_removes_an_axiom_and_is_recorded(cfg):
+    df = pd.DataFrame({"flag": ["S0", "SF", "SF"], "rate": [0.0, 0.9, 0.1]})
+    m = RuleOnly()
+    info = m.fit(_splits(df), {**cfg, "kb_edit": {"exclude": ["A2"]}})
+    assert info["kb_ids"] == ["A1"]
+    assert info["kb_edit"] == {"exclude": ["A2"]}
+    assert m.predict_proba(_splits(df), "val").argmax(axis=1).tolist() == [1, 0, 0]
+
+
+def test_kb_edit_saves_the_edited_kb(cfg, tmp_path):
+    df = pd.DataFrame({"flag": ["S0", "SF"], "rate": [0.0, 0.9]})
+    m = RuleOnly()
+    m.fit(_splits(df), {**cfg, "kb_edit": {"exclude": ["A1"]}})
+    m.save(tmp_path)
+    assert "A1" not in (tmp_path / "kb.yaml").read_text()

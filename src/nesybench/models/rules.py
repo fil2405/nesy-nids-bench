@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 
 from nesybench.logic.c5 import THRESHOLD
-from nesybench.logic.kb import antecedents, load_kb, target_index
-from nesybench.data.base import REPO_ROOT
+from nesybench.logic.edit import dump_kb, kb_file, load_run_kb
+from nesybench.logic.kb import antecedents, target_index
 
 DEFAULT_CLASS = 0  # benign class, when no rule fires
 
@@ -17,15 +17,15 @@ class RuleOnly:
     def fit(self, splits, config):
         if not config.get("kb"):
             raise ValueError("rule_only needs a kb path in the config")
-        path = Path(config["kb"])
-        self.kb_path = path if path.is_absolute() else REPO_ROOT / path
-        self.kb = load_kb(self.kb_path)
+        self.kb = load_run_kb(config, splits.raw("train"))
+        self.kb_path = None if config.get("kb_edit") else kb_file(config)
         self.n_classes = len(splits.class_names)
         self.targets = target_index(self.kb, splits.class_names)
         fired = self._fired(splits.raw("train"))
         return {
             "kb_version": self.kb.version,
             "kb_ids": self.kb.ids,
+            "kb_edit": config.get("kb_edit"),
             "train_covered": int(fired.any(axis=1).sum()),
             "train_conflicts": int(self._conflicts(fired).sum()),
         }
@@ -42,7 +42,10 @@ class RuleOnly:
 
     def save(self, directory):
         directory = Path(directory)
-        shutil.copy(self.kb_path, directory / "kb.yaml")
+        if self.kb_path is not None:
+            shutil.copy(self.kb_path, directory / "kb.yaml")
+        else:
+            dump_kb(self.kb, directory / "kb.yaml")
         rules = {
             "kb_version": self.kb.version,
             "default_class": DEFAULT_CLASS,
