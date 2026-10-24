@@ -31,41 +31,42 @@ axioms:
     group: dataset
     origin: internship
     target: R2L
-    train: {}
+    train: {support: 0.315, confidence: 0.264, benign_hit: 873}
     all:
       - {col: is_guest_login, op: gt, tau: 0.5, s: 0.1}
   - id: R2
     group: dataset
     origin: internship
     target: R2L
-    train: {}
+    train: {support: 0.052, confidence: 0.426, benign_hit: 68}
     all:
       - {col: num_failed_logins, op: gt, tau: 0.5, s: 0.1}
   - id: R3
     group: dataset
     origin: internship
     target: R2L
-    train: {}
+    train: {support: 0.425, confidence: 0.158, benign_hit: 1256}
     all:
       - {col: hot, op: gt, tau: 0.5, s: 0.1}
   - id: U1
     group: dataset
     origin: internship
     target: U2R
-    train: {}
+    train: {support: 0.5, confidence: 0.154, benign_hit: 137}
     all:
       - {col: root_shell, op: gt, tau: 0.5, s: 0.1}
   - id: U2
     group: dataset
     origin: internship
     target: U2R
-    train: {}
+    # covers no U2R row of the train and 79 Normal ones; kept as the union has it, E3 can drop it
+    train: {support: 0.0, confidence: 0.0, benign_hit: 79}
     all:
       - {col: su_attempted, op: gt, tau: 0.5, s: 0.1}
   - id: U3
     group: dataset
     origin: internship
     target: U2R
-    train: {}
+    train: {support: 0.442, confidence: 0.08, benign_hit: 253}
     all:
       - {col: num_file_creations, op: gt, tau: 0.5, s: 0.1}
