@@ -1,6 +1,6 @@
 import numpy as np
 
-from nesybench.metrics import compute_metrics, pr_auc_per_class, operator_metrics
+from nesybench.metrics import compute_metrics, pr_auc_per_class, operator_metrics, recall_by_label
 
 NAMES = ["Normal", "DoS", "Probe", "R2L", "U2R"]
 
@@ -88,3 +88,18 @@ def test_operator_metrics_keep_the_order_of_tiny_benign_probabilities():
     proba = np.column_stack([p_normal, 1 - p_normal]).astype(np.float32)
     m = operator_metrics(y, proba, tpr_levels=(1.0,), fpr_levels=(0.5,))
     assert m["fpr_at_tpr"]["1"] == 0.0
+
+
+def test_recall_by_label():
+    labels = ["Hulk", "Hulk", "Slowloris", "Slowloris", "BENIGN"]
+    y_true = np.array([1, 1, 1, 1, 0])
+    y_pred = np.array([1, 1, 1, 0, 0])
+    out = recall_by_label(labels, y_true, y_pred)
+    assert out["Hulk"] == {"n": 2, "recall": 1.0, "detected": 1.0}
+    assert out["Slowloris"] == {"n": 2, "recall": 0.5, "detected": 0.5}
+    assert out["BENIGN"]["recall"] == 1.0 and out["BENIGN"]["detected"] == 0.0
+
+
+def test_detected_counts_a_wrong_attack_class():
+    out = recall_by_label(["x"], np.array([1]), np.array([2]))
+    assert out["x"] == {"n": 1, "recall": 0.0, "detected": 1.0}

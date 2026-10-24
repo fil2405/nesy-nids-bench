@@ -1,7 +1,7 @@
 """Configs of the stress runs (E3, E11, E13) from a tuned LTN-full config.
 
     python -m nesybench.stress --base results/tuning/tune_nslkdd_ltn_full_best.yaml \
-        --experiment base|e3|e11|e13 [--kb FILE --tag NAME] [--out configs/stress]
+        --experiment base|e3|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
 
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
@@ -63,18 +63,43 @@ def e13(base: dict, kb, axiom=None, counts=COPIES) -> list[dict]:
                     {"copies": {"axiom": axiom, "n": n, "spread": 0.1}}) for n in counts]
 
 
+def e9(base: dict, labels, tag: str) -> dict:
+    """Any arm: the fine labels never seen in train or validation, all in the test part."""
+    if not labels or tag == "kb":
+        raise SystemExit("e9 needs --holdout LABEL... and --tag NAME")
+    if base.get("split") != "stratified_random":
+        raise SystemExit("e9 holds labels out of a stratified_random split")
+    config = _derive(base, f"e9_{tag}", None)
+    config.pop("kb_edit")
+    config["split_params"] = {**base.get("split_params", {}), "holdout_labels": list(labels)}
+    return config
+
+
+def _write(configs, out):
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    for config in configs:
+        (out / f"{config['run_id']}.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
+        print(out / f"{config['run_id']}.yaml")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
-    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e11", "e13"])
+    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e9", "e11", "e13"])
     parser.add_argument("--out", default="configs/stress")
     parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant")
     parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
+    parser.add_argument("--holdout", nargs="+", help="E9: fine labels kept out of train")
     parser.add_argument("--swap", nargs="*", default=[], help="E11: ID:class")
     parser.add_argument("--axiom", help="E13: axiom to copy (default: the first)")
     args = parser.parse_args(argv)
 
     base = load_config(args.base)
+    if args.experiment == "e9":
+        configs = [e9(base, args.holdout, args.tag)]
+        _write(configs, args.out)
+        return
     if base.get("model") != "ltn_full" or not base.get("kb"):
         raise SystemExit("the base config must be an ltn_full config with a kb")
     if args.kb:
@@ -90,11 +115,7 @@ def main(argv=None):
     else:
         configs = e13(base, kb, args.axiom)
 
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
-    for config in configs:
-        (out / f"{config['run_id']}.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
-        print(out / f"{config['run_id']}.yaml")
+    _write(configs, args.out)
 
 
 if __name__ == "__main__":

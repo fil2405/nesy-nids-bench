@@ -115,3 +115,27 @@ def test_raw_missing_or_unknown_part_is_an_error():
     bare = s._replace(raw_val=None)
     with pytest.raises(ValueError, match="raw rows"):
         bare.raw("val")
+
+def test_holdout_labels_go_to_test_only():
+    spec = get_spec("cicids2017")
+    rows = []
+    for cls, labels in {"Normal": ["BENIGN"], "DoS": ["DoS Hulk", "DoS Slowloris"],
+                        "DDoS": ["DDoS"]}.items():
+        rows += [{"label": lab, "class": cls, "f": i} for lab in labels for i in range(60)]
+    df = pd.DataFrame(rows)
+    train, val, test = split_data("stratified_random", df, None, spec, 0,
+                                  holdout_labels=["DoS Slowloris"])
+    assert (train["label"] == "DoS Slowloris").sum() == 0
+    assert (val["label"] == "DoS Slowloris").sum() == 0
+    assert (test["label"] == "DoS Slowloris").sum() == 60
+    assert len(train) + len(val) + len(test) == len(df)
+
+
+def test_holdout_cannot_empty_a_class_or_name_a_missing_label():
+    spec = get_spec("cicids2017")
+    df = pd.DataFrame({"label": ["BENIGN"] * 30 + ["DDoS"] * 30,
+                       "class": ["Normal"] * 30 + ["DDoS"] * 30, "f": range(60)})
+    with pytest.raises(ValueError, match="every row"):
+        split_data("stratified_random", df, None, spec, 0, holdout_labels=["DDoS"])
+    with pytest.raises(ValueError, match="not in the data"):
+        split_data("stratified_random", df, None, spec, 0, holdout_labels=["nope"])

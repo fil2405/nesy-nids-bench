@@ -5,6 +5,7 @@
         [--rank run1 run2 run3 ...] [--tex out.tex] [--cd-plot cd.pdf]
 
 metric: macro_f1 | mcc | accuracy | recall:CLASS | f1:CLASS | precision:CLASS | pr_auc:CLASS
+       | label_recall:LABEL | label_detected:LABEL   (fine label; detected = predicted not Normal)
 Difference is B minus A. Holm over the pairs of one call.
 """
 import argparse
@@ -22,6 +23,8 @@ from nesybench.compare import friedman_nemenyi, holm, paired  # noqa: E402
 def metric_value(rec, part, metric):
     m = rec["metrics"][part]
     name, _, cls = metric.partition(":")
+    if name in ("label_recall", "label_detected"):  # one fine label, e.g. label_detected:DoS Slowloris
+        return m["by_label"][cls][name.split("_")[1]]
     if not cls:
         return m[name]
     return m[name][m["class_names"].index(cls)]

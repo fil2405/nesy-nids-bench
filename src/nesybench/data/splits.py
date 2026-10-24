@@ -3,9 +3,10 @@
 They return raw frames: rules and C5 metrics need the untransformed columns.
 """
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from .base import class_index
+from .base import CLASS_COL, LABEL_COL, class_index
 
 
 def _keep_train_fraction(train, spec, fraction, seed):
@@ -59,16 +60,34 @@ def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fractio
             val_part, test_df)
 
 
+def _hold_out(train_df, labels):
+    """Rows of the given fine labels, apart; every class keeps at least one other label."""
+    labels = list(labels)
+    unknown = sorted(set(labels) - set(train_df[LABEL_COL]))
+    if unknown:
+        raise ValueError(f"holdout_labels not in the data: {unknown}")
+    mask = train_df[LABEL_COL].isin(labels)
+    emptied = sorted(set(train_df.loc[mask, CLASS_COL]) - set(train_df.loc[~mask, CLASS_COL]))
+    if emptied:
+        raise ValueError(f"holdout_labels remove every row of the classes {emptied}")
+    return train_df[~mask], train_df[mask]
+
+
 def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
                       test_fraction=0.2, test_seed=0, train_fraction=1.0,
-                      train_class_fractions=None):
+                      train_class_fractions=None, holdout_labels=None):
     """One frame cut into train, validation and test, stratified by class.
 
     The test cut uses test_seed, so every run sees the same test; only the
     train/validation cut follows the run seed (as with the official test file).
+    holdout_labels: fine labels never seen in train or validation; all their rows
+    are added to the test part (E9, attack variants).
     """
     if test_df is not None:
         raise ValueError(f"{spec.name} has an official test file, use another split")
+    held = None
+    if holdout_labels:
+        train_df, held = _hold_out(train_df, holdout_labels)
     rest, test = train_test_split(
         train_df,
         test_size=test_fraction,
@@ -81,6 +100,8 @@ def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
         stratify=class_index(rest, spec),
         random_state=seed,
     )
+    if held is not None:
+        test = pd.concat([test, held])
     return _shrink_train(train, spec, seed, train_fraction, train_class_fractions), val, test
 
 

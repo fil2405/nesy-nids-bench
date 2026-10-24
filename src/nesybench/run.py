@@ -18,7 +18,8 @@ from nesybench.export import artifact_dir, file_sizes, save_preprocessing
 from nesybench.data.splits import split_data
 from nesybench.logic.c5 import axiom_report
 from nesybench.logic.kb import load_kb
-from nesybench.metrics import compute_metrics, operator_metrics, pr_auc_per_class
+from nesybench.data.base import LABEL_COL
+from nesybench.metrics import compute_metrics, operator_metrics, pr_auc_per_class, recall_by_label
 from nesybench.models import get_model
 from nesybench.timing import Stopwatch
 from nesybench.utils.results import run_path, save_run
@@ -57,6 +58,9 @@ def _evaluate(model, splits, part: str, timings: dict, kb=None):
     metrics = compute_metrics(y, proba.argmax(axis=1), splits.class_names)
     metrics["pr_auc"] = pr_auc_per_class(y, proba, splits.class_names)
     metrics.update(operator_metrics(y, proba))
+    raw = getattr(splits, f"raw_{part}", None)
+    if raw is not None and LABEL_COL in raw.columns:
+        metrics["by_label"] = recall_by_label(raw[LABEL_COL], y, proba.argmax(axis=1))
     if kb is not None:  # crisp: a rule fires when every condition holds at its tau
         metrics["c5"] = axiom_report(kb, splits.raw(part), proba, splits.class_names,
                                      crisp=True, y_true=y)

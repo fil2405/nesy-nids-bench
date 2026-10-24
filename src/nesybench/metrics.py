@@ -58,3 +58,16 @@ def operator_metrics(y_true, proba, benign=0,
         "tpr_at_fpr": {f"{f:g}": float(tpr[np.searchsorted(fpr, f, side="right") - 1])
                        for f in fpr_levels},
     }
+
+
+def recall_by_label(labels, y_true, y_pred, benign=0):
+    """Per fine label: rows, class-level recall and detection rate (predicted not benign)."""
+    labels = np.asarray(labels)
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    out = {}
+    for name in sorted(set(labels)):
+        rows = labels == name
+        out[str(name)] = {"n": int(rows.sum()),
+                          "recall": float((y_pred[rows] == y_true[rows]).mean()),
+                          "detected": float((y_pred[rows] != benign).mean())}
+    return out

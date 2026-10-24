@@ -60,3 +60,20 @@ def test_other_kb_and_base(tmp_path):
     cfg = yaml.safe_load(path.read_text())
     assert path.stem == "toy_ltn_full_weak" and cfg["run_id"] == "toy_ltn_full_weak"
     assert cfg["kb"] == cfg["c5_kb"] == str(other) and "kb_edit" not in cfg
+
+
+def test_e9_holds_labels_out_of_any_arm(tmp_path):
+    out = tmp_path / "o"
+    cfg = {"run_id": "toy_mlp", "dataset": "cicids2017", "split": "stratified_random",
+           "split_params": {"test_seed": 0}, "model": "mlp_ce", "kb": None, "seeds": [0],
+           "training": {}, "evaluate_test": False}
+    base = tmp_path / "mlp.yaml"
+    base.write_text(yaml.safe_dump(cfg))
+    stress.main(["--base", str(base), "--experiment", "e9", "--out", str(out),
+                 "--holdout", "DoS Slowloris", "DoS Slowhttptest", "--tag", "slow"])
+    (path,) = out.glob("*.yaml")
+    got = yaml.safe_load(path.read_text())
+    assert path.stem == "toy_mlp_e9_slow"
+    assert got["split_params"] == {"test_seed": 0,
+                                   "holdout_labels": ["DoS Slowloris", "DoS Slowhttptest"]}
+    assert "kb_edit" not in got
