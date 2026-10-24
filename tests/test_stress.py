@@ -48,3 +48,15 @@ def test_e13_counts(tmp_path):
     stress.main(["--base", str(_base(tmp_path)), "--experiment", "e13", "--out", str(out)])
     names = sorted(p.stem for p in out.glob("*.yaml"))
     assert set(names) == {f"toy_ltn_full_e13_k{k}" for k in (4, 6, 8, 10)}
+
+
+def test_other_kb_and_base(tmp_path):
+    out = tmp_path / "o"
+    other = tmp_path / "weak.yaml"
+    other.write_text(KB_YAML.replace("toy_v1", "toy_v1_weak"))
+    stress.main(["--base", str(_base(tmp_path)), "--experiment", "base", "--out", str(out),
+                 "--kb", str(other), "--tag", "weak"])
+    (path,) = out.glob("*.yaml")
+    cfg = yaml.safe_load(path.read_text())
+    assert path.stem == "toy_ltn_full_weak" and cfg["run_id"] == "toy_ltn_full_weak"
+    assert cfg["kb"] == cfg["c5_kb"] == str(other) and "kb_edit" not in cfg

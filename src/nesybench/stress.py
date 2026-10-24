@@ -1,7 +1,7 @@
 """Configs of the stress runs (E3, E11, E13) from a tuned LTN-full config.
 
     python -m nesybench.stress --base results/tuning/tune_nslkdd_ltn_full_best.yaml \
-        --experiment e3|e11|e13 [--out configs/stress]
+        --experiment base|e3|e11|e13 [--kb FILE --tag NAME] [--out configs/stress]
 
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
@@ -66,8 +66,10 @@ def e13(base: dict, kb, axiom=None, counts=COPIES) -> list[dict]:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
-    parser.add_argument("--experiment", required=True, choices=["e3", "e11", "e13"])
+    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e11", "e13"])
     parser.add_argument("--out", default="configs/stress")
+    parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant")
+    parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
     parser.add_argument("--swap", nargs="*", default=[], help="E11: ID:class")
     parser.add_argument("--axiom", help="E13: axiom to copy (default: the first)")
     args = parser.parse_args(argv)
@@ -75,8 +77,13 @@ def main(argv=None):
     base = load_config(args.base)
     if base.get("model") != "ltn_full" or not base.get("kb"):
         raise SystemExit("the base config must be an ltn_full config with a kb")
+    if args.kb:
+        base["kb"] = base["c5_kb"] = args.kb
+        base["run_id"] = f"{base['run_id']}_{args.tag}"
     kb = load_kb(kb_file(base))
-    if args.experiment == "e3":
+    if args.experiment == "base":
+        configs = [{**copy.deepcopy(base), "evaluate_test": False}]
+    elif args.experiment == "e3":
         configs = e3(base, kb)
     elif args.experiment == "e11":
         configs = e11(base, kb, swap=args.swap)

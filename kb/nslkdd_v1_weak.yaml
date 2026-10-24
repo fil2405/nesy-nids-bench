@@ -1,0 +1,71 @@
+# group: domain | ddos | dataset   origin: mechanism | data | internship
+# A1-A3 as in nslkdd_v1; R1-R3 and U1-U3 are broad rules for R2L and U2R, each a term of an OR.
+# Train stats: python analysis/kb_train_stats.py kb/nslkdd_v1_weak.yaml
+# s: width of the sigmoid around tau, a hyperparameter of the logic
+version: nslkdd_v1_weak
+axioms:
+  - id: A1
+    group: ddos
+    origin: mechanism
+    target: DoS
+    train: {support: 0.695, confidence: 0.999, benign_hit: 0}
+    all:
+      - {col: flag, op: eq, value: S0}
+      - {col: count, op: gt, tau: 30, s: 5}
+      - {col: dst_host_diff_srv_rate, op: le, tau: 0.95, s: 0.02}
+  - id: A2
+    group: dataset
+    origin: mechanism
+    target: Probe
+    train: {support: 0.194, confidence: 0.960, benign_hit: 68}
+    all:
+      - {col: dst_host_diff_srv_rate, op: gt, tau: 0.95, s: 0.02}
+  - id: A3
+    group: dataset
+    origin: data
+    target: Probe
+    train: {support: 0.187, confidence: 0.900, benign_hit: 146}
+    all:
+      - {col: flag, op: eq, value: RSTR}
+  - id: R1
+    group: dataset
+    origin: internship
+    target: R2L
+    train: {}
+    all:
+      - {col: is_guest_login, op: gt, tau: 0.5, s: 0.1}
+  - id: R2
+    group: dataset
+    origin: internship
+    target: R2L
+    train: {}
+    all:
+      - {col: num_failed_logins, op: gt, tau: 0.5, s: 0.1}
+  - id: R3
+    group: dataset
+    origin: internship
+    target: R2L
+    train: {}
+    all:
+      - {col: hot, op: gt, tau: 0.5, s: 0.1}
+  - id: U1
+    group: dataset
+    origin: internship
+    target: U2R
+    train: {}
+    all:
+      - {col: root_shell, op: gt, tau: 0.5, s: 0.1}
+  - id: U2
+    group: dataset
+    origin: internship
+    target: U2R
+    train: {}
+    all:
+      - {col: su_attempted, op: gt, tau: 0.5, s: 0.1}
+  - id: U3
+    group: dataset
+    origin: internship
+    target: U2R
+    train: {}
+    all:
+      - {col: num_file_creations, op: gt, tau: 0.5, s: 0.1}
