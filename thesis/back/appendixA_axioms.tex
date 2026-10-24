@@ -1,0 +1,57 @@
+\chapter{Full axiom set in Real Logic}
+\label{app:axioms}
+
+This appendix lists the axioms of the knowledge bases described in
+\cref{sec:kb-format}. A row with conditions $C_1,\dots,C_k$ and target class $T$
+is the axiom $\forall x\,\bigl(C_1(x)\wedge\dots\wedge C_k(x)\rightarrow
+T(x)\bigr)$ over the classified units. An equality is a crisp predicate, and a
+comparison with a threshold is graded with the width of the file or crisp, as the
+run asks.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The knowledge bases of the thesis. The confidence is measured on the
+training data of the dataset: the whole training part of NSL-KDD (125\,973
+records), the training and validation parts of one seed of CIC-IDS2017
+(1\,372\,272 flows), and the training day of CIC-DDoS2019 after sampling and
+cleaning (340\,560 flows). Groups: D = \texttt{dos}, S = \texttt{dataset}.
+Origins: M = \texttt{mechanism}, Da = \texttt{data}, I = \texttt{internship}.}
+\label{tab:kb-versions}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{2.9cm}p{0.6cm}p{5.0cm}p{1.0cm}p{1.1cm}p{0.9cm}@{}}
+\toprule
+Version & Id & Conditions & Target & Gr./Or. & Conf. \\
+\midrule
+\texttt{nslkdd\_v1} & A1
+  & \texttt{flag} = S0; \texttt{count} $>$ 30; \texttt{dst\_host\_diff\_srv\_rate} $\le$ 0.95
+  & DoS & D/M & 0.999 \\
+ & A2 & \texttt{dst\_host\_diff\_srv\_rate} $>$ 0.95 & Probe & S/M & 0.960 \\
+ & A3 & \texttt{flag} = RSTR & Probe & S/Da & 0.900 \\
+\texttt{\_weak} & R1 & \texttt{is\_guest\_login} $>$ 0.5 & R2L & S/I & 0.264 \\
+ & R2 & \texttt{num\_failed\_logins} $>$ 0.5 & R2L & S/I & 0.426 \\
+ & R3 & \texttt{hot} $>$ 0.5 & R2L & S/I & 0.158 \\
+ & U1 & \texttt{root\_shell} $>$ 0.5 & U2R & S/I & 0.154 \\
+ & U2 & \texttt{su\_attempted} $>$ 0.5 & U2R & S/I & 0.000 \\
+ & U3 & \texttt{num\_file\_creations} $>$ 0.5 & U2R & S/I & 0.080 \\
+\midrule
+\texttt{cicids2017\_v1} & A1
+  & \texttt{Total Length of Fwd Packet} $\le$ 21; \texttt{Fwd Packet Length Max} $>$ 19.5; \texttt{Bwd Segment Size Avg} $>$ 1644.15
+  & DDoS & S/Da & 1.000 \\
+ & A2
+  & \texttt{Bwd Packet Length Std} $>$ 1302.36; \texttt{Fwd Packet Length Max} $>$ 214.5; \texttt{Bwd PSH Flags} $\le$ 2.5
+  & DoS & S/Da & 0.997 \\
+\texttt{\_r2l} & A3
+  & \texttt{Down/Up Ratio} $>$ 1.26914; \texttt{Average Packet Size} $\le$ 123.375; \texttt{Fwd IAT Total} $>$ 7\,475\,140
+  & R2L & S/Da & 0.892 \\
+\texttt{\_slow} & S1
+  & \texttt{Flow Duration} $>$ 116\,011\,844; \texttt{Flow Packets/s} $\le$ 0.382333
+  & DoS & D/M & 0.008 \\
+\midrule
+\texttt{cicddos2019\_v1} & A1
+  & \texttt{Protocol} = udp; \texttt{Total Backward Packets} $\le$ 0.5
+  & DDoS & D/M & 0.999 \\
+ & A2 & \texttt{Flow Packets/s} $\le$ 0.1828 & DDoS & S/Da & 0.967 \\
+\bottomrule
+\end{tabular}
+\end{table}

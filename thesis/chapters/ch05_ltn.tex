@@ -344,13 +344,14 @@ configuration \citep{badreddine2022ltn}.
 The price is a small distortion. $T_P'(a,1)=(1-\epsilon)a+\epsilon\neq a$ for
 $a<1$, so the stable conjunction is no longer a t-norm
 \citep{badreddine2022ltn}. The authors report that the stable operators
-improve numerical stability in their experiments. We take the stable product
+improve numerical stability in their experiments. We take the product
 configuration, with the Reichenbach implication and $A_{pME}$ for every
-universal quantifier. In the implementation the stable projections act in the aggregator only; the
-conjunction of the conditions and the Reichenbach implication are computed in their
-plain form. $\epsilon$ is kept small and fixed, and it is not varied in the experiments. The
-sensitivity experiment E4 varies the exponent $p$ and the crispness of the
-conditions (\cref{sec:kb-versions}).
+universal quantifier. Of the stable operators we keep the stable aggregator
+only: the conjunction of the conditions and the Reichenbach implication are
+computed in their plain form. $\epsilon$ is kept small and fixed, and it is not
+varied in the experiments. The sensitivity experiment E4 varies the exponent
+$p$, the crispness of the conditions and the scale of their widths
+(\cref{sec:kb-format}).
 
 The exponent $p$ decides where the gradient goes. The derivative of $A_{pME}$
 with respect to $a_i$ contains the factor $(1-a_i)^{p-1}$
@@ -522,8 +523,9 @@ It has a limit. The rules are not enforced at inference. A unit that violates
 an axiom is still classified by the network, which is why the satisfaction on
 test data is a result and not a property. Keeping a symbolic component in the
 loop at inference would be a different design with a different cost, for
-example a rule check after the prediction. The thesis does not take it in its
-core experiments.
+example a rule check after the prediction. The thesis does not make it one of
+the compared arms, and measures it as an optional post-check in the second part
+of E12.
 
 \subsection{Scalability limits with many axioms and large batches}
 \label{sec:scalability-limits}
@@ -727,8 +729,9 @@ Two points limit their use. The conditions of the R2L and U2R axioms are
 content features of NSL-KDD, such as a guest login or a root shell. Flow
 records do not carry them, as \cref{sec:r2l-u2r-hard} notes. These axioms can
 be evaluated on NSL-KDD only, and a detector deployed on flow records could not
-use them. This is our judgment, and the benchmark keeps them as an NSL-KDD
-specific group. Second, the axioms were written after looking at the errors of
+use them. This is our judgment, and the benchmark keeps them, one axiom for each term of
+the disjunctions, in a variant of the NSL-KDD knowledge base with weak knowledge
+(\cref{sec:kb-format}). Second, the axioms were written after looking at the errors of
 one model on the training data. They are tuned to that model and dataset, and
 they are not independent knowledge like those of \cref{ch:attacks-ddos}. The
 results of the report are not used in this thesis.
@@ -737,8 +740,10 @@ results of the report are not used in this thesis.
 \label{sec:ddos-axioms}
 
 The seven axioms of \cref{tab:candidate-axioms} are the DDoS-specific group,
-and they join the knowledge base with the form of \cref{sec:predicate-design}.
-They cover the class that the internship axioms leave without a rule.
+written with the form of \cref{sec:predicate-design}. They cover the class that
+the internship axioms leave without a rule. Most of them need a window or a
+source, and \cref{sec:kb-elicitation} says which ones the knowledge bases of the
+experiments can hold.
 
 Two structural groups can be added. Mutual exclusivity states that a unit has
 one class, for example $\forall x\,\neg(\mathrm{Normal}(x)\wedge\mathrm{U2R}(x))$.
@@ -761,10 +766,11 @@ a softmax is an empirical question of the benchmark.
 
 Real Logic gives the predicates of \cref{ch:attacks-ddos} a degree of truth, and
 a fuzzy semantics turns a formula into a number that a network can maximise.
-The thesis takes the stable product configuration and trains a network with
-the architecture of the baseline on supervised and domain axioms. At inference
+The thesis takes the product configuration with a stable aggregator and
+trains a network with the architecture of the baseline on supervised and domain axioms. At inference
 the network is a plain multilayer perceptron, and the satisfaction of an axiom
-is measured and not assumed. The axioms are the seven of the attack
+is measured and not assumed. The candidate axioms are the seven of the attack
 taxonomy and the four of the internship, over one domain of classified units with
-graded conditions. The next chapter reviews the work on neurosymbolic detection
+graded conditions, and \cref{ch:usecases-design} draws the knowledge bases of the
+experiments from them and from the training data. The next chapter reviews the work on neurosymbolic detection
 that came before.
