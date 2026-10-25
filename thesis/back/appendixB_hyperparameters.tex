@@ -1,0 +1,59 @@
+\chapter{Hyperparameter search spaces and experiment datasets}
+\label{app:hyperparameters}
+
+\Cref{tab:tuning-spaces} gives the space of each arm (\cref{sec:matched-tuning}). Each arm
+is searched with 20 trials of 3 seeds. Ranges are uniform, log-uniform (log) or a list.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Search spaces.}
+\label{tab:tuning-spaces}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{2.3cm}p{10.3cm}@{}}
+\toprule
+Arm & Parameters searched \\
+\midrule
+MLP-CE & Learning rate, log $[3\cdot10^{-4}, 3\cdot10^{-3}]$. Weighted variant: also the
+  exponent of the class weights, $[0.25, 1]$ \\
+LTN-sup & Learning rate as above; exponent of the batch quota per class, $[0, 0.5]$;
+  minimum examples per class in a batch, $\{2,4,8,16\}$; exponent $p$ of the
+  aggregator, $\{1,2,4,6\}$ \\
+LTN-full & The four of LTN-sup; weight $w$ of the domain axioms, $\{0.1, 0.25, 0.5\}$;
+  scale of the widths $s$, log $[0.5, 2]$ \\
+Random Forest & Trees $\{100,300,500\}$; depth $\{$none$,10,20,30\}$; minimum leaf size
+  $\{1,2,5\}$; features per split $\{\sqrt{\cdot},\log_2,0.3\}$; exponent of the class
+  weights, $[0, 1]$ \\
+XGBoost & Learning rate, log $[0.03, 0.3]$; depth $\{3,\dots,10\}$; minimum child
+  weight, log $[1, 10]$; row and column subsample, $[0.6, 1]$ and $[0.5, 1]$; exponent
+  of the class weights, $[0, 1]$ \\
+Rule-only & None; nothing is learned \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): add the values selected by the tuning of each arm and dataset after the final runs.
+
+\section*{Datasets of the experiments}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\caption{Datasets of the experiments. N: NSL-KDD, I: CIC-IDS2017, D: CIC-DDoS2019.}
+\label{tab:experiment-data}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{3.2cm}p{1.7cm}p{7.6cm}@{}}
+\toprule
+Experiment & Datasets & Note \\
+\midrule
+E1, E2, E5, E6 & N; N; I; D & One per dataset, all arms, 10 seeds, test part \\
+E3, E11, E13 & N, I, D & From the tuned LTN-full; no new tuning \\
+E4 & N, I & One setting varied at a time \\
+E7, E8 & N, I, D & Training fractions; rare classes thinned (on D only Normal) \\
+E9 & I, D & Held-out labels; Portmap; transfer I to D \\
+E10, E12, E17 & I, N & Noise and evasion; post-check and latency; explanations \\
+E14, E15 & I & Streaming, if available \\
+E16 & N, I, D & Effort log \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): proposal, to confirm: the assignment of datasets in the table above; E10 has low priority and its perturbations are not yet defined.

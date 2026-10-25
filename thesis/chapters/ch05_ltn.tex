@@ -170,7 +170,6 @@ The same number, computed for one axiom on test data, is the raw material of
 the axiom-level satisfaction of contribution C5 in \cref{sec:contributions}.
 Its definition belongs to the benchmark, see
 \cref{sec:detection-quality-dimension}.
-% FIXME(open): \cref{sec:detection-quality-dimension} (Chapter 8, Sec. 8.2) renders as "??" until that chapter exists; C5 is defined formally there.
 
 Variables of different domains can be quantified together. By default every
 individual of one variable is paired with every individual of the others.
@@ -368,7 +367,8 @@ as in the paper and treat $p$ as a hyperparameter. A high $p$ has a cost in
 our setting. An axiom such as the SYN flood one is a heuristic with
 exceptions, and a single flash crowd could dominate its degree. This
 argument is ours.
-% FIXME(open): the value of p for each axiom is not fixed in Sec. 5.7; fix it in the methodology chapter (Ch. 8) with the other parameters of the logic.
+The benchmark uses one value of $p$ for all the axioms of a run and tunes it
+(\cref{sec:matched-tuning}).
 
 % ================================================================
 % 5.4 Learning as maximisation of satisfiability
@@ -426,7 +426,8 @@ through a propositional predicate $p_w\wedge\phi$, whose value could then be
 learned \citep{badreddine2022ltn}. The alternative is to aggregate each group
 separately and combine the two numbers. The framework does not choose among
 these. The weighting of the two groups is a design decision of the thesis.
-% FIXME(open): the weighting of supervised formulas and security axioms is not fixed in Sec. 5.7; fix it in the methodology chapter (Ch. 8).
+The benchmark aggregates the two groups separately and combines the two numbers
+with a weight that is tuned (\cref{sec:matched-tuning}).
 
 \subsection{Optimisation loop, batching and the role of the guarded quantifier}
 \label{sec:optimisation-loop}
@@ -490,8 +491,8 @@ With $p=2$ the degree of a universal formula is $1-\mathrm{RMSE}$, and very
 different situations give the same number. Ten percent of units that violate
 an axiom completely and half of the units with a degree of about $0.55$ both
 give about $0.68$. The example is ours. A single number hides the distribution,
-and the benchmark must report the operators and also a rate of violations.
-% FIXME(open): the rate of violations is the domain-rule violation rate of Ch. 8; \cref{sec:detection-quality-dimension} must say which threshold turns a degree into a violation.
+and the benchmark must report the operators and also a rate of violations
+(\cref{sec:rule-violation-rate}).
 The second reason is deeper. Badreddine et al. define logical consequence with
 a threshold, and they show that querying after learning can accept a false
 consequence. In their example every run of the optimiser reaches the same
