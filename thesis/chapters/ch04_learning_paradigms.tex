@@ -111,12 +111,12 @@ example. It adds to the loss a penalty on the size of the weights
 \citep{goodfellow2016deep}.
 
 Two points follow for the benchmark. First, the settings that control
-capacity and regularization must be chosen without the test set. Arp et al.
+capacity and regularization must be chosen without the test set
+(\cref{sec:no-leakage}). Arp et al.
 call the opposite practice data snooping, and recommend that test data stay
 apart until the final evaluation \citep{arp2022dosdonts}. Second, a fair
 comparison needs the same capacity on both sides, which is the
-matched-capacity requirement of the benchmark, and the same regularization.
-% FIXME(open): \cref{ch:benchmarking-methodology} (Chapter 8, Sec. 8.1.1 and 8.1.3) should be referenced here once it exists; matched capacity and test-set leakage are defined there.
+matched-capacity requirement of \cref{sec:matched-capacity}, and the same regularization.
 There is also a hypothesis to test. Domain axioms restrict what a model may
 learn, and they may therefore act like a regularizer. This is a hypothesis of
 the thesis and not a result, and the experiments test it.
@@ -750,9 +750,10 @@ description of the attack traffic. This list is ours.
 Besides the engineering effort, RQ4 asks what the approach returns in alerts
 that a human analyst can interpret and audit. A feature weight meets the second need only in part,
 because it does not say which condition of an attack held. A rule that fired
-does. Whether this difference matters to an analyst is an empirical question,
-and the usability measurements of the benchmark address it.
-% FIXME(open): the usability and explainability measurements are defined in Chapter 8 (Sec. 8.4, with the C5 metrics in Sec. 8.2); add \cref{ch:benchmarking-methodology} to the last sentence once that chapter exists.
+names one, although beside a learned model it agrees with the decision and does
+not cause it. Whether this difference matters to an analyst is an empirical
+question, and the usability measurements of \cref{sec:usability-dimension}
+address it.
 
 % ================================================================
 % 4.7 Summary
