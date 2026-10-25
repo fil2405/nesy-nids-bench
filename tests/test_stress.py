@@ -132,3 +132,52 @@ def test_e7_refuses_bad_input(tmp_path):
     with pytest.raises(SystemExit):
         stress.main(["--base", str(_arm(tmp_path)), "--experiment", "e7", "--out", str(out),
                      "--exclude", "A1"])
+
+
+def test_e8_thins_the_rare_classes_of_any_arm(tmp_path):
+    out = tmp_path / "o"
+    stress.main(["--base", str(_arm(tmp_path, "nslkdd")), "--experiment", "e8", "--out", str(out)])
+    names = sorted(p.stem for p in out.glob("*.yaml"))
+    assert names == ["toy_mlp_ce_e8_f10", "toy_mlp_ce_e8_f25", "toy_mlp_ce_e8_f50"]
+    got = yaml.safe_load((out / "toy_mlp_ce_e8_f25.yaml").read_text())
+    assert got["split_params"] == {"test_seed": 0, "min_keep_per_class": 5,
+                                   "train_class_fractions": {"R2L": 0.25, "U2R": 0.25}}
+    assert "kb_edit" not in got and "trial_set" not in got
+
+
+def test_e8_explicit_classes_and_levels(tmp_path):
+    out = tmp_path / "o"
+    stress.main(["--base", str(_arm(tmp_path, "cicddos2019")), "--experiment", "e8",
+                 "--out", str(out), "--levels", "0.2"])
+    (path,) = out.glob("*.yaml")
+    assert yaml.safe_load(path.read_text())["split_params"]["train_class_fractions"] == {"Normal": 0.2}
+    stress.main(["--base", str(_arm(tmp_path)), "--experiment", "e8", "--out", str(out),
+                 "--classes", "Probe", "--levels", "0.5"])
+    got = yaml.safe_load((out / "toy_mlp_ce_e8_f50.yaml").read_text())
+    assert got["split_params"]["train_class_fractions"] == {"Probe": 0.5}
+
+
+def test_e4_one_setting_at_a_time(tmp_path):
+    out = tmp_path / "o"
+    kb = tmp_path / "kb.yaml"
+    kb.write_text(KB_YAML)
+    base = _arm(tmp_path, "nslkdd", "ltn_full", kb=str(kb), training={"p": 4})
+    stress.main(["--base", str(base), "--experiment", "e4", "--out", str(out)])
+    names = sorted(p.stem for p in out.glob("*.yaml"))
+    assert names == ["toy_ltn_full_e4_crisp", "toy_ltn_full_e4_p1", "toy_ltn_full_e4_p2",
+                     "toy_ltn_full_e4_p6", "toy_ltn_full_e4_s0p5", "toy_ltn_full_e4_s2"]
+    got = yaml.safe_load((out / "toy_ltn_full_e4_crisp.yaml").read_text())
+    assert got["training"] == {"p": 4, "crisp": True}
+    got = yaml.safe_load((out / "toy_ltn_full_e4_s2.yaml").read_text())
+    assert got["training"] == {"p": 4, "s_scale": 2.0}
+
+
+def test_e4_sup_only_varies_p_and_refuses_other_arms(tmp_path):
+    import pytest
+    out = tmp_path / "o"
+    stress.main(["--base", str(_arm(tmp_path, "nslkdd", "ltn_sup")), "--experiment", "e4",
+                 "--out", str(out)])
+    assert sorted(p.stem for p in out.glob("*.yaml")) == [
+        "toy_ltn_sup_e4_p1", "toy_ltn_sup_e4_p4", "toy_ltn_sup_e4_p6"]
+    with pytest.raises(SystemExit):
+        stress.main(["--base", str(_arm(tmp_path)), "--experiment", "e4", "--out", str(out)])

@@ -43,7 +43,7 @@ def _keep_train_fraction(train, spec, fraction, seed, min_keep_per_class=0):
     return kept
 
 
-def _thin_classes(train, spec, fractions, seed):
+def _thin_classes(train, spec, fractions, seed, min_keep_per_class=0):
     """Random subsample of some classes of the train part only (e.g. Normal for the tuning)."""
     if not fractions:
         return train
@@ -57,14 +57,15 @@ def _thin_classes(train, spec, fractions, seed):
         if not 0 < fraction <= 1:
             raise ValueError(f"train_class_fractions[{name}] must be in (0, 1], got {fraction}")
         rows = np.flatnonzero(labels == spec.classes.index(name))
-        n_drop = len(rows) - max(1, round(fraction * len(rows))) if len(rows) else 0
+        n_keep = min(len(rows), max(1, min_keep_per_class, round(fraction * len(rows))))
+        n_drop = len(rows) - n_keep
         keep[rng.choice(rows, n_drop, replace=False)] = False
     return train[keep]
 
 
 def _shrink_train(train, spec, seed, train_fraction, train_class_fractions,
                   min_keep_per_class=0):
-    train = _thin_classes(train, spec, train_class_fractions, seed)
+    train = _thin_classes(train, spec, train_class_fractions, seed, min_keep_per_class)
     return _keep_train_fraction(train, spec, train_fraction, seed, min_keep_per_class)
 
 

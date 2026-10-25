@@ -136,3 +136,13 @@ def test_bad_floor_is_refused():
     with pytest.raises(ValueError, match="min_keep_per_class"):
         _split("cicids2017", "stratified_random", False, train_fraction=0.5,
                min_keep_per_class=-1)
+
+
+@pytest.mark.parametrize("name, strategy, official", CASES)
+def test_floor_also_holds_when_thinning_classes(name, strategy, official):
+    spec = get_spec(name)
+    rare = spec.classes[-1]
+    df = _rare_frame(spec)
+    (train, *_) = split_data(strategy, df, _rare_frame(spec) if official else None, spec, 0,
+                             train_class_fractions={rare: 0.1}, min_keep_per_class=5)
+    assert train["class"].value_counts()[rare] >= 5

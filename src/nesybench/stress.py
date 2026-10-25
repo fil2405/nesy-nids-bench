@@ -1,8 +1,10 @@
-"""Configs of the stress runs (E3, E7, E9, E11, E13) from a tuned config.
+"""Configs of the stress runs (E3, E4, E7, E8, E9, E11, E13) from a tuned config.
 
     python -m nesybench.stress --base results/tuning/tune_nslkdd_ltn_full_best.yaml \
-        --experiment base|e3|e7|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
+        --experiment base|e3|e4|e7|e8|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
 E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... (ltn_full only).
+E8 takes any arm: --classes C ... thinned to --levels F ... of their train rows (--floor N).
+E4 takes an LTN arm: p, crisp thresholds and s_scale one at a time (crisp and s_scale: ltn_full).
 
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
@@ -24,6 +26,14 @@ E7_LEVELS = {                                # train fractions; 1.0 is the final
     "cicddos2019": (0.1, 0.01, 0.001),
 }
 E7_FLOOR = 5                                 # rows kept per class at any fraction
+E8_CLASSES = {                               # classes made rarer in train
+    "nslkdd": ("R2L", "U2R"),
+    "cicids2017": ("R2L", "U2R", "Botnet"),
+    "cicddos2019": ("Normal",),
+}
+E8_LEVELS = (0.5, 0.25, 0.1)
+E4_P = (1, 2, 4, 6)                          # same set as the tuning
+E4_S_SCALE = (0.5, 1.0, 2.0)
 
 
 def _derive(base: dict, suffix: str, edit: dict) -> dict:
@@ -105,6 +115,49 @@ def e7(base: dict, levels=None, floor=E7_FLOOR, exclude=()) -> list[dict]:
     return out
 
 
+def e8(base: dict, classes=None, levels=None, floor=E7_FLOOR) -> list[dict]:
+    """Any arm: the listed classes cut to a fraction of their train rows, the rest untouched."""
+    classes = tuple(classes or E8_CLASSES.get(base.get("dataset"), ()))
+    if not classes:
+        raise SystemExit(f"e8: no default classes for {base.get('dataset')!r}, use --classes")
+    levels = tuple(levels or E8_LEVELS)
+    if any(not 0 < f < 1 for f in levels):
+        raise SystemExit("e8: levels must be in (0, 1)")
+    out = []
+    for f in levels:
+        config = _derive(base, f"e8_f{_pct(f)}", None)
+        config["split_params"] = {**base.get("split_params", {}),
+                                  "train_class_fractions": {c: f for c in classes},
+                                  "min_keep_per_class": floor}
+        out.append(config)
+    return out
+
+
+def e4(base: dict, p_levels=E4_P, s_levels=E4_S_SCALE) -> list[dict]:
+    """One LTN setting at a time against the base: p, crisp thresholds, width scale."""
+    model = base.get("model")
+    if model not in ("ltn_sup", "ltn_full"):
+        raise SystemExit("e4 needs an ltn_sup or ltn_full base config")
+    training = base.get("training", {})
+    out = []
+    for p in p_levels:
+        if p != training.get("p", 2):
+            config = _derive(base, f"e4_p{p:g}", None)
+            config["training"] = {**training, "p": p}
+            out.append(config)
+    if model == "ltn_full":
+        if not training.get("crisp", False):
+            config = _derive(base, "e4_crisp", None)
+            config["training"] = {**training, "crisp": True}
+            out.append(config)
+            for s in s_levels:
+                if s != training.get("s_scale", 1.0):
+                    config = _derive(base, f"e4_s{s:g}".replace(".", "p"), None)
+                    config["training"] = {**training, "s_scale": s}
+                    out.append(config)
+    return out
+
+
 def _write(configs, out):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -116,15 +169,16 @@ def _write(configs, out):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
-    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e7", "e9", "e11", "e13"])
+    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e4", "e7", "e8", "e9", "e11", "e13"])
     parser.add_argument("--out", default="configs/stress")
     parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant")
     parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
     parser.add_argument("--holdout", nargs="+", help="E9: fine labels kept out of train")
     parser.add_argument("--swap", nargs="*", default=[], help="E11: ID:class")
     parser.add_argument("--axiom", help="E13: axiom to copy (default: the first)")
-    parser.add_argument("--levels", nargs="+", type=float, help="E7: train fractions")
-    parser.add_argument("--floor", type=int, default=E7_FLOOR, help="E7: rows kept per class")
+    parser.add_argument("--levels", nargs="+", type=float, help="E7, E8: train fractions")
+    parser.add_argument("--classes", nargs="+", help="E8: classes made rarer")
+    parser.add_argument("--floor", type=int, default=E7_FLOOR, help="E7, E8: rows kept per class")
     parser.add_argument("--exclude", nargs="+", default=[], help="E7: axiom ids out of the KB")
     args = parser.parse_args(argv)
 
@@ -135,6 +189,12 @@ def main(argv=None):
         return
     if args.experiment == "e7":
         _write(e7(base, args.levels, args.floor, args.exclude), args.out)
+        return
+    if args.experiment == "e8":
+        _write(e8(base, args.classes, args.levels, args.floor), args.out)
+        return
+    if args.experiment == "e4":
+        _write(e4(base), args.out)
         return
     if base.get("model") != "ltn_full" or not base.get("kb"):
         raise SystemExit("the base config must be an ltn_full config with a kb")
