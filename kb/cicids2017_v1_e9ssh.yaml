@@ -1,0 +1,37 @@
+# group: domain | dos | dataset   origin: mechanism | data | internship
+# Found with a depth-3 tree on train + validation (seed 0), checked on the other half; test never read.
+# Train stats are over the whole of train + validation (1372272 flows).
+# E9 ssh: A3 derived with SSH-Patator rows removed from train + validation (n=1369905), so only FTP-Patator is R2L.
+# A3 support/confidence are the two halves (fit + check) summed; benign_hit counts all non-R2L hits.
+# s: width of the sigmoid around tau, a hyperparameter of the logic
+version: cicids2017_v1_e9ssh
+axioms:
+  - id: A1
+    group: dataset
+    origin: data
+    target: DDoS
+    train: {support: 0.995, confidence: 1.000, benign_hit: 0}
+    all:
+      - {col: Total Length of Fwd Packet, op: le, tau: 21, s: 1}
+      - {col: Fwd Packet Length Max, op: gt, tau: 19.5, s: 1}
+      - {col: Bwd Segment Size Avg, op: gt, tau: 1644.15, s: 80}
+  - id: A2
+    group: dataset
+    origin: data
+    target: DoS
+    # fires on Hulk and GoldenEye (HTTP floods), not on Slowloris or Slowhttptest
+    train: {support: 0.963, confidence: 0.997, benign_hit: 451}
+    all:
+      - {col: Bwd Packet Length Std, op: gt, tau: 1302.36, s: 65}
+      - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
+      - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}
+  - id: A3
+    group: dataset
+    origin: data
+    target: R2L
+    # FTP password guessing only; SSH-Patator held out of the derivation
+    train: {support: 0.943, confidence: 0.995, benign_hit: 16}
+    all:
+      - {col: Bwd RST Flags, op: gt, tau: 1.5, s: 0.1}
+      - {col: Down/Up Ratio, op: gt, tau: 1.49074, s: 0.07}
+      - {col: Fwd IAT Max, op: gt, tau: 2907070, s: 145000}
