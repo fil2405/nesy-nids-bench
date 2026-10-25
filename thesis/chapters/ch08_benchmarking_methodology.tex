@@ -1,451 +1,492 @@
 \chapter{Benchmarking Methodology}
 \label{ch:benchmarking-methodology}
 
-\Cref{ch:usecases-design} fixed what is asked of a detector. This chapter fixes how
-the answer is measured. It sets the rules that make a comparison fair, the measures
-on the three axes of detection quality, computational cost and usability, the
-protocols for batch and for streaming evaluation, and the tests that turn per-seed
-numbers into statements. It is the methodological contribution C1 and the basis of
-the answer to RQ5. It reports no result; the numbers are in \cref{ch:results}.
+\Cref{ch:usecases-design} fixed what is asked of a detector. This chapter fixes how the
+answer is measured: the rules of a fair comparison, the measures on the three axes of
+detection quality, computational cost and usability, the batch and streaming
+protocols, and the tests that turn per-seed numbers into statements. It is the
+methodological contribution C1 and the basis of the answer to RQ5. It reports no
+result; the numbers are in \cref{ch:results}.
 
-The protocol exists to test nine hypotheses, listed in \cref{tab:hypotheses}. Each
-sits under the research question it bears on. A hypothesis is a claim that the data
-can contradict, and it is stated here without any conclusion. The set was fixed
-before the final runs. The tests of this chapter decide how each is read, and where
-the datasets cannot test one, the chapter says so.
-% FIXME(open): the wording of H1 to H9 is reconstructed from the meeting of 14 October 2026; check it against the written version of the co-supervisor when it arrives, and decide whether Ch. 1, Sec. 1.3 cites \cref{tab:hypotheses} in one sentence.
+The protocol exists to test nine hypotheses (\cref{tab:hypotheses}). The set was fixed before the final runs.
+% FIXME(open): the wording of H1 to H9 is reconstructed from the meeting of 14 October 2026; check it against the written version of the co-supervisor, and decide whether Ch. 1, Sec. 1.3 cites \cref{tab:hypotheses} in one sentence.
 
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{The hypotheses of the benchmark, by research question, with the experiments
-that test them. The knowledge effect is LTN-full minus LTN-sup; the effect of the loss
-is LTN-sup minus MLP-CE.}
+\caption{Hypotheses by research question. The knowledge effect is LTN-full minus
+LTN-sup; the effect of the loss is LTN-sup minus MLP-CE.}
 \label{tab:hypotheses}
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{1.9cm}p{1.5cm}p{7.2cm}p{2.2cm}@{}}
+\begin{tabular}{@{}p{1.9cm}p{1.4cm}p{7.5cm}p{2.1cm}@{}}
 \toprule
 Hypothesis & RQ & Statement & Experiments \\
 \midrule
-H1 Quality & RQ1
-  & A knowledge arm with well-built, tuned axioms reaches a higher macro-F1 than a
-    neural network trained without them, on the same data & E2, E5, E6 \\
-H2 Rare classes & RQ1, RQ2
-  & The gain of the knowledge arms is concentrated in the rare classes & E2, E3, E5, E8 \\
-H3 Changed axioms & RQ2
-  & If the initial axioms are changed, the gain shrinks, stays or reverses; it
-    reverses when LTN-full falls below LTN-sup & E3, E11 \\
-H4 Data quantity & RQ2
-  & The gain grows as the labelled data shrink and fades as the training set grows & E7 \\
-H5 Shift & RQ2
-  & The gain changes under a shift of distribution, on attack types unseen in
-    training and across datasets & E6, E9 \\
-H6 Degradation & RQ2
-  & When the axioms are degraded in controlled steps, the performance falls
-    gradually and not catastrophically & E11 \\
-H7 Cost & RQ3
-  & Training cost grows linearly with the number of axioms; at inference an
-    LTN-trained network costs about the same as the same network trained with
-    cross-entropy & E13, E12 \\
-H8 Constraints & RQ4
-  & At equal quality, a knowledge arm violates fewer domain rules than a
-    data-driven one & E2, E5, E6, E12 \\
-H9 Classical ML & RQ5
-  & Random Forest and gradient boosting remain strong baselines on tabular flow
-    data, at a much lower cost of training & E2, E5, E6, E13 \\
+H1 Quality & RQ1 & A knowledge arm with well-built, tuned axioms reaches a higher
+  macro-F1 than a network trained without them, on the same data & E2, E5, E6 \\
+H2 Rare classes & RQ1, RQ2 & The gain of the knowledge arms is concentrated in the
+  rare classes & E2, E3, E5, E8 \\
+H3 Changed axioms & RQ2 & If the initial axioms change, the gain shrinks, stays or
+  reverses (LTN-full below LTN-sup) & E3, E11 \\
+H4 Data quantity & RQ2 & The gain grows as labelled data shrink and fades as the
+  training set grows & E7 \\
+H5 Shift & RQ2 & The gain changes under distribution shift, on unseen attack types and
+  across datasets & E6, E9 \\
+H6 Degradation & RQ2 & Under controlled degradation of the axioms, performance falls
+  gradually, not catastrophically & E11 \\
+H7 Cost & RQ3 & Training cost grows linearly with the number of axioms; at inference an
+  LTN-trained network costs about the same as the same network trained with
+  cross-entropy & E13, E12 \\
+H8 Constraints & RQ4 & At equal quality, a knowledge arm violates fewer domain rules
+  than a data-driven one & E2, E5, E6, E12 \\
+H9 Classical ML & RQ5 & Random Forest and gradient boosting remain strong baselines on
+  tabular flow data, at a much lower training cost & E2, E5, E6, E13 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Three readings of the table are fixed now. H1 is tested against both baselines:
-LTN-full against MLP-CE, which is the claim as stated, and against LTN-sup, which says
-whether the gain comes from the knowledge or from the loss. H2 cannot be tested on
-CIC-DDoS2019, which has two classes and no rare one (\cref{sec:uc2}). H5 also asks
-whether a longer training buys a better transfer; this is read from the training times
-that every run records.
+H1 is tested against MLP-CE (the claim as stated) and against LTN-sup, which says whether
+a gain comes from the knowledge or from the loss. H2 cannot be tested on CIC-DDoS2019,
+which has no rare class (\cref{sec:uc2}).
 
-% ================================================================
-% 8.1 Fair benchmark
 % ================================================================
 \section{Requirements for a fair benchmark}
 \label{sec:fair-benchmark}
 
-A comparison is fair when the difference between two arms can be attributed to what
-changes between them. Five requirements follow. They answer the pitfalls that
-\citet{arp2022dosdonts} list for learning-based security systems, and the sources of
-variance that \citet{bouthillier2021variance} study in machine-learning benchmarks,
-among them the data split, the initialisation and the choice of hyperparameters.
-Model evaluation and selection in general are surveyed by \citet{raschka2018model}.
-% FIXME(open): \cref{sec:cost-dimension}, \cref{sec:statistical-plan}, \cref{sec:harness} and \cref{sec:threats} render as "??" until Secs. 8.3, 8.6, 8.7 and 8.8 are written.
+A difference between two arms is fair when it can be attributed to what changes between
+them. Five requirements follow, answering the pitfalls of \citet{arp2022dosdonts} and the
+sources of variance of \citet{bouthillier2021variance} (split, initialisation, hyperparameter
+choice); \citet{raschka2018model} survey evaluation and selection.
 
 \subsection{Matched capacity: same architecture, same features, same preprocessing}
 \label{sec:matched-capacity}
 
-The four neural arms share one network: two hidden layers of 256 and 128 units with
-ReLU, dropout 0.2, one output per class, trained with Adam at batch size 256 and the
-selection rule of \cref{sec:matched-tuning}. The arms differ in the loss and in what
-they do about class imbalance, which are the things under test. The number of
-parameters is recorded in every run, so equality can be checked.
-% FIXME(open): the common network is fixed for all three datasets by the tuning files (D6 of the protocol); on the two CIC datasets it is a proposal to confirm, since it was chosen with NSL-KDD in view. It is not optimal for every arm, which \cref{sec:threats} must say.
+The four neural arms share one network: hidden layers of 256 and 128 units, ReLU, dropout
+0.2, one output per class, Adam, batch size 256 and one selection rule
+(\cref{sec:matched-tuning}). They differ in the loss and in the handling of imbalance, which
+are the things under test. The parameter count is recorded in every run.
+% FIXME(open): the common network is fixed for all datasets by the tuning files (D6); on the CIC datasets it is a proposal to confirm, since it was chosen with NSL-KDD in view. It is not optimal for every arm, which \cref{sec:threats} says.
+All arms get the same features: numeric columns standardised, categorical columns one-hot
+encoded, fitted on the training part. The trees read the same matrix; the axioms read the raw
+columns (\cref{sec:batch-pipeline}). A window feature added to a dataset goes to every arm.
+Capacity is matched for the neural arms only; the trees have other capacity, set by tuning,
+and enter as the baselines of H9.
 
-All arms receive the same features and the same preprocessing. Numeric columns are
-standardised and categorical columns one-hot encoded, with the scaler and the encoder
-fitted on the training part only. Random Forest and XGBoost read the same matrix. The
-axioms are written on the raw columns (\cref{sec:batch-pipeline}), which the knowledge
-arms and the rule-only arm read beside the network input. If a feature computed over a
-window of flows is added to a dataset, it goes to every arm; otherwise a gain could
-come from information that only one arm sees.
-
-Capacity is matched for the four neural arms only. Random Forest and XGBoost have
-other kinds of capacity, set by their own tuning with the same budget, and they enter
-as the strong tabular baselines of H9, to be compared on quality and on cost. The
-rule-only arm has no capacity to match.
-
-Imbalance is not handled the same way, and this is declared and not hidden. MLP-CE
-weights the loss by class, and in its weighted variant the exponent of the weights is
-tuned. The LTN arms aggregate the supervised axioms per class and draw batches in which
-every class has a minimum quota, and the strength of the balancing is tuned. The forest
-and the boosted trees use class weights, with a tuned exponent. These are different
-levers. Each is searched inside the same budget, and \cref{sec:threats} states what
-follows from the difference.
+Imbalance is handled by different levers (class weights for MLP-CE and the trees, per-class
+aggregation and batch quotas for LTN), each searched inside the same budget (\cref{sec:threats}).
 
 \subsection{Matched tuning budget: same search space and same number of trials}
 \label{sec:matched-tuning}
 
-Every arm that has hyperparameters gets 20 trials. A trial is one draw from the search
-space of the arm, scored by the validation macro-F1 averaged over three tuning seeds,
-100, 101 and 102, which are not among the final seeds. The draws come from a Latin
-hypercube with a fixed search seed, so a repeated search tries the same configurations.
-The trial with the highest mean is kept, and a tie goes to the earlier one. The test
-part is never scored while tuning. The chosen configuration is frozen and run on the
-ten final seeds. \Cref{tab:tuning-spaces} gives the spaces.
+Every arm with hyperparameters gets 20 trials. A trial is one draw from the space of the arm
+(\cref{app:hyperparameters}), scored by the validation macro-F1 averaged over three tuning
+seeds, 100 to 102, outside the final seeds. The draws come from a Latin hypercube with a fixed
+search seed, and the best mean wins. The test part is never scored. The chosen configuration is
+frozen and run on the ten final seeds.
 
-\begin{table}[t]
-\centering
-\footnotesize
-\caption{Search spaces. Each arm is searched with 20 trials of 3 seeds. Ranges are
-uniform, log-uniform (log) or a list of values.}
-\label{tab:tuning-spaces}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{2.3cm}p{10.3cm}@{}}
-\toprule
-Arm & Parameters searched \\
-\midrule
-MLP-CE & Learning rate, log $[3\cdot10^{-4}, 3\cdot10^{-3}]$. Weighted variant: also the
-  exponent of the class weights, $[0.25, 1]$ \\
-LTN-sup & Learning rate as above; exponent of the batch quota per class, $[0, 0.5]$;
-  minimum examples per class in a batch, $\{2,4,8,16\}$; exponent $p$ of the
-  aggregator, $\{1,2,4,6\}$ \\
-LTN-full & The four of LTN-sup; weight $w$ of the domain axioms, $\{0.1, 0.25, 0.5\}$;
-  scale of the widths $s$, log $[0.5, 2]$ \\
-Random Forest & Trees $\{100,300,500\}$; depth $\{$none$,10,20,30\}$; minimum leaf size
-  $\{1,2,5\}$; features per split $\{\sqrt{\cdot},\log_2,0.3\}$; exponent of the class
-  weights, $[0, 1]$ \\
-XGBoost & Learning rate, log $[0.03, 0.3]$; depth $\{3,\dots,10\}$; minimum child
-  weight, log $[1, 10]$; row and column subsample, $[0.6, 1]$ and $[0.5, 1]$; exponent
-  of the class weights, $[0, 1]$ \\
-Rule-only & None; nothing is learned \\
-\bottomrule
-\end{tabular}
-\end{table}
+Early stopping and the choice of epoch follow one rule in all arms: the mean validation macro-F1
+over the last five epochs (rounds for XGBoost), patience ten, best weights restored. The
+validation loss cannot be common, since cross-entropy and one minus the satisfaction are not on
+one scale. The moving mean damps a lucky epoch, because validation holds few rare examples.
+Neural arms run at most 100 epochs and XGBoost 300 rounds. A cap binds unevenly, so the share of
+runs ending at the cap is reported.
+% FIXME(open): the repository gives a cap of 100 epochs on NSL-KDD too; check that the NSL-KDD final runs used 100 and not 50.
+The budget is equal in trials, not in dimensions: an arm offers from one lever (MLP-CE) to six
+(LTN-full, XGBoost), so these two are the most exposed to under-tuning. We take equal trials as
+equal budget, since the levers are part of the arm. On CIC-IDS2017 the tuning trials train on a
+quarter of the Normal rows, to bound the cost, and the final runs use all rows.
 
-Early stopping and the choice of epoch follow one rule in every arm. The criterion is
-the mean of the validation macro-F1 over the last five epochs, or rounds for XGBoost,
-with a patience of ten and the best weights restored. The validation loss cannot be the
-common criterion, because cross-entropy and one minus the satisfaction aggregate are
-not on the same scale. The moving mean damps a lucky epoch: the validation part holds
-few examples of the rare classes, and one example moves the recall of a class such as U2R
-by a large step. The mean does not remove the problem, and \cref{sec:threats} lists it.
-The neural arms run at most 100 epochs and XGBoost at most 300 rounds. A cap binds
-unevenly, since an arm that converges slowly is cut short, so the share of runs that
-end at the cap is reported for every arm.
-% FIXME(open): the files of the repository give a cap of 100 epochs on NSL-KDD as well; check that the NSL-KDD final runs used 100 and not 50, and correct this paragraph if they did not.
-
-The budget is equal in trials, not in dimensions. The arms offer from one to six
-levers, and twenty draws cover a six-dimensional space less densely than a
-one-dimensional one. LTN-full and XGBoost are therefore the arms most exposed to
-under-tuning. We take equal trials as the definition of an equal budget, because the
-levers of an arm are part of what the arm is. On CIC-IDS2017 the tuning trials train
-on a quarter of the Normal rows of the training part, to bound the cost of sixty runs
-per arm, while the final runs use all rows. A configuration chosen on a thinned set is
-then applied to another class balance, and \cref{sec:threats} says so.
-
-The logic has settings of its own, and they belong to the run and not to the knowledge
-base file (\cref{sec:kb-format}). The connectives, product and Reichenbach implication,
-are fixed (\cref{ch:ltn}). The exponent $p$ is one value per run, used by the
-quantifiers and by the aggregation of the axioms into the satisfaction, and it is
-tuned; it is not set axiom by axiom. The supervised and the domain axioms are
-aggregated separately and combined with the weight $w$ of \cref{tab:tuning-spaces}, so
-that the loss is
-\[
-  1 - \bigl((1-w)\,\mathrm{SatAgg}_{\mathrm{sup}} + w\,\mathrm{SatAgg}_{\mathrm{domain}}\bigr).
-\]
-This is the second of the two options that \cref{sec:supervised-domain-axioms} leaves
-open, and it makes the weight explicit instead of letting the number of axioms in each
-group decide it. The widths $s$ of the graded conditions are fixed in the file and
-scaled by one factor, which is tuned. Crisp conditions are used only where E4 asks for
-them.
+The logic settings belong to the run, not to the knowledge base file (\cref{sec:kb-format}).
+Product and Reichenbach are fixed (\cref{ch:ltn}); the exponent $p$ is one value per run and is
+tuned; supervised and domain axioms are aggregated separately and combined with a tuned weight
+$w$ (the second option left open by \cref{sec:supervised-domain-axioms}); the widths $s$ are
+scaled by one tuned factor. Crisp conditions appear only in E4.
 
 \subsection{No test-set leakage: the validation set is never the test set}
 \label{sec:no-leakage}
 
-The test part is the one piece of data that no decision may touch. Every decision
-that could use it is fixed on training or validation data. The scaler and the encoder
-are fitted on the training part. The thresholds $\tau$ and the widths $s$ of the axioms
-are fixed on training data, with the statistics of the axiom, support and confidence,
-computed there (\cref{sec:kb-elicitation}). The hyperparameters, the epoch and the
-operating point (\cref{sec:operating-point}) are chosen on the validation part. The
-primary metric was fixed before the first final run. In code, the flag that scores the
-test part is false in every configuration used for tuning, and the tuning routine
-refuses a base configuration that sets it. The test part is scored once per seed, in
-the final run.
+Every decision that could use the test part is fixed on training or validation data: scaler
+and encoder (training), axiom thresholds and widths (training, \cref{sec:kb-elicitation}),
+hyperparameters, epoch and operating point (validation, \cref{sec:operating-point}). The primary
+metric was fixed before the first final run, the flag that scores the test part is false in every
+tuning configuration, and the tuning routine refuses a base configuration that sets it.
 
-The parts are built as follows. NSL-KDD has an official test file. The validation part
-is a stratified 15\,\% of the training file, drawn again for each seed. CIC-IDS2017 has
-one labelled file, cut into training, validation and test parts in the proportions
-60, 20 and 20, stratified by class. The test cut is drawn once with a fixed seed, so
-every arm and every seed meets the same test part, and only the cut between training
-and validation follows the seed. CIC-DDoS2019 has a training day and a test day, and
-the validation part is a stratified 15\,\% of the training day, drawn for each seed. On
-the two CIC datasets, rows with the same features and the same label are removed before
-any split, so that an identical row cannot sit in the training and in the test part.
-In E9 the held-out fine labels are removed from the training and the validation parts
-and all their rows are added to the test part.
-
-The axioms are the place where the rule is easiest to break and hardest to see. For
-NSL-KDD the thresholds were fixed on the whole training file, so the validation rows of
-every seed shaped them. No test row did, but the validation part is not independent of
-the axioms, and a validation score of a knowledge arm is slightly flattered by it.
-\Cref{sec:threats} records this.
+NSL-KDD uses its official test file and a stratified 15\,\% of the training file, drawn per
+seed, as validation. CIC-IDS2017 has one labelled file, cut 60/20/20 and stratified; the test
+cut is drawn once with a fixed seed, so every arm and seed meets the same test, and only the
+training/validation cut follows the seed. CIC-DDoS2019 has a training day and a test day, with
+15\,\% of the training day as validation. On both CICs rows with the same features and label
+are removed before the split. In E9 the held-out fine labels leave training and validation and
+join the test part. On NSL-KDD the axiom thresholds were fixed by hand on the whole training
+file, so validation is not independent of the axioms, though no test row shaped them
+(\cref{sec:threats}).
 
 \subsection{Repetition: $n$ independent seeds, report mean and dispersion}
 \label{sec:repetition}
 
-Every arm runs on the same ten seeds, 0 to 9. A seed fixes the initial weights, the
-order and composition of the batches, the randomness of the trees and the cut between
-training and validation. It does not move the test part, which is the same for every
-seed. The spread over seeds therefore measures the randomness of training and of the
-validation cut. It does not measure the sampling variation of the test set, and it says
-nothing about other datasets. The arms share their seeds, and so their training and
-validation cuts, which makes the comparison paired: it is made seed by seed
-(\cref{sec:statistical-plan}). The three tuning seeds are not among them.
-
-We report, for every measure and arm, the mean and the sample standard deviation over
-the seeds, and for a comparison the paired median of the differences with an interval.
-Ten is a budget decision, set by the cost of the runs, and not the outcome of a power
-analysis. With ten pairs the exact two-sided Wilcoxon test cannot give a $p$-value
-below $2/2^{10}\approx 0.002$, a limit that matters when several comparisons share the
-correction (\cref{sec:statistical-plan}).
+Every arm runs on the same seeds 0 to 9. A seed fixes the initial weights, the batches, the
+randomness of the trees and the training/validation cut, and does not move the test part, so
+the spread measures the randomness of training and of the validation cut, not the sampling
+variation of the test set, and says nothing on other datasets. Arms share seeds, so comparisons
+are paired. We report mean and sample standard deviation per measure and arm. Ten seeds is a
+budget set by cost, not a power analysis.
 
 \subsection{Reproducibility: pinned environment, fixed seeds, published artefacts}
 \label{sec:reproducibility}
 
-The environment is pinned in a lock file of package versions. A run seeds the Python
-hash, the Python and NumPy generators and TensorFlow, and switches on the deterministic
-operations of TensorFlow. Its result file records the configuration, the seed, the
-versions of Python, TensorFlow, \texttt{ltn}, NumPy, scikit-learn and XGBoost, the
-platform, the commit of the code and whether the working tree was modified, the time of
-each phase and the metrics of each part. The final runs on the CIC datasets also save
-the model and the preprocessing, so that a measure added later can be computed without
-training again.
-% FIXME(open): check that the NSL-KDD final runs saved the model and the preprocessing too.
+The environment is pinned in a lock file. A run seeds Python, NumPy and TensorFlow and enables
+deterministic operations; its result file records configuration, seed, package versions,
+platform, commit, whether the tree was modified, timings and metrics. The CIC finals also save
+model and preprocessing.
+% FIXME(open): check that the NSL-KDD final runs saved model and preprocessing too.
+Determinism holds on one machine: two runs of one configuration and seed give the same macro-F1
+and select the same epoch in our checks, while the GPU loss can differ in its last digits. Across
+machines and library versions we claim nothing. The CIC finals ran on a server (Python 3.14,
+TensorFlow 2.22) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
+compared only within one machine (\cref{sec:cost-dimension}). Code and configurations are in
+\texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
+% FIXME(open): the result files of the NSL-KDD finals show the server environment, while the plan was the laptop; confirm which machine made them and correct this paragraph.
+% FIXME(open): server runs record the commit as unknown (point 22 of the open list); record the commit of each series before any figure is called citable. Check also that all finals used the same TF_ENABLE_ONEDNN_OPTS, which the package sets to 0 unless the environment overrides it.
 
-Determinism is a property of one machine. On one machine, in the checks we made, two
-runs of the same configuration and seed give the same macro-F1 and select the same
-epoch, and the loss differs at most in its last digits on the GPU. Across machines and
-library versions we do not claim bit-identical results. The final runs were made on a
-server with Python 3.14 and TensorFlow 2.22, and the early work on a laptop with Python
-3.11 and TensorFlow 2.21. For this reason times are compared only between runs of one
-machine (\cref{sec:cost-dimension}), and a metric is not assumed to be equal across the
-two.
-% FIXME(open): the result files of the NSL-KDD final runs show the server environment, while the plan was to make them on the laptop; confirm which machine made them and correct this paragraph and the cost section.
-% FIXME(open): the final runs made on the server record the commit as unknown; record the commit of each series from the repository history (point 22 of the open list) before any figure is called citable.
-% FIXME(open): the package sets TF_ENABLE_ONEDNN_OPTS to 0 unless the environment sets it; check that the final runs on both machines used the same value.
-
-What is published is the code, the configurations, the knowledge base files, the
-result files and the saved models, in the repository \texttt{fil2405/nesy-nids-bench}.
-\Cref{sec:harness} shows how a table is rebuilt from them.
-
-% ================================================================
-% 8.2 Detection quality
 % ================================================================
 \section{Dimension 1 -- Detection quality}
 \label{sec:detection-quality-dimension}
 
-Detection quality is measured on the validation part while tuning and on the test part
-in the final runs. The measures are chosen for a detector whose Normal class is the
-large majority and whose attack classes are not equally rare. Only the macro-F1 is
-used to select anything.
-
 \subsection{Metric set and why each one is included}
 \label{sec:metric-set}
 
-\Cref{tab:metric-set} lists the measures. The primary one is the macro-F1, the
-arithmetic mean of the per-class F1. It is primary because the task has classes of very
-different size, and a detector that ignores the rare ones has to pay for it. Accuracy
-does not charge that price: a detector that always answers Normal scores high accuracy
-on a mostly benign test part and low macro-F1. The macro-F1 was fixed as the primary
-measure, and as the criterion of selection in tuning, before the first final run. It is
-not changed after the data are seen. Every other measure may qualify a result and none
-may replace the primary one.
+The primary measure is the macro-F1, the mean of the per-class F1: classes differ greatly in
+size and a detector that ignores the rare ones must pay for it, which accuracy does not
+ask. It was fixed, as primary measure and selection criterion, before the first final run.
+The others qualify a result and never replace it: the Matthews coefficient
+\citep{chicco2020mcc}; accuracy (never used to claim); precision, recall and F1 per class with
+the confusion matrix; the PR-AUC per class, the more informative view when a class is rare
+\citep{davis2006relationship,saito2015precision}; an operator view of all attacks against
+Normal on the ROC curve \citep{fawcett2006introduction}, as FPR at TPR 0.90, 0.95, 0.99 and
+TPR at FPR 0.001, 0.01 (levels of ours); the alert budget; and the measures of C5. The score
+is $-P(\text{Normal})$, not one minus it, which in single precision rounds to one and ties the
+most confident flows.
 
-\begin{table}[t]
-\centering
-\footnotesize
-\caption{Measures of detection quality. All are computed for every arm.}
-\label{tab:metric-set}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{3.5cm}p{6.4cm}p{3cm}@{}}
-\toprule
-Measure & What it reads & Role \\
-\midrule
-Macro-F1 & Mean of the per-class F1, every class with the same weight & Primary \\
-MCC & One number from the whole confusion matrix & Secondary \\
-Accuracy & Share of correct decisions & Reported; never used to claim \\
-Precision, recall, F1 per class & Where the errors are & Secondary; answers ``on which classes'' \\
-PR-AUC per class & Ranking of one class against the rest, without a threshold & Secondary; always read beside the macro-F1 \\
-FPR at fixed TPR, TPR at fixed FPR & Attack against Normal, on the score $-P(\text{Normal})$ & Secondary; operator view \\
-False alarms per 100\,000 benign flows & FPR times 100\,000 & Secondary; alert budget \\
-Satisfaction and violation rate per axiom & Agreement of the prediction with the knowledge & Secondary; contribution C5 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The Matthews correlation coefficient summarises the confusion matrix in one number that
-does not reward the majority class \citep{chicco2020mcc}. It is secondary because it
-mixes the classes into one value, where the question of RQ1 is which classes gain.
-Precision and recall are therefore reported per class, with the confusion matrix. The
-precision--recall area of a class is the average precision of that class against all
-the others, from the class probability. The precision--recall view is the more
-informative one when a class is rare \citep{davis2006relationship,saito2015precision}.
-The operator view reads the attack classes together against Normal, on the score
-$-P(\text{Normal})$, with the ROC curve \citep{fawcett2006introduction}. The score is
-the negative of the Normal probability and not one minus it, because in single
-precision one minus a very small probability rounds to one and creates ties among the
-most confident flows. The levels of the operator view are fixed in advance: a
-true positive rate of 0.90, 0.95 and 0.99, and a false positive rate of 0.001 and 0.01.
-They are starting values of ours, not taken from the literature.
-
-Two conventions are stated. The mean of the macro-F1 runs over all classes of the
-dataset, so a class that is absent from both the truth and the prediction of a part
-scores an F1 of zero and lowers the mean. This does not happen on the full test parts,
-but it can happen in E7 at small fractions of the training data. The precision--recall
-area of an absent class is not a number, and the summaries skip it and report how many
-seeds they used.
+A class absent from truth and prediction scores an F1 of zero (E7 at small fractions); its
+PR-AUC is undefined and summaries skip it and report the seeds used.
 % FIXME(open): decide before E7 whether an absent class keeps the zero F1 or is left out of the mean; the code uses the zero.
 
 \subsection{Threshold-free vs threshold-dependent metrics; choosing an operating point}
 \label{sec:operating-point}
 
-The macro-F1, the MCC, the precision and the recall are read at the argmax: the class
-with the highest score is the decision. This is what a detector does when nothing else
-is tuned, and it is why the macro-F1 is the primary measure.
+Macro-F1, MCC, precision and recall are read at the argmax, which is what a detector does when
+nothing else is tuned. An arm that balances the classes moves the implicit threshold, raising
+the recall of rare classes and lowering their precision, so two arms can differ in macro-F1
+and not in separation. PR-AUC and the operator measures read the ranking and ignore the
+threshold. ``Separates better'' needs a measure without threshold, ``detects better as it
+would run'' needs the macro-F1 at the argmax; when they disagree both are reported.
 
-It has a weakness for this comparison. An arm that balances the classes raises the
-recall of the rare classes and lowers their precision. It moves the implicit threshold.
-The macro-F1 at the argmax rewards or punishes the move whether or not the arm ranks the
-flows better. Two arms can differ in macro-F1 and not in how well they separate the
-classes, and without a measure that ignores the threshold the two cases cannot be told
-apart. The precision--recall area per class and the operator measures are such
-measures. They read the ranking of the scores, and a different threshold does not
-change them.
-
-The two readings can diverge, and the protocol does not decide in advance which one
-wins. A statement that an arm separates the classes better needs a measure without a
-threshold. A statement that it detects better as it would run needs the macro-F1 at the
-argmax. When they disagree, both are reported, and the thesis does not pick the one
-that is more favourable to an arm.
-
-The operator measures that each run writes have a limit. They are read off the curve of
-the part scored, so the threshold is the best one for that very part. They summarise
-the ranking, and they are not figures that a deployed detector would reach, because it
-cannot choose its threshold on the data it is going to meet. A deployable figure fixes
-the operating point on the validation part and applies it unchanged to the test part
-(UC2 and UC4 in \cref{ch:usecases-design}). We propose the following rule. The
-operating point of an arm is the threshold on $-P(\text{Normal})$ at which the false
-positive rate on the validation part equals the alert budget of
-\cref{sec:alert-budget}. We report the true positive rate and the false positive rate
-that this threshold gives on the test part, and the gap between that false positive
-rate and the budget. The recall on an attack unseen in training (FR4) is read at the
-same threshold.
-% FIXME(open): proposal, to confirm: the operating point at the validation FPR equal to the alert budget (0.001 by default). The transfer of the validation threshold to the test part is not in metrics.py; it needs a script over the saved models and the validation scores of each final run. Ch. 7 says ``operating point fixed on training data'' in FR4 and UC4 and ``on validation data'' in UC2: align Ch. 7 to the validation part.
+The operator measures written by each run are read off the curve of the part scored, so the
+threshold is the best one for that part: they summarise the ranking and are not figures a
+deployed detector would reach. A deployable figure fixes the operating point on validation and
+applies it unchanged to the test part (UC2, UC4). We propose the threshold on $-P(\text{Normal})$
+at which the validation FPR equals the alert budget of \cref{sec:alert-budget}, and report the
+TPR and FPR it gives on the test part and the gap from the budget. The recall on an unseen
+attack (FR4) is read at the same threshold.
+% FIXME(open): proposal, to confirm. The transfer of the validation threshold to the test part is not in metrics.py; it needs a script over the saved models. Ch. 7 says ``fixed on training data'' in FR4 and UC4 and ``on validation data'' in UC2: align Ch. 7 to the validation part.
 
 \subsection{Cost-sensitive evaluation and the alert-budget view}
 \label{sec:alert-budget}
 
-A false alarm and a missed attack do not cost the same, and the ratio is unknown. There
-is no deployment from which to take it, and an invented ratio would give a score with
-no meaning. We therefore build no cost-weighted score. Cost curves show the performance
-of a classifier over the whole range of misclassification costs and class priors
-\citep{drummond2006cost}, but they need a range that we could not justify.
-
-What can be argued is the base rate. Attacks are rare in real traffic, so a small false
-positive rate still produces many alerts that are not attacks, and the analyst stops
-trusting the detector \citep{axelsson2000baserate}. The alert budget makes this
-operational. It is the number of false alarms that an analyst can handle in a period.
-We express it in false alarms per 100\,000 benign flows, which is the false positive
-rate times 100\,000. We do not count total alerts per 100\,000 flows, because that
-figure depends on the share of attacks in the test part, and the test parts differ
-widely in it. The question the budget asks is then this: what true positive rate does
-an arm reach at the false positive rate that the budget allows?
-
-On the two CIC datasets the budget is also given per day, from the number of benign
-flows per day of the full capture. NSL-KDD has no time stamps, so it has no daily
-figure. The daily figure describes a day of a laboratory network and is not a forecast
-for a real one. The resolution of the levels depends on the test part. On KDDTest+,
-which has 9\,711 benign records, the smallest non-zero false positive rate is about
-$10^{-4}$, so a level below that cannot be resolved.
-% FIXME(open): the benign flows per day of CIC-IDS2017 and CIC-DDoS2019 are given in Ch. 9, \cref{ch:implementation}, Sec. 9.2.
+A false alarm and a missed attack do not cost the same, and no deployment supplies the ratio,
+so we build no cost-weighted score; cost curves \citep{drummond2006cost} would need a range we
+cannot justify. What can be argued is the base rate: attacks are rare, so a small FPR still
+buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budget is the number
+of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the
+FPR times 100\,000), which does not depend on the share of attacks in the test part. The
+question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
+also given per day; NSL-KDD has no time stamps. It describes a day of a laboratory network.
+KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
+% FIXME(open): the benign flows per day of the two CIC datasets are given in Ch. 9, \cref{ch:implementation}.
 
 \subsection{Rule-violation rate: definition and rationale}
 \label{sec:rule-violation-rate}
 
-This section defines contribution C5. Take an axiom $j$ with target class $c_j$. It is
-evaluated crisp: its antecedent holds on a flow $x$ when every condition holds at its
-threshold $\tau$, which is the value at which the graded degree of a condition is $0.5$.
-The covered set $C_j$ is the set of flows on which the antecedent holds, and the
-coverage is $|C_j|/n$. The \emph{domain-rule violation rate} of the axiom is
+This section defines contribution C5. For axiom $j$ with target $c_j$, evaluated crisp, the
+antecedent holds on a flow when every condition holds at its threshold $\tau$, where the
+graded degree is $0.5$; the covered set $C_j$ is where it holds. The \emph{domain-rule
+violation rate} is
 \[
-  v_j = \frac{\bigl|\{x\in C_j : \arg\max_c P(c\mid x) \neq c_j\}\bigr|}{|C_j|}.
+  v_j = \bigl|\{x\in C_j : \arg\max_c P(c\mid x) \neq c_j\}\bigr| \,/\, |C_j| ,
 \]
-A flow violates the axiom when the antecedent holds and the predicted class is not the
-target. This closes the question that \cref{sec:querying} leaves open: the threshold that
-turns a degree into a violation is $0.5$ on the antecedent, and the decision is the
-argmax. The \emph{axiom-level satisfaction} is
-\[
-  s_j = 1 - \sqrt{\frac{1}{|C_j|}\sum_{x\in C_j}\bigl(1 - P(c_j\mid x)\bigr)^2},
-\]
-the $p$-mean-error aggregate with $p=2$ of the Reichenbach implication on the covered
-flows, which for a crisp antecedent is the probability of the target class. The \emph{rule precision}
-$r_j$ is the share of covered flows whose true class is $c_j$. Both rates are
-undefined when no flow is covered, and the summaries then skip the axiom and report the
-number of seeds used. The mean violation rate of a model is the unweighted mean over
-the axioms that cover at least one flow. Every arm is scored, whether it was trained on
-the axioms or not, and always against the original file of the knowledge base, also when
-a run trained on an edited copy (E3, E11, E13), so the numbers stay comparable between
-arms and between edits.
+so the threshold that turns a degree into a violation (\cref{sec:querying}) is $0.5$ on the
+antecedent and the decision is the argmax. The \emph{axiom-level satisfaction} is
+$s_j = 1 - \bigl(\tfrac{1}{|C_j|}\sum_{x\in C_j}(1 - P(c_j\mid x))^2\bigr)^{1/2}$, the
+$p$-mean-error with $p=2$ of the Reichenbach implication, which for a crisp antecedent is the
+probability of the target. The \emph{rule precision} $r_j$ is the share of covered flows whose
+true class is $c_j$. With no covered flow the values are undefined and summaries skip the
+axiom; the mean violation rate is over covered axioms. Every arm is scored, trained on the
+axioms or not, against the original file of the knowledge base, also when a run trained on an
+edited copy (E3, E11, E13). Evaluation is crisp because a graded antecedent depends on the
+width $s$, which is tuned per LTN run and does not exist for a tree. Satisfaction and
+violation can rank models differently, so both are reported.
 
-The evaluation is crisp for a reason. A graded antecedent depends on the width $s$,
-which is tuned for each LTN run and does not exist for a forest or a boosted tree.
-Crisp conditions give a number that reads as an analyst reads the rule, and that every
-arm can be scored on.
+The violation is defined against the rule, not the label, so a rule wrong on a flow is
+violated by the correct answer, and a low rate is not a merit in itself: a model that copies
+the rules has none. The rate is read beside the macro-F1 and $r_j$, and H8 asks for fewer
+violations at equal quality, never for fewer violations alone. C5 extends the satisfaction that
+\citet{onchis2022neurosymbolic} report for rules on labels to rules on features, one rule at a
+time and for every arm; the violation rate and rule precision are ours.
 
-Satisfaction and violation are different measures, and neither replaces the other.
-Satisfaction uses the probabilities. It separates a target that wins the argmax with a
-probability of 0.6 from one that wins with 0.99, and the violation rate does not. With
-$p=2$ the aggregate also hides the distribution: very different situations give the
-same number, as shown in \cref{sec:querying}. The violation rate is a count that is
-easy to read and, for a human, closer to a rule that was broken. The two can rank two
-models differently, and both are reported.
+% ================================================================
+\section{Dimension 2 -- Computational performance}
+\label{sec:cost-dimension}
 
-The violation is defined against the rule and not against the label, and this limits
-how it is read. A rule that is wrong on a flow is violated by the correct answer. A low
-violation rate is therefore not a merit in itself: a model that copies the rules has
-none, and the rule-only arm has none except where two rules conflict. The rate is read
-beside the macro-F1 and the rule precision. For an axiom $j$ the violation rate of a
-classifier with perfect labels is $1-r_j$, which is the floor of that axiom. H8 asks for
-fewer violations at an equal quality, and it never asks for fewer violations alone.
+\subsection{Training cost: wall-clock/epoch, epochs to convergence, total cost, peak RAM/VRAM}
+\label{sec:training-cost}
 
-C5 extends the satisfaction that \citet{onchis2022neurosymbolic} report for rules on
-the labels to rules on the features, one rule at a time and for every arm. The
-violation rate and the rule precision are our own additions.
+Every run records the time of each epoch (round for XGBoost), the epochs run, the epoch
+selected and the total fit time, with validation scoring timed apart. Peak RAM and VRAM are
+measured in dedicated runs on CIC-IDS2017. An LTN epoch and an MLP epoch have the same number
+of steps but not the same distinct examples, since LTN draws batches with quotas, so we also
+report steps and examples seen. The epoch cap cuts slow arms short (\cref{sec:matched-tuning}),
+and only runs of one idle machine are compared (D9).
+% FIXME(open): the share of distinct examples per LTN epoch is our estimate and has not been measured on the sampler.
+
+H7 asks that training cost grow linearly with the axioms. E13 adds 2, 4, 6 or 8 copies of one
+axiom, with thresholds moved by small steps on either side (up to $\pm0.1$ percentile points of
+the training column); we fit a line to time per epoch against the number of axioms and report
+slope and residuals. Copies measure cost, not knowledge.
+% FIXME(open): the 2 to 8 copies and the axiom copied (the first of the file) are a proposal to confirm.
+
+\subsection{Inference cost: throughput, latency distribution, model size, memory footprint}
+\label{sec:inference-cost}
+
+Inference is measured on the saved models of the final runs, on preprocessed rows. For batch
+sizes 1, 64 and 1024 we report latency at p50, p95 and p99, the mean and rows per second, on
+CPU and on the default device, with the size of the model files. An LTN-trained network is a
+plain network at inference (\cref{sec:symbolic-placement}), so equal cost with the same network
+trained with cross-entropy is a control, not a finding. E12 compares the network alone with the
+network followed by the post-check (\cref{sec:explanation-quality}) and reports the added time
+per row; the two are not summed into an end-to-end latency.
+% FIXME(open): the latency tool and the post-check are in the practical chat's local commits, not in the pushed repository; check names and options when they are pushed.
+
+\subsection{Energy proxy measurement [EXT]}
+\label{sec:energy}
+
+Energy is an extension and is not measured. Training time and model size stand as proxies.
+
+\subsection{Measurement hygiene: warm-up, repetitions, isolation, reporting percentiles}
+\label{sec:measurement-hygiene}
+
+Times use a monotonic wall clock. Latency runs discard 20 warm-up calls and keep 200
+repetitions, and report percentiles, not only the mean, since the tail matters in streaming.
+The machine is otherwise idle, the device is stated, and a time is compared only with times
+of the same machine and software. Per-seed times are summarised like any measure, by mean and
+deviation over seeds.
+
+% ================================================================
+\section{Dimension 3 -- Usability and operational fitness}
+\label{sec:usability-dimension}
+
+\subsection{Knowledge engineering effort (time and LOC to add / change a rule)}
+\label{sec:effort}
+
+The main cost of a knowledge arm, which the baselines do not pay, is writing and tuning the
+axioms. A log (E16) holds for each axiom the start and end time, the lines of the knowledge
+base, the revisions, the origin and the training support and confidence; the cost of changing a
+rule is measured with a trial edit. The times of the NSL-KDD log were reconstructed after the
+fact and are not measured live; this is declared.
+% FIXME(open): the log has no entries yet for the CIC bases; do not report figures from it before the correction (Ch. 7). The log also shows that the first threshold of A1 on NSL-KDD was changed after looking at Probe.
+
+\subsection{Sensitivity to knowledge quality}
+\label{sec:knowledge-sensitivity}
+
+The knowledge base is an experimental factor; each edit is applied to the training copy only
+and recorded in the run as \texttt{kb\_edit}, and C5 is measured on the original. E3 removes
+one axiom or group. E11 moves all thresholds by $-0.10$, $-0.05$, $+0.05$, $+0.10$ and $+0.20$
+percentile points of the training column and swaps the target of one axiom (for example A1 to
+Probe). E13 adds copies. The weak variant of NSL-KDD tests broad axioms for R2L and U2R. E9 holds
+fine labels out of training and validation and adds them to the test part, with per-label
+recall and the share detected (predicted not Normal). Hyperparameters stay those of the base
+configuration. For each level we report LTN-full minus LTN-sup with an interval over seeds, its
+area over the levels and the level where it turns negative (H3, H6); these are descriptive and
+outside the Holm family (\cref{sec:statistical-plan}).
+% FIXME(open): proposal, to confirm: the E11 levels and the target swap, and the axiom set of the transfer in E9 (axioms computable on both CIC datasets, or a declared change of knowledge base). The slow DoS and SSH scenarios of E9 need their fine labels confirmed.
+
+\subsection{Explanation quality: coverage, faithfulness, conciseness}
+\label{sec:explanation-quality}
+
+The post-check evaluates the knowledge base on the raw flow after the model has decided,
+for any arm (\cref{sec:symbolic-placement}), in two modes. \emph{Annotate} leaves the
+predictions and attaches to each alert the rules that fire. \emph{Enforce} replaces the
+prediction by the target where a rule fires, and the first axiom of the file wins a
+conflict. E12 reports both. Over the alerts, \emph{coverage} is the share with at least one
+rule firing; \emph{faithfulness} is, among covered alerts, the share where a firing rule has
+the predicted class as target; \emph{conciseness} is the mean number of rules firing per
+covered alert. Faithfulness tests agreement with the prediction, not a causal explanation.
+Enforce with imprecise rules lowers the macro-F1 by construction (\cref{sec:rule-violation-rate}),
+and this is reported as a result.
+
+\subsection{Maintainability under drift; retraining cost}
+\label{sec:drift}
+
+We run no drift experiment. E11 degrades the axioms as a stand-in for domain shift, and the
+retraining cost is the fit time of E13; a claim about maintenance in production is outside the
+evidence.
+
+\subsection{Structured qualitative scorecard (define the rubric, avoid hand-waving)}
+\label{sec:scorecard}
+
+Each arm scores 0, 1 or 2 on four criteria, with anchors written before the measurements and
+each score citing its measure (NFR13). Setup: 0 written and tuned axioms, 1 tuning only, 2
+defaults. Sensitivity to knowledge: 0 the gain reverses under mild degradation, 1 it shrinks, 2
+it stays. Explanation: 0 none, 1 low coverage or faithfulness, 2 high. Change of a rule: 0
+retraining and re-tuning, 1 retraining only, 2 none.
+% FIXME(open): the anchors are our proposal; confirm them with the co-supervisor before the measurements.
+
+% ================================================================
+\section{Batch vs real-time evaluation protocols}
+\label{sec:protocols}
+
+\subsection{Batch protocol}
+\label{sec:batch-protocol}
+
+A batch run is one configuration and one seed: split, preprocess, fit with the selection
+rule, score the validation part and, in final runs, the test part (\cref{sec:batch-pipeline}).
+\Cref{tab:experiment-data} (Appendix~\ref{app:hyperparameters}) assigns the datasets of the experiments of \cref{ch:usecases-design}.
+All arms of \cref{sec:matched-capacity} take part unless stated. The one-dimensional
+network is not included; it is optional and enters only if time remains.
+
+
+
+The runs of E3, E4, E7, E8, E11 and E13 keep the hyperparameters of the base configuration,
+and the validation part is not reduced in E7 and E8. Their conclusions on the test part rest
+on ten seeds and on a clean commit. E7 has one axis, since with supervised arms the label
+fraction and the training size are one operation; rows removed are lost. Sizes above the
+full training part are not run, so the large-data side of H4 is not tested.
+
+\subsection{Streaming protocol: replay speed, backpressure, drop policy, detection latency}
+\label{sec:streaming-protocol}
+
+The streaming protocol belongs to the co-supervisor's pipeline (\cref{sec:streaming-pipeline});
+we state the mandatory part. A captured dataset is replayed at its recorded rate and at
+multiples of it. The broker queue is bounded. Under backpressure the producer is slowed in
+one condition and flows are dropped in another, and in both the share of dropped flows is
+reported with the throughput; a dropped flow is never counted as correct. FR9 is checked by
+the share of identical decisions in batch and in streaming. The \emph{attack start} is the
+start time of the first flow labelled DDoS in the replay; the \emph{detection delay} of E15 is
+the time of the first alert on a DDoS flow minus that start, on the replay clock, split into
+the exporter timeout, transport, inference and check (\cref{sec:uc2-latency}).
+% FIXME(open): broker, replay speeds, drop policy, the model and extractor of the pipeline, and whether DDL is used (if so amend Ch. 1, Sec. 1.6) are the co-supervisor's decisions; the measures here are the mandatory part.
+
+% ================================================================
+\section{Statistical analysis plan}
+\label{sec:statistical-plan}
+
+\subsection{Paired tests on the same splits (Wilcoxon signed-rank)}
+\label{sec:wilcoxon}
+
+For two arms on the same dataset the seeds are the pairs, so the test is paired on the
+same training/validation cut. We use the Wilcoxon signed-rank test \citep{wilcoxon1945individual},
+which \citet{demsar2006statistical} recommend for two classifiers. The difference is B
+minus A, and zero differences are dropped. The $p$-value is exact when there are no ties
+and a normal approximation otherwise. Five pairs are planned for each dataset and form the
+Holm family: MLP-CE without weights to with weights; with weights to LTN-sup (effect of the
+loss); LTN-sup to LTN-full (effect of the knowledge); MLP-CE with weights to LTN-full (H1);
+LTN-full to XGBoost (H9). The primary metric is the test macro-F1. The family and the pairs
+are fixed and are not changed after the data are seen. Any other pair or measure is
+secondary and declared outside the family.
+% FIXME(open): proposal, to confirm and to record with its date in decisioni_protocollo.md: the five pairs of the Holm family.
+
+\subsection{Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)}
+\label{sec:friedman}
+
+For all arms together on one dataset we use the Friedman test \citep{friedman1937use} with
+the seeds as blocks, then the Nemenyi critical difference and a CD diagram
+\citep{demsar2006statistical}. This adapts a procedure written for datasets as blocks:
+the seeds are not independent samples of datasets, so the result concerns the randomness of
+training on this dataset only. The chi-square approximation is rough with ten blocks and
+seven arms, so the $p$-value is indicative. The Nemenyi values are those of Dem{\v{s}}ar for
+$\alpha=0.05$. We run no test across datasets; three are too few. A general conclusion is
+drawn only if its sign is the same on the flow datasets, and a result on NSL-KDD alone holds
+for NSL-KDD.
+
+\subsection{Effect sizes and confidence intervals; multiple-comparison correction}
+\label{sec:effect-sizes}
+
+A $p$-value alone says little, so each comparison reports the paired median of the
+differences with a bootstrap interval of the median \citep{efron1979bootstrap,efron1994introduction},
+10\,000 resamples, and the wins out of ten. With ten pairs the smallest exact two-sided $p$
+is $2/2^{10}\approx0.002$, and the interval is optimistic at this size. The Holm step-down
+correction \citep{demsar2006statistical} is applied to the five $p$-values of a dataset.
+Stress experiments are read through effect size and intervals, not through new families.
+
+% ================================================================
+\section{Benchmark harness design}
+\label{sec:harness}
+
+\subsection{Configuration-driven runs, result schema, artefact layout}
+\label{sec:harness-config}
+
+One run is one YAML configuration and one seed, and writes one JSON result with configuration,
+seed, versions, platform, commit, timings, training history and metrics per part, including
+the C5 block and per-label recall. \texttt{tune.py} runs trials in parallel workers and writes
+the summary and best configuration. A launcher script runs the final seeds of an arm on a CIC
+dataset, scores the test part, saves the model and archives results and models with a
+checksum. \texttt{stress.py} derives the configurations of E3, E9 and E11 to E13 from a tuned
+one. Results are not committed.
+
+\subsection{How a third party reproduces a table of the thesis in one command}
+\label{sec:harness-reproduce}
+
+Given the result files, a comparison table is rebuilt by one call of
+\texttt{analysis/compare\_runs.py}, with the metric, the pairs and the list of arms, which
+runs the Wilcoxon tests, the Holm correction, the bootstrap, the Friedman and Nemenyi tests,
+the CD diagram and the \LaTeX{} table. \texttt{summarize\_runs.py} prints the mean and
+deviation of every measure. Rebuilding the result files from the data needs the tuning and
+final scripts and the datasets (\cref{ch:implementation}).
+% FIXME(open): the result files are not in the repository; decide where they are archived for a third party (Appendix E of the outline) and name the commands there.
+
+% ================================================================
+\section{Threats to validity (internal, external, construct, conclusion)}
+\label{sec:threats}
+
+\paragraph{Internal.}
+The common network is not optimal for every arm, the arms balance classes with different
+levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The tuning of CIC-IDS2017 used a thinned Normal class, and its
+validation part held labels later held out in E9. The epoch cap binds unevenly. Validation has few
+rare examples, and the moving mean only damps this. The NSL-KDD thresholds were fixed on the whole
+training file, and the first threshold of A1 was changed after looking at Probe. The weak knowledge base was a planned variant, and its axiom U2 covers no U2R row of training. The CIC finals ran on the server and the early work on a
+laptop, with unrecorded commits on the server.
+
+\paragraph{External.}
+CIC-IDS2017 is cut by a random stratified split, so training and test come from the same capture
+and the result is in-distribution. CIC-DDoS2019 has two classes, is close to saturation, uses a
+training and a test day, and has Portmap only in the test part; its documented dates differ from
+the time stamps of the files, so we claim no temporal effect. NSL-KDD has content features that the
+flow datasets lack. The knowledge bases are small and one neurosymbolic method, LTN, is tested. The data are from laboratory networks, and a transfer between the CICs changes attacks and flow extractor together.
+
+\paragraph{Construct.}
+Macro-F1 at the argmax is not the whole of detection; this is why the threshold-free measures are
+reported. The violation rate is measured against the rule, not the label. Five of the nine axioms of
+the main bases have the origin \texttt{data}, so part of the ``knowledge'' was read from the training
+data. The NSL-KDD axioms, and some of the four inherited ones, come from the author's internship,
+whose report is not used as a source of this thesis. The alert budget per day is a day of a
+laboratory network. Faithfulness is agreement, not causation.
+
+\paragraph{Conclusion.}
+Ten seeds give a smallest $p$ of about 0.002, bootstrap intervals that are optimistic, and a
+Friedman approximation that is rough. The family of five pairs is fixed, and every other test is
+descriptive. The seeds do not sample test sets or datasets, so no inference is made across them.
+E7 to E11 use fixed knowledge bases and hyperparameters tuned on the full training part, which
+makes the knowledge arm an upper bound at low data.
+
+% ================================================================
+\section{Summary}
+\label{sec:ch8-summary}
+
+The benchmark compares arms of matched capacity, with the same budget of tuning, selection on
+validation only and ten seeds, on three axes. Quality has the macro-F1 as its pre-fixed primary
+measure, threshold-free measures beside it, an alert budget and the rule-violation rate of C5.
+Cost covers training and inference on one machine, and usability an effort log, sensitivity to
+knowledge, explanations and a rubric. The confirmatory tests are five paired comparisons per
+dataset with the Holm correction; everything else is descriptive. The threats are declared.
+\Cref{ch:implementation} describes how this is implemented and \cref{ch:results} reports what it
+measured.
+% FIXME(open): \cref{ch:implementation} and \cref{ch:results} render as "??" until Chapters 9 and 10 exist.

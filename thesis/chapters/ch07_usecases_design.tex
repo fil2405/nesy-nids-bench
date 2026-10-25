@@ -7,7 +7,7 @@ measured. This chapter turns that gap into five use cases, requirements traceabl
 to the experiments, a reference architecture and the design of the knowledge base.
 It does not fix how measurements are taken (\cref{ch:benchmarking-methodology}),
 the code (\cref{ch:implementation}) or the numbers (\cref{ch:results}).
-% FIXME(open): \cref{ch:benchmarking-methodology}, \cref{ch:implementation} and \cref{ch:results} (Chapters 8, 9 and 10) render as "??" until those chapters exist.
+% FIXME(open): \cref{ch:implementation} and \cref{ch:results} (Chapters 9 and 10) render as "??" until those chapters exist.
 UC1, UC2 and UC3 are the tasks on which detectors are trained and scored on
 labelled data. UC4 and UC5 are properties asked of the same detectors: that they
 hold up on attacks they did not see, and that an alert comes with something a
@@ -107,7 +107,6 @@ An alert refers to one flow and carries the time the flow was closed, the time o
 the decision, the score and, when a knowledge base is attached, the axioms that
 hold on it (\cref{sec:uc5}). One correct alert tells the operator that an attack
 has begun, while the alert budget counts every false alarm.
-% FIXME(open): the definition of the attack start used for the detection delay of E15 is given in Ch. 8, \cref{ch:benchmarking-methodology}.
 
 % ================================================================
 % 7.3 UC3
@@ -194,7 +193,6 @@ and in real time (\cref{ch:introduction}). The experiments are numbered E1 to
 E17. This chapter names them and states what each is for; their protocol is the
 subject of \cref{ch:benchmarking-methodology} and their outcomes of
 \cref{ch:results}.
-% FIXME(open): the definition of each measure (macro-F1, MCC, alert budget, C5, cost and usability measures) is given in Ch. 8, \cref{sec:detection-quality-dimension} and following sections.
 
 The requirements carry no numeric target: a target would need a deployment or a
 result to calibrate it on, and we have neither. A requirement is verified when its
@@ -292,7 +290,6 @@ only where a rare class exists, which excludes CIC-DDoS2019 (\cref{sec:uc2}). Ev
 row that compares arms covers the four neural arms, which share one network and one
 batch size, and Random Forest, XGBoost and the rule-only arm; a one-dimensional
 convolutional network is optional.
-% FIXME(open): the datasets assigned to E3, E4, E7 to E11 and E13 to E17, and the status of the 1D-CNN arm, are fixed in Ch. 8, \cref{ch:benchmarking-methodology}.
 
 % ================================================================
 % 7.7 Reference architecture
@@ -425,7 +422,6 @@ design keeps as an extension, a control for the neurosymbolic arms. It removes e
 violation except those of an axiom that loses a conflict, and the interesting
 quantity is what it costs in quality, because the axioms are not exact
 (\cref{sec:kb-format}).
-% FIXME(open): confirm in Ch. 8 that the post-check has the two modes (annotate, enforce) and that E12 reports both.
 
 E12 has two parts. The first compares the inference latency and throughput of an
 LTN-trained network with those of the same network trained with cross-entropy. They
@@ -549,7 +545,7 @@ comparison of knowledge on rare classes cannot be made there (\cref{sec:uc2}). T
 three knowledge bases are not the same set. An experiment that moves a model between
 datasets (E9) needs the axioms computable on both, or must declare that the
 knowledge base changes.
-% FIXME(open): the axiom set used in the transfer experiment E9 is fixed in Ch. 8, \cref{ch:benchmarking-methodology}.
+% FIXME(open): the axiom set of the E9 transfer is a proposal in Ch. 8, \cref{sec:knowledge-sensitivity}; confirm it.
 
 The knowledge base is also a factor of the benchmark. A run records the version of
 the knowledge base, the identifiers of its axioms, any edit applied to it, the weight
@@ -622,4 +618,3 @@ experimental factor.
 \Cref{ch:benchmarking-methodology} takes this design and fixes how it is
 measured: the datasets and their splits, the arms and their tuning, the measures
 and the statistical tests.
-% FIXME(open): \cref{ch:benchmarking-methodology} (Chapter 8) renders as "??" until that chapter exists.
