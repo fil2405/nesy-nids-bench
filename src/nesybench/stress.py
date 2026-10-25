@@ -18,7 +18,7 @@ from nesybench.logic.edit import kb_file
 from nesybench.logic.kb import load_kb
 from nesybench.run import load_config
 
-LEVELS = (-0.10, -0.05, 0.05, 0.10, 0.20)   # tau shift, percentile points
+LEVELS = (-0.10, -0.05, 0.05, 0.10, 0.20)   # tau shift, fraction of the train column (0.05 = 5 percentile points)
 COPIES = (2, 4, 6, 8)                        # extra copies of one axiom
 E7_LEVELS = {                                # train fractions; 1.0 is the final run
     "nslkdd": (0.5, 0.2, 0.1, 0.05),

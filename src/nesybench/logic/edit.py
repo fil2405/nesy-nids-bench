@@ -5,7 +5,7 @@ Config, applied to the KB a model trains on; C5 keeps reading the original file.
     kb_edit:
       exclude: [A1, group:dos]         # ids or group:<name>
       swap_target: {A2: DoS}           # id -> new target class
-      tau_shift: {axioms: [A1], by: 0.05}   # percentile points of the train column
+      tau_shift: {axioms: [A1], by: 0.05}   # fraction of the train column, 0.05 = 5 percentile points
       copies: {axiom: A1, n: 6, spread: 0.1}
 
 Order: exclude, swap_target, tau_shift, copies.
@@ -38,7 +38,7 @@ def _pick(kb: KB, names, where: str) -> set[str]:
 
 
 def _moved(cond: Condition, shift: float, column) -> Condition:
-    """Threshold moved by `shift` percentile points of the column; eq conditions stay."""
+    """Threshold moved by `shift` as a fraction of the column (0.05 = 5 percentile points); eq stays."""
     if cond.op == "eq":
         return cond
     values = np.asarray(column, dtype=float)
