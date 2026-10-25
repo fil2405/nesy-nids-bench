@@ -81,14 +81,21 @@ def e13(base: dict, kb, axiom=None, counts=COPIES) -> list[dict]:
                     {"copies": {"axiom": axiom, "n": n, "spread": 0.1}}) for n in counts]
 
 
-def e9(base: dict, labels, tag: str) -> dict:
-    """Any arm: the fine labels never seen in train or validation, all in the test part."""
+def e9(base: dict, labels, tag: str, kb=None) -> dict:
+    """Any arm: the fine labels never seen in train or validation, all in the test part.
+
+    kb: a KB derived without those labels; C5 uses it in every arm, training only in ltn_full.
+    """
     if not labels or tag == "kb":
         raise SystemExit("e9 needs --holdout LABEL... and --tag NAME")
     if base.get("split") != "stratified_random":
         raise SystemExit("e9 holds labels out of a stratified_random split")
     config = _derive(base, f"e9_{tag}", None)
     config["split_params"] = {**base.get("split_params", {}), "holdout_labels": list(labels)}
+    if kb:
+        config["c5_kb"] = kb
+        if base.get("kb"):
+            config["kb"] = kb
     return config
 
 
@@ -171,7 +178,7 @@ def main(argv=None):
     parser.add_argument("--base", required=True)
     parser.add_argument("--experiment", required=True, choices=["base", "e3", "e4", "e7", "e8", "e9", "e11", "e13"])
     parser.add_argument("--out", default="configs/stress")
-    parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant")
+    parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant (E9: the one derived without the held-out labels)")
     parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
     parser.add_argument("--holdout", nargs="+", help="E9: fine labels kept out of train")
     parser.add_argument("--swap", nargs="*", default=[], help="E11: ID:class")
@@ -184,7 +191,7 @@ def main(argv=None):
 
     base = load_config(args.base)
     if args.experiment == "e9":
-        configs = [e9(base, args.holdout, args.tag)]
+        configs = [e9(base, args.holdout, args.tag, args.kb)]
         _write(configs, args.out)
         return
     if args.experiment == "e7":

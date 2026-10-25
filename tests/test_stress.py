@@ -181,3 +181,18 @@ def test_e4_sup_only_varies_p_and_refuses_other_arms(tmp_path):
         "toy_ltn_sup_e4_p1", "toy_ltn_sup_e4_p4", "toy_ltn_sup_e4_p6"]
     with pytest.raises(SystemExit):
         stress.main(["--base", str(_arm(tmp_path)), "--experiment", "e4", "--out", str(out)])
+
+
+def test_e9_other_kb_reaches_training_only_where_the_arm_trains_on_it(tmp_path):
+    out = tmp_path / "o"
+    kb = tmp_path / "kb.yaml"
+    kb.write_text(KB_YAML)
+    ltn = _arm(tmp_path, "cicids2017", "ltn_full", kb=str(kb), c5_kb=None)
+    mlp = _arm(tmp_path, "cicids2017", "mlp_ce", c5_kb=str(kb))
+    for base in (ltn, mlp):
+        stress.main(["--base", str(base), "--experiment", "e9", "--out", str(out),
+                     "--holdout", "SSH-Patator", "--tag", "ssh", "--kb", "kb/other.yaml"])
+    got_ltn = yaml.safe_load((out / "toy_ltn_full_e9_ssh.yaml").read_text())
+    got_mlp = yaml.safe_load((out / "toy_mlp_ce_e9_ssh.yaml").read_text())
+    assert got_ltn["kb"] == got_ltn["c5_kb"] == "kb/other.yaml"
+    assert got_mlp["c5_kb"] == "kb/other.yaml" and got_mlp["kb"] is None
