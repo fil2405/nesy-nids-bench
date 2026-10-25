@@ -33,28 +33,3 @@ Rule-only & None; nothing is learned \\
 \end{tabular}
 \end{table}
 % FIXME(open): add the values selected by the tuning of each arm and dataset after the final runs.
-
-\section*{Datasets of the experiments}
-
-\begin{table}[h]
-\centering
-\footnotesize
-\caption{Datasets of the experiments. N: NSL-KDD, I: CIC-IDS2017, D: CIC-DDoS2019.}
-\label{tab:experiment-data}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{3.2cm}p{1.7cm}p{7.6cm}@{}}
-\toprule
-Experiment & Datasets & Note \\
-\midrule
-E1, E2, E5, E6 & N; N; I; D & One per dataset, all arms, 10 seeds, test part \\
-E3, E11, E13 & N, I, D & From the tuned LTN-full; no new tuning \\
-E4 & N, I & One setting varied at a time \\
-E7, E8 & N, I, D & Training fractions; rare classes thinned (on D only Normal) \\
-E9 & I, D & Held-out labels; Portmap; transfer I to D \\
-E10, E12, E17 & I, N & Noise and evasion; post-check and latency; explanations \\
-E14, E15 & I & Streaming, if available \\
-E16 & N, I, D & Effort log \\
-\bottomrule
-\end{tabular}
-\end{table}
-% FIXME(open): proposal, to confirm: the assignment of datasets in the table above; E10 has low priority and its perturbations are not yet defined.

@@ -89,9 +89,8 @@ Early stopping and the choice of epoch follow one rule in all arms: the mean val
 over the last five epochs (rounds for XGBoost), patience ten, best weights restored. The
 validation loss cannot be common, since cross-entropy and one minus the satisfaction are not on
 one scale. The moving mean damps a lucky epoch, because validation holds few rare examples.
-Neural arms run at most 100 epochs and XGBoost 300 rounds. A cap binds unevenly, so the share of
-runs ending at the cap is reported.
-% FIXME(open): the repository gives a cap of 100 epochs on NSL-KDD too; check that the NSL-KDD final runs used 100 and not 50.
+Neural arms run at most 100 epochs on every dataset and XGBoost 300 rounds. A cap binds unevenly,
+so the share of runs ending at the cap is reported.
 The budget is equal in trials, not in dimensions: an arm offers from one lever (MLP-CE) to six
 (LTN-full, XGBoost), so these two are the most exposed to under-tuning. We take equal trials as
 equal budget, since the levers are part of the arm. On CIC-IDS2017 the tuning trials train on a
@@ -355,11 +354,31 @@ retraining and re-tuning, 1 retraining only, 2 none.
 
 A batch run is one configuration and one seed: split, preprocess, fit with the selection
 rule, score the validation part and, in final runs, the test part (\cref{sec:batch-pipeline}).
-\Cref{tab:experiment-data} (Appendix~\ref{app:hyperparameters}) assigns the datasets of the experiments of \cref{ch:usecases-design}.
+\Cref{tab:experiment-data} assigns the datasets of the experiments of \cref{ch:usecases-design}.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Datasets of the experiments. N: NSL-KDD, I: CIC-IDS2017, D: CIC-DDoS2019.}
+\label{tab:experiment-data}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{3.2cm}p{1.7cm}p{7.6cm}@{}}
+\toprule
+Experiment & Datasets & Note \\
+\midrule
+E1, E2, E5, E6 & N; N; I; D & One per dataset, all arms, 10 seeds, test part \\
+E3, E11, E13 & N, I, D & From the tuned LTN-full; no new tuning \\
+E4 & N, I & One setting varied at a time \\
+E7, E8 & N, I, D & Training fractions; rare classes thinned (on D only Normal) \\
+E9 & I, D & Held-out labels; Portmap; transfer I to D \\
+E10, E12, E17 & I, N & Noise and evasion; post-check and latency; explanations \\
+E14, E15 & I & Streaming, if available \\
+E16 & N, I, D & Effort log \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): proposal, to confirm: the assignment of datasets in the table above; E10 has low priority and its perturbations are not yet defined.
 All arms of \cref{sec:matched-capacity} take part unless stated. The one-dimensional
 network is not included; it is optional and enters only if time remains.
-
-
 
 The runs of E3, E4, E7, E8, E11 and E13 keep the hyperparameters of the base configuration,
 and the validation part is not reduced in E7 and E8. Their conclusions on the test part rest

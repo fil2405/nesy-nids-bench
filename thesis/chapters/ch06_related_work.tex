@@ -468,13 +468,13 @@ logic in the loss. Seven extractions rest on the full text. Of these, only the
 paper of Alemayehu et al. repeats runs over seeds, and only it mentions a
 released repository, without giving a link. None tests the difference between
 two detectors, and none reports the violation of rules by the predictions. Only
-Onchis et al. report the satisfaction of a knowledge base on test data. Cost
+Onchis et al. report the satisfaction of a knowledge base on test data, and their
+axioms constrain the labels only. Cost
 appears as training time in the two papers of Tran et al. and as latency,
 memory and energy in the paper of Alemayehu et al. Explanations are evaluated by
 manual validation in one paper, and qualitatively or not at all in the rest. These statements hold for
 the eight papers. The corpus supports the claim that logic in the loss can work,
 and it does not tell when it pays.
-% FIXME(open): how the metrics of C5 are positioned against the satisfaction reported by Onchis et al. is to be decided with the advisor; Secs. 6.6 and 6.7 and Ch. 1 follow that decision.
 
 % ================================================================
 % 6.5 Benchmarking methodology for learning-based security systems
@@ -655,8 +655,10 @@ one, which has no logic in the loss.
 The thesis measures training and inference cost in batch and in streaming
 operation. The sixth is usability. No paper reports the effort of writing the
 knowledge or evaluates the explanations beyond a manual check. The thesis
-measures both.
-% FIXME(open): the sentence on the metrics of C5 is missing here; add it after the decision with the advisor on how C5 is positioned against Onchis et al.
+measures both. On the knowledge itself, one paper reports the satisfaction of a
+knowledge base, with axioms on labels, and none reports how often the predictions
+violate a rule. The two measures of C5 extend that practice to rules on traffic
+features, one rule at a time and for every arm.
 
 These gaps map to the research questions. The first two concern RQ1 and RQ2,
 the third and fourth RQ5, the fifth RQ3 and the sixth RQ4. Every statement
