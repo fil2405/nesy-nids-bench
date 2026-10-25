@@ -45,8 +45,9 @@ H9 Classical ML & RQ5 & Random Forest and gradient boosting remain strong baseli
 \end{tabular}
 \end{table}
 
-H1 is tested against MLP-CE (the claim as stated) and against LTN-sup, which says whether
-a gain comes from the knowledge or from the loss. H2 cannot be tested on CIC-DDoS2019,
+H1 is read along two pairs of the confirmatory family (\cref{sec:wilcoxon}): MLP-CE with
+weights to LTN-sup, the effect of the loss, and LTN-sup to LTN-full, the effect of the
+knowledge. The direct difference between LTN-full and MLP-CE is reported outside the family. H2 cannot be tested on CIC-DDoS2019,
 which has no rare class (\cref{sec:uc2}).
 
 % ================================================================
@@ -63,9 +64,9 @@ choice); \citet{raschka2018model} survey evaluation and selection.
 
 The four neural arms share one network: hidden layers of 256 and 128 units, ReLU, dropout
 0.2, one output per class, Adam, batch size 256 and one selection rule
-(\cref{sec:matched-tuning}). They differ in the loss and in the handling of imbalance, which
-are the things under test. The parameter count is recorded in every run.
-% FIXME(open): the common network is fixed for all datasets by the tuning files (D6); on the CIC datasets it is a proposal to confirm, since it was chosen with NSL-KDD in view. It is not optimal for every arm, which \cref{sec:threats} says.
+(\cref{sec:matched-tuning}). The network was chosen on NSL-KDD and kept on the CIC datasets.
+The arms differ in the loss and in the handling of imbalance, which are the things under
+test. The parameter count is recorded in every run.
 All arms get the same features: numeric columns standardised, categorical columns one-hot
 encoded, fitted on the training part. The trees read the same matrix; the axioms read the raw
 columns (\cref{sec:batch-pipeline}). A window feature added to a dataset goes to every arm.
@@ -134,13 +135,13 @@ budget set by cost, not a power analysis.
 \subsection{Reproducibility: pinned environment, fixed seeds, published artefacts}
 \label{sec:reproducibility}
 
-The environment is pinned in a lock file. A run seeds Python, NumPy and TensorFlow and enables
-deterministic operations; its result file records configuration, seed, package versions,
+The environment is pinned in a lock file. A run seeds Python, NumPy and TensorFlow and enables the
+deterministic operations of TensorFlow; its result file records configuration, seed, package versions,
 platform, commit, whether the tree was modified, timings and metrics. The CIC finals also save
 model and preprocessing.
 % FIXME(open): check that the NSL-KDD final runs saved model and preprocessing too.
 Determinism holds on one machine: two runs of one configuration and seed give the same macro-F1
-and select the same epoch in our checks, while the GPU loss can differ in its last digits. Across
+and select the same epoch in our checks. Across
 machines and library versions we claim nothing. The CIC finals ran on a server (Python 3.14,
 TensorFlow 2.22) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
 compared only within one machine (\cref{sec:cost-dimension}). Code and configurations are in
@@ -188,19 +189,25 @@ applies it unchanged to the test part (UC2, UC4). We propose the threshold on $-
 at which the validation FPR equals the alert budget of \cref{sec:alert-budget}, and report the
 TPR and FPR it gives on the test part and the gap from the budget. The recall on an unseen
 attack (FR4) is read at the same threshold.
-% FIXME(open): proposal, to confirm. The transfer of the validation threshold to the test part is not in metrics.py; it needs a script over the saved models. Ch. 7 says ``fixed on training data'' in FR4 and UC4 and ``on validation data'' in UC2: align Ch. 7 to the validation part.
+% FIXME(open): proposal, to confirm. The transfer of the validation threshold to the test part is not in metrics.py; it needs a script over the saved models.
 
 \subsection{Cost-sensitive evaluation and the alert-budget view}
 \label{sec:alert-budget}
 
 A false alarm and a missed attack do not cost the same, and no deployment supplies the ratio,
-so we build no cost-weighted score; cost curves \citep{drummond2006cost} would need a range we
-cannot justify. What can be argued is the base rate: attacks are rare, so a small FPR still
+so we build no cost-weighted score. Cost curves need no ratio: they show the expected cost of a
+classifier over the full range of class distributions and misclassification costs
+\citep{drummond2006cost}. As proposed in \cref{sec:metrics-beyond-accuracy}, we draw them for the
+operator view of attacks against Normal, to show where the ranking of the arms changes with
+prevalence and cost.
+% FIXME(open): cost curves are not in the code; they need the scores of the test part, so a script over the saved models of the final runs, with no new run. If they are dropped, soften the proposal of Ch. 6, Sec. 6.5.2.
+What can be argued is the base rate: attacks are rare, so a small FPR still
 buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budget is the number
 of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the
 FPR times 100\,000), which does not depend on the share of attacks in the test part. The
 question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
-also given per day; NSL-KDD has no time stamps. It describes a day of a laboratory network.
+also given per day; NSL-KDD has no time stamps. The figure per day describes a day of a
+laboratory network.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
 % FIXME(open): the benign flows per day of the two CIC datasets are given in Ch. 9, \cref{ch:implementation}.
 
@@ -244,13 +251,13 @@ Every run records the time of each epoch (round for XGBoost), the epochs run, th
 selected and the total fit time, with validation scoring timed apart. Peak RAM and VRAM are
 measured in dedicated runs on CIC-IDS2017. An LTN epoch and an MLP epoch have the same number
 of steps but not the same distinct examples, since LTN draws batches with quotas, so we also
-report steps and examples seen. The epoch cap cuts slow arms short (\cref{sec:matched-tuning}),
-and only runs of one idle machine are compared (D9).
+report steps and examples seen. The epoch cap can cut slow arms short (\cref{sec:matched-tuning}),
+and only runs of one idle machine are compared.
 % FIXME(open): the share of distinct examples per LTN epoch is our estimate and has not been measured on the sampler.
 
 H7 asks that training cost grow linearly with the axioms. E13 adds 2, 4, 6 or 8 copies of one
-axiom, with thresholds moved by small steps on either side (up to $\pm0.1$ percentile points of
-the training column); we fit a line to time per epoch against the number of axioms and report
+axiom, with thresholds moved by small steps on either side, up to 10 percentile points of
+the training column; we fit a line to time per epoch against the number of axioms and report
 slope and residuals. Copies measure cost, not knowledge.
 % FIXME(open): the 2 to 8 copies and the axiom copied (the first of the file) are a proposal to confirm.
 
@@ -264,7 +271,6 @@ plain network at inference (\cref{sec:symbolic-placement}), so equal cost with t
 trained with cross-entropy is a control, not a finding. E12 compares the network alone with the
 network followed by the post-check (\cref{sec:explanation-quality}) and reports the added time
 per row; the two are not summed into an end-to-end latency.
-% FIXME(open): the latency tool and the post-check are in the practical chat's local commits, not in the pushed repository; check names and options when they are pushed.
 
 \subsection{Energy proxy measurement [EXT]}
 \label{sec:energy}
@@ -299,7 +305,7 @@ fact and are not measured live; this is declared.
 
 The knowledge base is an experimental factor; each edit is applied to the training copy only
 and recorded in the run as \texttt{kb\_edit}, and C5 is measured on the original. E3 removes
-one axiom or group. E11 moves all thresholds by $-0.10$, $-0.05$, $+0.05$, $+0.10$ and $+0.20$
+one axiom or group. E11 moves all thresholds by $-10$, $-5$, $+5$, $+10$ and $+20$
 percentile points of the training column and swaps the target of one axiom (for example A1 to
 Probe). E13 adds copies. The weak variant of NSL-KDD tests broad axioms for R2L and U2R. E9 holds
 fine labels out of training and validation and adds them to the test part, with per-label
@@ -320,8 +326,8 @@ conflict. E12 reports both. Over the alerts, \emph{coverage} is the share with a
 rule firing; \emph{faithfulness} is, among covered alerts, the share where a firing rule has
 the predicted class as target; \emph{conciseness} is the mean number of rules firing per
 covered alert. Faithfulness tests agreement with the prediction, not a causal explanation.
-Enforce with imprecise rules lowers the macro-F1 by construction (\cref{sec:rule-violation-rate}),
-and this is reported as a result.
+Where a rule is wrong on a flow, enforce replaces a correct prediction, so with imprecise rules
+it can lower the macro-F1 (\cref{sec:rule-violation-rate}); this is reported as a result.
 
 \subsection{Maintainability under drift; retraining cost}
 \label{sec:drift}
@@ -384,15 +390,16 @@ the exporter timeout, transport, inference and check (\cref{sec:uc2-latency}).
 
 For two arms on the same dataset the seeds are the pairs, so the test is paired on the
 same training/validation cut. We use the Wilcoxon signed-rank test \citep{wilcoxon1945individual},
-which \citet{demsar2006statistical} recommend for two classifiers. The difference is B
-minus A, and zero differences are dropped. The $p$-value is exact when there are no ties
-and a normal approximation otherwise. Five pairs are planned for each dataset and form the
-Holm family: MLP-CE without weights to with weights; with weights to LTN-sup (effect of the
-loss); LTN-sup to LTN-full (effect of the knowledge); MLP-CE with weights to LTN-full (H1);
-LTN-full to XGBoost (H9). The primary metric is the test macro-F1. The family and the pairs
+which \citet{demsar2006statistical} recommends for two classifiers over several datasets;
+here the seeds take the place of the datasets. The difference is B minus A. Zero differences
+are dropped, while Dem{\v{s}}ar splits their ranks between the two signs. The $p$-value comes
+from the exact null distribution, which ties among the differences make approximate. Five
+pairs are planned for each dataset and form the Holm family: MLP-CE without weights to with
+weights (balancing); with weights to LTN-sup (effect of the loss); LTN-sup to LTN-full (effect
+of the knowledge); LTN-full to Random Forest and LTN-full to XGBoost (H9). The primary metric
+is the test macro-F1. The family and the pairs
 are fixed and are not changed after the data are seen. Any other pair or measure is
 secondary and declared outside the family.
-% FIXME(open): proposal, to confirm and to record with its date in decisioni_protocollo.md: the five pairs of the Holm family.
 
 \subsection{Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)}
 \label{sec:friedman}
@@ -401,8 +408,9 @@ For all arms together on one dataset we use the Friedman test \citep{friedman193
 the seeds as blocks, then the Nemenyi critical difference and a CD diagram
 \citep{demsar2006statistical}. This adapts a procedure written for datasets as blocks:
 the seeds are not independent samples of datasets, so the result concerns the randomness of
-training on this dataset only. The chi-square approximation is rough with ten blocks and
-seven arms, so the $p$-value is indicative. The Nemenyi values are those of Dem{\v{s}}ar for
+training on this dataset only. We compute the chi-square form of the statistic. Dem{\v{s}}ar recommends the F form of Iman
+and Davenport, since the chi-square form is conservative, so our $p$-value errs on the safe
+side and is indicative. The Nemenyi values are those of Dem{\v{s}}ar for
 $\alpha=0.05$. We run no test across datasets; three are too few. A general conclusion is
 drawn only if its sign is the same on the flow datasets, and a result on NSL-KDD alone holds
 for NSL-KDD.
@@ -429,8 +437,8 @@ seed, versions, platform, commit, timings, training history and metrics per part
 the C5 block and per-label recall. \texttt{tune.py} runs trials in parallel workers and writes
 the summary and best configuration. A launcher script runs the final seeds of an arm on a CIC
 dataset, scores the test part, saves the model and archives results and models with a
-checksum. \texttt{stress.py} derives the configurations of E3, E9 and E11 to E13 from a tuned
-one. Results are not committed.
+checksum. \texttt{stress.py} derives the configurations of E3, E4, E7 to E9, E11 and E13 from a tuned
+one, and E12 adds a post-check key to any configuration. Results are not committed.
 
 \subsection{How a third party reproduces a table of the thesis in one command}
 \label{sec:harness-reproduce}
@@ -464,10 +472,10 @@ flow datasets lack. The knowledge bases are small and one neurosymbolic method, 
 
 \paragraph{Construct.}
 Macro-F1 at the argmax is not the whole of detection; this is why the threshold-free measures are
-reported. The violation rate is measured against the rule, not the label. Five of the nine axioms of
-the main bases have the origin \texttt{data}, so part of the ``knowledge'' was read from the training
-data. The NSL-KDD axioms, and some of the four inherited ones, come from the author's internship,
-whose report is not used as a source of this thesis. The alert budget per day is a day of a
+reported. The violation rate is measured against the rule, not the label. Five of the nine axioms
+outside the weak variant have the origin \texttt{data}, so part of the ``knowledge'' was read from
+the training data. The axioms of the weak variant come from the author's internship, whose report
+is not used as a source of this thesis. The alert budget per day is a day of a
 laboratory network. Faithfulness is agreement, not causation.
 
 \paragraph{Conclusion.}

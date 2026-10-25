@@ -145,7 +145,7 @@ imbalance.
 
 In UC4 the analyst meets an attack that was not in the training data and wants an
 alert anyway. The success criterion is the recall on the unseen attack at the
-operating point fixed on training data, with the quality on the whole test day.
+operating point fixed on validation data, with the quality on the whole test day.
 Two scenarios serve it, both in E9: the Portmap attack of CIC-DDoS2019, present in
 the test day and absent from the training day, and the transfer between the two CIC
 datasets. In the second, attacks and flow-extractor version change together, so
@@ -223,7 +223,7 @@ FR2 & Decide Normal or DDoS for each flow and raise an alert at a fixed operatin
 FR3 & Report R2L and U2R separately from the other classes (UC3)
   & E2, E5, E8 & Q & Per-class recall and precision--recall area \\
 FR4 & Detect an attack type absent from the training data (UC4)
-  & E9 & Q & Recall on the unseen attack at the operating point fixed on training data \\
+  & E9 & Q & Recall on the unseen attack at the operating point fixed on validation data \\
 FR5 & Attach to an alert the axioms whose antecedent holds on the flow (UC5)
   & E17 & U & Explanation coverage, fidelity and conciseness \\
 FR6 & Read the axioms from a versioned file, so that an axiom set can be swapped or reduced without a change of code (\cref{sec:kb-format})
