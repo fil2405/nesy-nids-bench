@@ -9,15 +9,37 @@ from sklearn.model_selection import train_test_split
 from .base import CLASS_COL, LABEL_COL, class_index
 
 
-def _keep_train_fraction(train, spec, fraction, seed):
-    """Stratified subsample of the train part only; validation and test stay whole."""
+def _top_up(kept, train, spec, minimum, seed):
+    """Put back random dropped rows until every class has `minimum` rows (or all it had)."""
+    if not train.index.is_unique:
+        raise ValueError("train index must be unique")
+    labels = np.asarray(class_index(train, spec))
+    keep = train.index.isin(kept.index)
+    rng = np.random.default_rng(seed)
+    for c in range(len(spec.classes)):
+        rows = np.flatnonzero(labels == c)
+        missing = min(minimum, len(rows)) - int(keep[rows].sum())
+        if missing > 0:
+            keep[rng.choice(rows[~keep[rows]], missing, replace=False)] = True
+    return train[keep]
+
+
+def _keep_train_fraction(train, spec, fraction, seed, min_keep_per_class=0):
+    """Stratified subsample of the train part only; validation and test stay whole.
+
+    min_keep_per_class: floor per class, so rare classes survive small fractions.
+    """
     if not 0 < fraction <= 1:
         raise ValueError(f"train_fraction must be in (0, 1], got {fraction}")
+    if min_keep_per_class < 0:
+        raise ValueError(f"min_keep_per_class must be >= 0, got {min_keep_per_class}")
     if fraction == 1:
         return train
     kept, _ = train_test_split(
         train, train_size=fraction, stratify=class_index(train, spec), random_state=seed
     )
+    if min_keep_per_class:
+        kept = _top_up(kept, train, spec, min_keep_per_class, seed)
     return kept
 
 
@@ -40,13 +62,15 @@ def _thin_classes(train, spec, fractions, seed):
     return train[keep]
 
 
-def _shrink_train(train, spec, seed, train_fraction, train_class_fractions):
+def _shrink_train(train, spec, seed, train_fraction, train_class_fractions,
+                  min_keep_per_class=0):
     train = _thin_classes(train, spec, train_class_fractions, seed)
-    return _keep_train_fraction(train, spec, train_fraction, seed)
+    return _keep_train_fraction(train, spec, train_fraction, seed, min_keep_per_class)
 
 
 def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fraction=0.15,
-                                      train_fraction=1.0, train_class_fractions=None):
+                                      train_fraction=1.0, train_class_fractions=None,
+                                      min_keep_per_class=0):
     """Official test file; validation stratified from train."""
     if test_df is None:
         raise ValueError(f"{spec.name} has no official test file")
@@ -56,8 +80,8 @@ def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fractio
         stratify=class_index(train_df, spec),
         random_state=seed,
     )
-    return (_shrink_train(train_part, spec, seed, train_fraction, train_class_fractions),
-            val_part, test_df)
+    return (_shrink_train(train_part, spec, seed, train_fraction, train_class_fractions,
+                          min_keep_per_class), val_part, test_df)
 
 
 def _hold_out(train_df, labels):
@@ -75,7 +99,7 @@ def _hold_out(train_df, labels):
 
 def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
                       test_fraction=0.2, test_seed=0, train_fraction=1.0,
-                      train_class_fractions=None, holdout_labels=None):
+                      train_class_fractions=None, holdout_labels=None, min_keep_per_class=0):
     """One frame cut into train, validation and test, stratified by class.
 
     The test cut uses test_seed, so every run sees the same test; only the
@@ -102,7 +126,8 @@ def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
     )
     if held is not None:
         test = pd.concat([test, held])
-    return _shrink_train(train, spec, seed, train_fraction, train_class_fractions), val, test
+    return (_shrink_train(train, spec, seed, train_fraction, train_class_fractions,
+                          min_keep_per_class), val, test)
 
 
 STRATEGIES = {

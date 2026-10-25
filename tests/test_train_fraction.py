@@ -91,3 +91,48 @@ def test_bad_class_fractions_are_refused(fractions):
     with pytest.raises(ValueError, match="train_class_fractions"):
         _split("nslkdd", "official_test_with_stratified_val", True,
                train_class_fractions=fractions)
+
+
+def _rare_frame(spec):
+    counts = {c: 400 for c in spec.classes}
+    counts[spec.classes[-1]] = 12
+    rng = np.random.default_rng(0)
+    return pd.DataFrame({"x": rng.random(sum(counts.values())),
+                         "class": np.repeat(list(counts), list(counts.values()))})
+
+
+@pytest.mark.parametrize("name, strategy, official", CASES)
+def test_floor_keeps_rare_classes(name, strategy, official):
+    spec = get_spec(name)
+    df = _rare_frame(spec)
+    _, (train, val, test) = None, split_data(strategy, df, _rare_frame(spec) if official else None,
+                                             spec, 0, train_fraction=0.02, min_keep_per_class=5)
+    counts = train["class"].value_counts()
+    assert set(counts.index) == set(spec.classes)
+    assert counts.min() >= 5
+    assert train.index.is_unique
+
+
+@pytest.mark.parametrize("name, strategy, official", CASES)
+def test_floor_zero_changes_nothing(name, strategy, official):
+    spec = get_spec(name)
+    df = _rare_frame(spec)
+    other = _rare_frame(spec) if official else None
+    (a, *_) = split_data(strategy, df, other, spec, 1, train_fraction=0.3)
+    (b, *_) = split_data(strategy, df, other, spec, 1, train_fraction=0.3, min_keep_per_class=0)
+    assert a.index.equals(b.index)
+
+
+def test_floor_never_exceeds_what_the_class_has():
+    spec = get_spec("cicids2017")
+    df = _rare_frame(spec)
+    (train, *_) = split_data("stratified_random", df, None, spec, 0, train_fraction=0.05,
+                             min_keep_per_class=50)
+    rare = spec.classes[-1]
+    assert train["class"].value_counts()[rare] <= 12 * 0.6 + 1
+
+
+def test_bad_floor_is_refused():
+    with pytest.raises(ValueError, match="min_keep_per_class"):
+        _split("cicids2017", "stratified_random", False, train_fraction=0.5,
+               min_keep_per_class=-1)

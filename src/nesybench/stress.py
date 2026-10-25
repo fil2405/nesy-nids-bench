@@ -1,7 +1,8 @@
-"""Configs of the stress runs (E3, E11, E13) from a tuned LTN-full config.
+"""Configs of the stress runs (E3, E7, E9, E11, E13) from a tuned config.
 
     python -m nesybench.stress --base results/tuning/tune_nslkdd_ltn_full_best.yaml \
-        --experiment base|e3|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
+        --experiment base|e3|e7|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
+E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... (ltn_full only).
 
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
@@ -17,12 +18,19 @@ from nesybench.run import load_config
 
 LEVELS = (-0.10, -0.05, 0.05, 0.10, 0.20)   # tau shift, percentile points
 COPIES = (2, 4, 6, 8)                        # extra copies of one axiom
+E7_LEVELS = {                                # train fractions; 1.0 is the final run
+    "nslkdd": (0.5, 0.2, 0.1, 0.05),
+    "cicids2017": (0.25, 0.1, 0.03, 0.01),
+    "cicddos2019": (0.1, 0.01, 0.001),
+}
+E7_FLOOR = 5                                 # rows kept per class at any fraction
 
 
 def _derive(base: dict, suffix: str, edit: dict) -> dict:
     config = copy.deepcopy(base)
     config["run_id"] = f"{base['run_id']}_{suffix}"
-    config["kb_edit"] = edit
+    if edit is not None:
+        config["kb_edit"] = edit
     config["evaluate_test"] = False
     config.pop("trial_set", None)
     return config
@@ -70,9 +78,31 @@ def e9(base: dict, labels, tag: str) -> dict:
     if base.get("split") != "stratified_random":
         raise SystemExit("e9 holds labels out of a stratified_random split")
     config = _derive(base, f"e9_{tag}", None)
-    config.pop("kb_edit")
     config["split_params"] = {**base.get("split_params", {}), "holdout_labels": list(labels)}
     return config
+
+
+def _pct(fraction: float) -> str:
+    return f"{fraction * 100:.6g}".replace(".", "p")
+
+
+def e7(base: dict, levels=None, floor=E7_FLOOR, exclude=()) -> list[dict]:
+    """Any arm: the train part cut to a fraction (validation and test whole), floor per class."""
+    levels = tuple(levels or E7_LEVELS.get(base.get("dataset"), ()))
+    if not levels:
+        raise SystemExit(f"e7: no default levels for {base.get('dataset')!r}, use --levels")
+    if any(not 0 < f < 1 for f in levels):
+        raise SystemExit("e7: levels must be in (0, 1); 1.0 is the final run")
+    if exclude and base.get("model") != "ltn_full":
+        raise SystemExit("e7: --exclude needs an ltn_full base config")
+    suffix = "_no_" + "_".join(exclude) if exclude else ""
+    out = []
+    for f in levels:
+        config = _derive(base, f"e7{suffix}_f{_pct(f)}", {"exclude": list(exclude)} if exclude else None)
+        config["split_params"] = {**base.get("split_params", {}), "train_fraction": f,
+                                  "min_keep_per_class": floor}
+        out.append(config)
+    return out
 
 
 def _write(configs, out):
@@ -86,19 +116,25 @@ def _write(configs, out):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
-    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e9", "e11", "e13"])
+    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e7", "e9", "e11", "e13"])
     parser.add_argument("--out", default="configs/stress")
     parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant")
     parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
     parser.add_argument("--holdout", nargs="+", help="E9: fine labels kept out of train")
     parser.add_argument("--swap", nargs="*", default=[], help="E11: ID:class")
     parser.add_argument("--axiom", help="E13: axiom to copy (default: the first)")
+    parser.add_argument("--levels", nargs="+", type=float, help="E7: train fractions")
+    parser.add_argument("--floor", type=int, default=E7_FLOOR, help="E7: rows kept per class")
+    parser.add_argument("--exclude", nargs="+", default=[], help="E7: axiom ids out of the KB")
     args = parser.parse_args(argv)
 
     base = load_config(args.base)
     if args.experiment == "e9":
         configs = [e9(base, args.holdout, args.tag)]
         _write(configs, args.out)
+        return
+    if args.experiment == "e7":
+        _write(e7(base, args.levels, args.floor, args.exclude), args.out)
         return
     if base.get("model") != "ltn_full" or not base.get("kb"):
         raise SystemExit("the base config must be an ltn_full config with a kb")
