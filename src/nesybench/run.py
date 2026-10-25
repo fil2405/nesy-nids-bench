@@ -18,6 +18,7 @@ from nesybench.export import artifact_dir, file_sizes, save_preprocessing
 from nesybench.data.splits import split_data
 from nesybench.logic.c5 import axiom_report
 from nesybench.logic.kb import load_kb
+from nesybench.logic.postcheck import MODES as POSTCHECK_MODES, run_postcheck
 from nesybench.data.base import LABEL_COL
 from nesybench.metrics import compute_metrics, operator_metrics, pr_auc_per_class, recall_by_label
 from nesybench.models import get_model
@@ -45,7 +46,19 @@ def _load_c5_kb(config: dict):
     return load_kb(path if path.is_absolute() else REPO_ROOT / path)
 
 
-def _evaluate(model, splits, part: str, timings: dict, kb=None):
+def _postcheck_modes(config: dict, kb) -> tuple:
+    """`postcheck`: a mode or a list of modes (annotate, enforce); needs the C5 KB."""
+    raw = config.get("postcheck") or ()
+    modes = (raw,) if isinstance(raw, str) else tuple(raw)
+    unknown = [m for m in modes if m not in POSTCHECK_MODES]
+    if unknown:
+        raise ValueError(f"postcheck: unknown modes {unknown}, known: {list(POSTCHECK_MODES)}")
+    if modes and kb is None:
+        raise ValueError("postcheck needs a kb (or c5_kb) in the config")
+    return modes
+
+
+def _evaluate(model, splits, part: str, timings: dict, kb=None, postcheck=()):
     _, y = splits.part(part)
     with Stopwatch(timings, f"predict_{part}_s"):
         proba = np.asarray(model.predict_proba(splits, part))
@@ -64,6 +77,14 @@ def _evaluate(model, splits, part: str, timings: dict, kb=None):
     if kb is not None:  # crisp: a rule fires when every condition holds at its tau
         metrics["c5"] = axiom_report(kb, splits.raw(part), proba, splits.class_names,
                                      crisp=True, y_true=y)
+    if postcheck:
+        metrics["postcheck"] = {}
+        for mode in postcheck:
+            after, report = run_postcheck(kb, splits.raw(part), proba, splits.class_names, mode)
+            scores = compute_metrics(y, after, splits.class_names)
+            report["macro_f1"], report["accuracy"] = scores["macro_f1"], scores["accuracy"]
+            report["macro_f1_before"] = metrics["macro_f1"]
+            metrics["postcheck"][mode] = report
     return metrics
 
 
@@ -80,6 +101,7 @@ def _save_artifacts(model, splits, root, run_id: str, seed: int) -> dict:
 def run_one(config: dict, seed: int, results_dir, overwrite: bool = False, model_dir=None):
     model_class = get_model(config["model"])  # fail fast, before loading data
     kb = _load_c5_kb(config)
+    postcheck = _postcheck_modes(config, kb)
     timings: dict = {}
     with Stopwatch(timings, "total_s"):
         set_global_seed(seed)
@@ -100,9 +122,9 @@ def run_one(config: dict, seed: int, results_dir, overwrite: bool = False, model
         with Stopwatch(timings, "fit_s"):
             training = model.fit(splits, {**config, "seed": seed})
 
-        metrics = {"val": _evaluate(model, splits, "val", timings, kb)}
+        metrics = {"val": _evaluate(model, splits, "val", timings, kb, postcheck)}
         if config.get("evaluate_test", False):
-            metrics["test"] = _evaluate(model, splits, "test", timings, kb)
+            metrics["test"] = _evaluate(model, splits, "test", timings, kb, postcheck)
 
     artifacts = None
     if model_dir is not None:  # the result file is written last: it marks a finished run
