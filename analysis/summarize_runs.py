@@ -88,10 +88,12 @@ def print_c5(recs, part):
               f"{seeds_note(sk, len(recs))}  rule precision {prec:.3f}")
 
 
-def summarize(runs, baseline, part):
+def summarize(runs, baseline, part, prefix=""):
     if baseline not in runs:
         raise SystemExit(f"baseline run_id not found: {baseline}")
     for run_id, by_seed in runs.items():
+        if not run_id.startswith(prefix):
+            continue
         recs = [by_seed[s] for s in sorted(by_seed)]
         commits = sorted({r["git_commit"] for r in recs})
         dirty = sorted({bool(r["git_dirty"]) for r in recs})
@@ -102,6 +104,8 @@ def summarize(runs, baseline, part):
         m, s = mean_std([macro_f1(r, part) for r in recs])
         print(f"  macro-F1  {m:.4f} +- {s:.4f}")
         for name in FOCUS:
+            if name not in recs[0]["metrics"][part]["class_names"]:
+                continue
             p, r_ = zip(*(class_pr(r, name, part) for r in recs))
             (pm, ps), (rm, rs) = mean_std(p), mean_std(r_)
             print(f"  {name}  P {pm:.3f} +- {ps:.3f}  R {rm:.3f} +- {rs:.3f}")
@@ -134,8 +138,9 @@ def main():
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--baseline", default="nslkdd_mlp_noweights")
     ap.add_argument("--part", default="val", choices=["val", "test"])
+    ap.add_argument("--prefix", default="")
     args = ap.parse_args()
-    summarize(load_runs(args.results_dir), args.baseline, args.part)
+    summarize(load_runs(args.results_dir), args.baseline, args.part, args.prefix)
 
 
 if __name__ == "__main__":
