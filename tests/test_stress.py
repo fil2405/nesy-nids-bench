@@ -1,3 +1,4 @@
+import pytest
 import yaml
 
 from nesybench import stress
@@ -196,3 +197,14 @@ def test_e9_other_kb_reaches_training_only_where_the_arm_trains_on_it(tmp_path):
     got_mlp = yaml.safe_load((out / "toy_mlp_ce_e9_ssh.yaml").read_text())
     assert got_ltn["kb"] == got_ltn["c5_kb"] == "kb/other.yaml"
     assert got_mlp["c5_kb"] == "kb/other.yaml" and got_mlp["kb"] is None
+
+
+def test_rule_only_base_takes_e3_and_e11_but_not_e13(tmp_path):
+    out = tmp_path / "o"
+    base = _arm(tmp_path, "cicids2017", "rule_only", kb="kb/cicids2017_v1.yaml")
+    stress.main(["--base", str(base), "--experiment", "e3", "--out", str(out)])
+    stress.main(["--base", str(base), "--experiment", "e11", "--out", str(out)])
+    names = sorted(p.stem for p in out.glob("*.yaml"))
+    assert "toy_rule_only_e3_no_A1" in names and "toy_rule_only_e11_tau_p20" in names
+    with pytest.raises(SystemExit):
+        stress.main(["--base", str(base), "--experiment", "e13", "--out", str(out)])

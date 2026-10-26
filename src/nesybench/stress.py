@@ -6,6 +6,7 @@ E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... 
 E8 takes any arm: --classes C ... thinned to --levels F ... of their train rows (--floor N).
 E4 takes an LTN arm: p, crisp thresholds and s_scale one at a time (crisp and s_scale: ltn_full).
 
+E3, E11 and the weak KB also take a rule_only base (configs/<dataset>_rules.yaml); E13 does not.
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
 import argparse
@@ -203,8 +204,10 @@ def main(argv=None):
     if args.experiment == "e4":
         _write(e4(base), args.out)
         return
-    if base.get("model") != "ltn_full" or not base.get("kb"):
-        raise SystemExit("the base config must be an ltn_full config with a kb")
+    if base.get("model") not in ("ltn_full", "rule_only") or not base.get("kb"):
+        raise SystemExit("the base config must be an ltn_full or rule_only config with a kb")
+    if base["model"] == "rule_only" and args.experiment == "e13":
+        raise SystemExit("e13 measures training cost: it needs an ltn_full base config")
     if args.kb:
         base["kb"] = base["c5_kb"] = args.kb
         base["run_id"] = f"{base['run_id']}_{args.tag}"

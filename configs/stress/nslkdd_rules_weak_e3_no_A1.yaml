@@ -1,0 +1,24 @@
+run_id: nslkdd_rules_weak_e3_no_A1
+dataset: nslkdd
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+model: rule_only
+kb: kb/nslkdd_v1_weak.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+training: {}
+c5_kb: kb/nslkdd_v1_weak.yaml
+kb_edit:
+  exclude:
+  - A1
