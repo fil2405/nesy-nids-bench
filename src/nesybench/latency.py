@@ -45,8 +45,11 @@ def measure(predict, x, batch_sizes=(1, 64, 1024), repeats=200, warmup=20) -> di
     return out
 
 
-def load_predictor(directory):
-    """(predict function on a float array, kind) for the model saved in `directory`."""
+def load_predictor(directory, n_classes=None):
+    """(predict function on a float array, kind) for the model saved in `directory`.
+
+    n_classes: width of the output; a forest fitted without some class gets zero columns for it.
+    """
     directory = Path(directory)
     if (directory / "model.keras").exists():
         import tensorflow as tf
@@ -59,12 +62,22 @@ def load_predictor(directory):
     if (directory / "model.joblib").exists():
         import joblib
         model = joblib.load(directory / "model.joblib")
-        return (lambda batch: model.predict_proba(batch)), "random_forest"
+
+        def predict(batch):
+            proba = model.predict_proba(batch)
+            if n_classes is None or proba.shape[1] == n_classes:
+                return proba
+            out = np.zeros((len(batch), n_classes))
+            out[:, model.classes_] = proba
+            return out
+        return predict, "random_forest"
     if (directory / "model.json").exists():
         import xgboost as xgb
         booster = xgb.Booster()
         booster.load_model(str(directory / "model.json"))
-        return (lambda batch: booster.predict(xgb.DMatrix(batch))), "xgboost"
+        best = int(booster.attr("best_round") or 0)   # rounds kept after early stopping
+        rounds = (0, best) if best else (0, 0)
+        return (lambda batch: booster.predict(xgb.DMatrix(batch), iteration_range=rounds)), "xgboost"
     raise FileNotFoundError(f"no model.keras, model.joblib or model.json in {directory}")
 
 
