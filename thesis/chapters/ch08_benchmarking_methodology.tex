@@ -47,7 +47,7 @@ H9 Classical ML & RQ5 & Random Forest and gradient boosting remain strong baseli
 
 H1 is read along two pairs of the confirmatory family (\cref{sec:wilcoxon}): MLP-CE with
 weights to LTN-sup, the effect of the loss, and LTN-sup to LTN-full, the effect of the
-knowledge. The direct difference between LTN-full and MLP-CE is reported outside the family. H2 cannot be tested on CIC-DDoS2019,
+knowledge. The direct difference between LTN-full and MLP-CE is reported descriptively, without a test. H2 cannot be tested on CIC-DDoS2019,
 which has no rare class (\cref{sec:uc2}).
 
 % ================================================================
@@ -89,8 +89,8 @@ Early stopping and the choice of epoch follow one rule in all arms: the mean val
 over the last five epochs (rounds for XGBoost), patience ten, best weights restored. The
 validation loss cannot be common, since cross-entropy and one minus the satisfaction are not on
 one scale. The moving mean damps a lucky epoch, because validation holds few rare examples.
-Neural arms run at most 100 epochs on every dataset and XGBoost 300 rounds. A cap binds unevenly,
-so the share of runs ending at the cap is reported.
+Neural arms run at most 100 epochs on every dataset and XGBoost 300 rounds. The share of runs
+ending at the cap is reported; in tuning it is at most two of sixty runs per arm.
 The budget is equal in trials, not in dimensions: an arm offers from one lever (MLP-CE) to six
 (LTN-full, XGBoost), so these two are the most exposed to under-tuning. We take equal trials as
 equal budget, since the levers are part of the arm. On CIC-IDS2017 the tuning trials train on a
@@ -142,7 +142,7 @@ model and preprocessing.
 Determinism holds on one machine: two runs of one configuration and seed give the same macro-F1
 and select the same epoch in our checks. Across
 machines and library versions we claim nothing. The CIC finals ran on a server (Python 3.14,
-TensorFlow 2.22) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
+TensorFlow 2.22.0-rc0, a release candidate) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
 compared only within one machine (\cref{sec:cost-dimension}). Code and configurations are in
 \texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
 % FIXME(open): the result files of the NSL-KDD finals show the server environment, while the plan was the laptop; confirm which machine made them and correct this paragraph.
@@ -477,7 +477,7 @@ final scripts and the datasets (\cref{ch:implementation}).
 \paragraph{Internal.}
 The common network is not optimal for every arm, the arms balance classes with different
 levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The tuning of CIC-IDS2017 used a thinned Normal class, and its
-validation part held labels later held out in E9. The epoch cap binds unevenly. Validation has few
+validation part held labels later held out in E9. Validation has few
 rare examples, and the moving mean only damps this. The NSL-KDD thresholds were fixed on the whole
 training file, and the first threshold of A1 was changed after looking at Probe. The weak knowledge base was a planned variant, and its axiom U2 covers no U2R row of training. The CIC finals ran on the server and the early work on a
 laptop, with unrecorded commits on the server.
