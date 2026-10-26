@@ -1,0 +1,41 @@
+run_id: nslkdd_ltn_full_tuned_e7_f50
+dataset: nslkdd
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+  train_fraction: 0.5
+  min_keep_per_class: 5
+model: ltn_full
+kb: kb/nslkdd_v1.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+network:
+  hidden_units:
+  - 256
+  - 128
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 0.0005045
+  batch_size: 256
+  max_epochs: 100
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: none
+  sampling_power: 0.02776
+  min_per_class: 16
+  domain_weight: 0.1
+  crisp: false
+  p: 6
+  s_scale: 1.29

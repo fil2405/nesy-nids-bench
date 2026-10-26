@@ -1,0 +1,36 @@
+run_id: cicids2017_xgb_tuned_e7_f10
+dataset: cicids2017
+split: stratified_random
+split_params:
+  val_fraction: 0.2
+  test_fraction: 0.2
+  test_seed: 0
+  train_fraction: 0.1
+  min_keep_per_class: 5
+model: xgb
+kb: null
+c5_kb: kb/cicids2017_v1.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+params:
+  learning_rate: 0.0807
+  max_depth: 8
+  min_child_weight: 2.789
+  subsample: 0.6084
+  colsample_bytree: 0.5175
+training:
+  max_rounds: 300
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: class_weight
+  class_weight_power: 0.8664

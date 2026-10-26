@@ -1,0 +1,40 @@
+run_id: cicddos2019_ltn_sup_tuned_e8_f25
+dataset: cicddos2019
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+  train_class_fractions:
+    Normal: 0.25
+  min_keep_per_class: 5
+model: ltn_sup
+kb: null
+c5_kb: kb/cicddos2019_v1.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+network:
+  hidden_units:
+  - 256
+  - 128
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 0.0005411
+  batch_size: 256
+  max_epochs: 100
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: none
+  sampling_power: 0.4735
+  min_per_class: 4
+  p: 6

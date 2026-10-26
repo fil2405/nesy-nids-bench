@@ -1,0 +1,38 @@
+run_id: cicids2017_mlp_noweights_tuned_e7_f25
+dataset: cicids2017
+split: stratified_random
+split_params:
+  val_fraction: 0.2
+  test_fraction: 0.2
+  test_seed: 0
+  train_fraction: 0.25
+  min_keep_per_class: 5
+model: mlp_ce
+kb: null
+c5_kb: kb/cicids2017_v1.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+network:
+  hidden_units:
+  - 256
+  - 128
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 0.00075
+  batch_size: 256
+  max_epochs: 100
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: none
