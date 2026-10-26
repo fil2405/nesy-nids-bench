@@ -7,7 +7,6 @@ measured. This chapter turns that gap into five use cases, requirements traceabl
 to the experiments, a reference architecture and the design of the knowledge base.
 It does not fix how measurements are taken (\cref{ch:benchmarking-methodology}),
 the code (\cref{ch:implementation}) or the numbers (\cref{ch:results}).
-% FIXME(open): \cref{ch:implementation} and \cref{ch:results} (Chapters 9 and 10) render as "??" until those chapters exist.
 UC1, UC2 and UC3 are the tasks on which detectors are trained and scored on
 labelled data. UC4 and UC5 are properties asked of the same detectors: that they
 hold up on attacks they did not see, and that an alert comes with something a
@@ -42,7 +41,7 @@ with content features computed when the dataset was built
 \citep{tavallaee2009kddcup99}. Where a statement holds for both kinds of unit, this
 chapter writes flow; on NSL-KDD the unit is a connection record. No payload is
 inspected (\cref{ch:introduction}).
-% FIXME(open): the mapping of the raw labels of each dataset to the classes of UC1 is given in Ch. 9, \cref{ch:implementation}.
+The classes of each dataset and the labels behind them are in \cref{tab:impl-classes}.
 The output is a class for each flow with a score for every class.
 
 The success criteria are measures, not thresholds. On quality: macro-F1, the
@@ -117,8 +116,7 @@ has begun, while the alert budget counts every false alarm.
 R2L and U2R attacks leave little in flow-level features: the evidence is in the
 data portion of a connection, which flow records do not carry
 (\cref{sec:r2l-u2r-hard}). The classes are also small: NSL-KDD has 52 U2R and 995
-R2L records in training, and 67 and 2\,885 in test.
-% FIXME(open): the class counts come from the exploratory analysis of Ch. 9, Sec. 9.2; cite them there.
+R2L records in training, and 67 and 2\,885 in test (\cref{tab:impl-splits}).
 Input and output are those of UC1. The success criteria are the recall and the
 precision--recall area of each rare class, read along the chain of arms: MLP-CE
 without class weights, MLP-CE with class weights, LTN-sup, LTN-full. Each step
@@ -353,7 +351,7 @@ decouples producer and consumer, absorbs bursts and lets the inference service r
 at its own rate. The service loads the exported model and calls it on micro-batches.
 An optional symbolic check follows; the alert sink collects the decisions that
 reach the operating point, and a dashboard shows them.
-% FIXME(open): the choice of the broker and the implementation of each stage are given in Ch. 9, \cref{sec:realtime-pipeline}.
+% FIXME(open): the choice of the broker and the implementation of each stage are open in Ch. 9, \cref{sec:realtime-pipeline}, and belong to the co-supervisor.
 
 Three points need a decision or a caution. The first is the extractor. The corrected
 CIC-IDS2017 comes from a corrected CICFlowMeter and CIC-DDoS2019 from the original

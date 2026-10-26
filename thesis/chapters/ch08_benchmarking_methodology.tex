@@ -205,9 +205,8 @@ of false alarms an analyst can handle, expressed as false alarms per 100\,000 be
 FPR times 100\,000), which does not depend on the share of attacks in the test part. The
 question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
 also given per day; NSL-KDD has no time stamps. The figure per day describes a day of a
-laboratory network.
+laboratory network. The benign flows of each day are in \cref{tab:impl-benign-day}.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
-% FIXME(open): the benign flows per day of the two CIC datasets are given in Ch. 9, \cref{ch:implementation}.
 
 \subsection{Rule-violation rate: definition and rationale}
 \label{sec:rule-violation-rate}
@@ -515,4 +514,3 @@ knowledge, explanations and a rubric. The confirmatory tests are five paired com
 dataset with the Holm correction; everything else is descriptive. The threats are declared.
 \Cref{ch:implementation} describes how this is implemented and \cref{ch:results} reports what it
 measured.
-% FIXME(open): \cref{ch:implementation} and \cref{ch:results} render as "??" until Chapters 9 and 10 exist.

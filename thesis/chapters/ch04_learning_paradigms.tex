@@ -145,8 +145,7 @@ adds a penalty to the Euclidean distance when nominal values differ. The
 penalty is the median of the standard deviations of the continuous features
 of the minority class. A new example takes the nominal value held by the
 majority of its $k$ nearest neighbors \citep{chawla2002smote}. Which of the benchmark datasets
-mix the two kinds of feature is described with the data preparation.
-% FIXME(open): add \cref{ch:implementation} (Chapter 9, Sec. 9.2) in the sentence above once that chapter exists; it states which datasets have nominal features.
+mix the two kinds of feature is described with the data preparation (\cref{sec:impl-data}).
 
 Two cautions are ours. A synthetic point is an interpolation and not an
 observed flow, so nothing guarantees that it respects the domain rules of
