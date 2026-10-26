@@ -56,3 +56,39 @@ def test_summarize_means_over_seeds(kb):
                                 pd.DataFrame({"rate": [0.0, 0.9]}), kb, NAMES, ("enforce",)) for s in (0, 1)}
     summary = saved_eval.summarize(rows, ("enforce",))
     assert summary["seeds"] == 2 and summary["enforce"]["macro_f1"]["mean"] == pytest.approx(rows[0]["postcheck"]["enforce"]["macro_f1"])
+
+
+def test_noise_is_seeded_and_scaled_by_the_train_std():
+    from nesybench import perturb
+    raw = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [0, 0, 0]})
+    one = perturb.noise(raw, ["a", "b"], [2.0, 0.0], 0.5, seed=1)
+    two = perturb.noise(raw, ["a", "b"], [2.0, 0.0], 0.5, seed=1)
+    assert one.equals(two) and not one["a"].equals(raw["a"])
+    assert (one["b"] == 0).all()                       # zero scale: untouched
+    assert raw["a"].tolist() == [1.0, 2.0, 3.0]        # input not modified
+
+
+def test_evasion_moves_only_firing_rows_of_the_target_class(kb):
+    from nesybench import perturb
+    raw = pd.DataFrame({"rate": [0.9, 0.9, 0.0]})
+    y = np.array([1, 0, 1])                            # rows 0 and 2 are DoS; only row 0 fires A1
+    out, moved = perturb.evade(raw, y, kb, NAMES, 0.2)
+    assert moved == 1
+    assert out["rate"].tolist() == pytest.approx([0.5 - 0.1, 0.9, 0.0])
+    assert raw["rate"].tolist() == [0.9, 0.9, 0.0]
+
+
+@pytest.mark.parametrize("spec", ["noise", "noise:", "shake:0.1", "noise:0", "evade:-1"])
+def test_bad_perturbation_specs_are_refused(spec):
+    from nesybench import perturb
+    with pytest.raises(ValueError):
+        perturb.parse(spec)
+
+
+def test_summary_has_a_block_per_perturbation(kb):
+    base = saved_eval.score(np.array([[.8, .1, .1], [.1, .8, .1]]), np.array([0, 1]),
+                            pd.DataFrame({"rate": [0.0, 0.9]}), kb, NAMES, ("enforce",))
+    base["perturbed"] = {"noise:0.1": base}
+    summary = saved_eval.summarize({0: base}, ("enforce",))
+    assert set(summary["perturbed"]) == {"noise:0.1"}
+    assert summary["perturbed"]["noise:0.1"]["macro_f1"]["mean"] == pytest.approx(base["macro_f1"])

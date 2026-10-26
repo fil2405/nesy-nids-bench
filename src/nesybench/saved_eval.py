@@ -1,7 +1,8 @@
 """Score saved models without training again: macro-F1 before and after the symbolic post-check (E12, E17).
 
     python -m nesybench.saved_eval --config CONFIG --models results/models \
-        [--kb FILE] [--modes annotate enforce] [--part test] [--seeds 0 1 ...] [--out results/saved_eval]
+        [--kb FILE] [--modes annotate enforce] [--part test] [--seeds 0 1 ...] [--out results/saved_eval] \
+        [--perturb noise:0.25 evade:0.1 ...]
 
 CONFIG is the config of the final runs (dataset, split, run_id, seeds). Per seed the part is rebuilt
 with the same split, transformed with the saved preprocessing and fed to the saved model.
@@ -17,6 +18,7 @@ import numpy as np
 from nesybench.export import artifact_dir
 from nesybench.latency import load_predictor
 from nesybench.logic.kb import load_kb
+from nesybench import perturb
 from nesybench.logic.postcheck import MODES, run_postcheck
 from nesybench.metrics import compute_metrics
 
@@ -38,19 +40,28 @@ def score(proba, y, raw, kb, class_names, modes) -> dict:
     return out
 
 
-def summarize(per_seed: dict, modes) -> dict:
-    def stat(values):
-        values = np.asarray(values, dtype=float)
-        return {"mean": float(np.nanmean(values)), "std": float(np.nanstd(values, ddof=1)) if len(values) > 1 else 0.0}
+def _stat(values):
+    values = np.asarray(values, dtype=float)
+    return {"mean": float(np.nanmean(values)), "std": float(np.nanstd(values, ddof=1)) if len(values) > 1 else 0.0}
 
-    out = {"seeds": len(per_seed), "macro_f1": stat([r["macro_f1"] for r in per_seed.values()])}
+
+def _summ(results: list, modes) -> dict:
+    out = {"macro_f1": _stat([r["macro_f1"] for r in results])}
     for mode in modes:
-        rows = [r["postcheck"][mode] for r in per_seed.values()]
+        rows = [r["postcheck"][mode] for r in results]
         out[mode] = {
-            "macro_f1": stat([r["macro_f1"] for r in rows]),
-            "n_changed": stat([r["n_changed"] for r in rows]),
-            **{k: stat([r["explanations"][k] for r in rows]) for k in ("coverage", "fidelity", "conciseness")},
+            "macro_f1": _stat([r["macro_f1"] for r in rows]),
+            "n_changed": _stat([r["n_changed"] for r in rows]),
+            **{k: _stat([r["explanations"][k] for r in rows]) for k in ("coverage", "fidelity", "conciseness")},
         }
+    return out
+
+
+def summarize(per_seed: dict, modes) -> dict:
+    out = {"seeds": len(per_seed), **_summ(list(per_seed.values()), modes)}
+    names = sorted({n for r in per_seed.values() for n in r.get("perturbed", {})})
+    if names:
+        out["perturbed"] = {n: _summ([r["perturbed"][n] for r in per_seed.values()], modes) for n in names}
     return out
 
 
@@ -71,6 +82,7 @@ def main(argv=None):
     parser.add_argument("--seeds", type=int, nargs="+")
     parser.add_argument("--results-dir", default="results")
     parser.add_argument("--out", default="results/saved_eval")
+    parser.add_argument("--perturb", nargs="*", default=[], help="E10: noise:S or evade:D")
     args = parser.parse_args(argv)
 
     from nesybench.data import get_spec, load_dataset
@@ -84,6 +96,7 @@ def main(argv=None):
     if not kb_path:
         raise SystemExit("no KB: pass --kb or set c5_kb in the config")
     kb = load_kb(kb_path)
+    perturbations = [(spec_, *perturb.parse(spec_)) for spec_ in args.perturb]
     seeds = args.seeds if args.seeds else config["seeds"]
     run_id = config["run_id"]
 
@@ -101,10 +114,25 @@ def main(argv=None):
         frames = split_data(config["split"], train, test, spec, seed, **config.get("split_params", {}))
         raw = frames[2 if args.part == "test" else 1].reset_index(drop=True)
         features, y = _split_xy(raw, spec)
-        x = np.asarray(joblib.load(directory / "preprocessing.joblib").transform(features), dtype=np.float32)
+        transformer = joblib.load(directory / "preprocessing.joblib")
+        x = np.asarray(transformer.transform(features), dtype=np.float32)
         predict, _ = load_predictor(directory, n_classes=len(spec.classes))
         proba = predict_all(predict, x)
         result = score(proba, y, raw, kb, list(spec.classes), args.modes)
+        if perturbations:
+            _, scaler, num_cols = transformer.transformers_[0]
+            result["perturbed"] = {}
+            for name, kind, level in perturbations:
+                if kind == "noise":
+                    raw_p = perturb.noise(raw, num_cols, scaler.scale_, level, seed)
+                else:
+                    raw_p, moved = perturb.evade(raw, y, kb, list(spec.classes), level)
+                feats_p, _ = _split_xy(raw_p, spec)
+                x_p = np.asarray(transformer.transform(feats_p), dtype=np.float32)
+                result["perturbed"][name] = score(predict_all(predict, x_p), y, raw_p, kb,
+                                                  list(spec.classes), args.modes)
+                if kind == "evade":
+                    result["perturbed"][name]["rows_moved"] = moved
         stored = _stored(args.results_dir, run_id, seed, args.part)
         result["stored_macro_f1"] = stored
         per_seed[seed] = result
