@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
-# NSL-KDD stress runs (E3, E11, E13 and the weak KB), test part scored.
-#   bash stress_nslkdd.sh <group> [workers]
-# group: e3 | e11 | e13 | weak | all
+# LTN-full stress runs (E3, E11, E13 and the weak KB), test part scored.
+#   bash stress_ltn.sh <dataset> <group> [workers]
+# dataset: nslkdd | cicids2017 | cicddos2019
+# group: e3 | e11 | e13 | weak (nslkdd only) | all
 # workers: seeds running at the same time (default 1). Finished seeds are skipped on restart.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 [ -d configs ] || cd .. || exit 1
 ROOT="$PWD"
 
+DATASETS="nslkdd cicids2017 cicddos2019"
 GROUPS_OK="e3 e11 e13 weak all"
-GROUP="${1:-}"
-WORKERS="${2:-1}"
+DS="${1:-}"
+GROUP="${2:-}"
+WORKERS="${3:-1}"
 die() { echo "ERRORE: $*" >&2; exit 1; }
 
-case " $GROUPS_OK " in
-    *" $GROUP "*) ;;
-    *) echo "Uso: bash stress_nslkdd.sh <gruppo> [processi]"; echo "Gruppi: $GROUPS_OK"; exit 2 ;;
-esac
+usage() {
+    echo "Uso: bash stress_ltn.sh <dataset> <gruppo> [processi]"
+    echo "Dataset: $DATASETS"; echo "Gruppi: $GROUPS_OK"; exit 2
+}
+case " $DATASETS " in *" $DS "*) ;; *) usage ;; esac
+case " $GROUPS_OK " in *" $GROUP "*) ;; *) usage ;; esac
 [[ "$WORKERS" =~ ^[1-9][0-9]*$ ]] || die "processi: serve un intero >= 1 (ricevuto: $WORKERS)"
 PY="$(command -v python || command -v python3)" || die "python non trovato (attivare il venv)"
 
@@ -30,7 +35,7 @@ mkdir -p "$RES" "$LOGS"
 
 # config selection by name: weak ones carry _weak in the run_id
 FILES=()
-for f in configs/stress/nslkdd_*.yaml; do
+for f in configs/stress/${DS}_*.yaml; do
     [ -f "$f" ] || continue
     name="$(basename "$f" .yaml)"
     case "$name" in
@@ -42,16 +47,16 @@ for f in configs/stress/nslkdd_*.yaml; do
     esac
     if [ "$GROUP" = all ] || [ "$GROUP" = "$kind" ]; then FILES+=("$f"); fi
 done
-[ "${#FILES[@]}" -gt 0 ] || die "nessuna config per il gruppo $GROUP in configs/stress"
+[ "${#FILES[@]}" -gt 0 ] || die "nessuna config $DS/$GROUP in configs/stress"
 
 # one launch at a time
 if command -v flock >/dev/null; then
-    exec 9> "$RES/.stress_nslkdd.lock"
-    flock -n 9 || die "un lancio di stress_nslkdd.sh e' gia' in esecuzione"
+    exec 9> "$RES/.stress_${DS}.lock"
+    flock -n 9 || die "un lancio di stress_ltn.sh su $DS e' gia' in esecuzione"
 fi
 
-echo "== controllo rapido ($GROUP, ${#FILES[@]} config)"
-if ! "$PY" - "${FILES[@]}" <<'PY' 2>&1 | tee "$LOGS/stress_nslkdd_${GROUP}_check.log"
+echo "== controllo rapido ($DS $GROUP, ${#FILES[@]} config)"
+if ! "$PY" - "$DS" "${FILES[@]}" <<'PY' 2>&1 | tee "$LOGS/stress_${DS}_${GROUP}_check.log"
 import os
 import sys
 
@@ -62,7 +67,8 @@ from nesybench.logic.edit import load_run_kb
 
 from nesybench.data import load_dataset
 
-train = load_dataset("nslkdd", "train")
+dataset = sys.argv[1]
+train = load_dataset(dataset, "train")
 errors = []
 neural = False
 
@@ -72,9 +78,9 @@ def fail(msg):
     print("KO  " + msg)
 
 
-for path in sys.argv[1:]:
+for path in sys.argv[2:]:
     cfg = yaml.safe_load(open(path))
-    if cfg.get("dataset") != "nslkdd":
+    if cfg.get("dataset") != dataset:
         fail(f"{path}: dataset {cfg.get('dataset')!r}")
     if cfg.get("evaluate_test"):
         print(f"!!  {path}: evaluate_test gia' true")
@@ -87,7 +93,7 @@ for path in sys.argv[1:]:
         except Exception as exc:
             fail(f"{path}: KB non applicabile: {type(exc).__name__}: {exc}")
     neural = neural or cfg.get("model") in ("mlp_ce", "ltn_sup", "ltn_full")
-print(f"ok  config      {len(sys.argv) - 1} file letti")
+print(f"ok  config      {len(sys.argv) - 2} file letti")
 
 if neural:
     import tensorflow as tf
@@ -100,17 +106,22 @@ if neural:
     else:
         fail("nessuna GPU NVIDIA visibile a TensorFlow")
 
-for part, rows in (("train", 125973), ("test", 22544)):
-    n = len(train if part == "train" else load_dataset("nslkdd", part))
-    print(f"{'ok ' if n == rows else 'KO '} dati nslkdd {part}: {n} righe")
+ROWS = {
+    "nslkdd": {"train": 125973, "test": 22544},
+    "cicids2017": {"train": 1715341},
+    "cicddos2019": {"train": 340560, "test": 79083},
+}
+for part, rows in ROWS[dataset].items():
+    n = len(train if part == "train" else load_dataset(dataset, part))
+    print(f"{'ok ' if n == rows else 'KO '} dati {dataset} {part}: {n} righe")
     if n != rows:
-        errors.append(f"nslkdd {part}: {n} righe, attese {rows}")
+        errors.append(f"{dataset} {part}: {n} righe, attese {rows}")
 
 print("controllo KO" if errors else "controllo OK")
 sys.exit(1 if errors else 0)
 PY
 then
-    die "controllo fallito, le run non partono (log: $LOGS/stress_nslkdd_${GROUP}_check.log)"
+    die "controllo fallito, le run non partono (log: $LOGS/stress_${DS}_${GROUP}_check.log)"
 fi
 
 FAILED=0
@@ -169,13 +180,13 @@ fi
 
 SUFFIX=""
 [ "$FAILED" -eq 0 ] || SUFFIX="_incompleto"
-OUT="risultati_stress_nslkdd_${GROUP}${SUFFIX}.tar.gz"
+OUT="risultati_stress_${DS}_${GROUP}${SUFFIX}.tar.gz"
 LIST="$(mktemp)"
 for RUN_ID in "${IDS[@]}"; do
     find "$RES" -maxdepth 1 -type f -name "${RUN_ID}_seed*.json" >> "$LIST"
     find "$LOGS" -maxdepth 1 -type f -name "stress_${RUN_ID}_*" >> "$LIST"
 done
-find "$LOGS" -maxdepth 1 -type f -name "stress_nslkdd_${GROUP}_check.log" >> "$LIST"
+find "$LOGS" -maxdepth 1 -type f -name "stress_${DS}_${GROUP}_check.log" >> "$LIST"
 tar -czf "$OUT" -T "$LIST" && rm -f "$LIST"
 sha256sum "$OUT"
 
@@ -183,5 +194,5 @@ if [ "$FAILED" -ne 0 ]; then
     echo "Stress NON completo. Rilanciare lo stesso comando per riprendere; in ogni caso rimandare $OUT."
     exit 1
 fi
-rm -f "risultati_stress_nslkdd_${GROUP}_incompleto.tar.gz"
+rm -f "risultati_stress_${DS}_${GROUP}_incompleto.tar.gz"
 echo "Stress $GROUP completato. Da rimandare: $OUT"
