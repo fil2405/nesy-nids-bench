@@ -248,8 +248,8 @@ FR9 & Give the same decision to the same flow in batch and in streaming (UC2)
 \toprule
 ID & Requirement & Exp. & Axis & Measure \\
 \midrule
-NFR1 & Reproduce a published NSL-KDD result with the protocol of the thesis
-  & E1 & Q & Difference from the published figure \\
+NFR1 & Run the NSL-KDD pipeline under the corrected protocol, with validation kept apart from the official test file
+  & E1 & Q & Accuracy and macro-F1 on validation and on test \\
 NFR2 & Keep the quality when labels are scarce or the training set is small
   & E7 & Q & Macro-F1 against the fraction of labels and the size of the training set \\
 NFR3 & Keep the quality on rare classes when the imbalance grows

@@ -179,15 +179,14 @@ The second reason is comparability. Most of the machine learning and deep
 learning entries in the table of Bizzarri et al. use KDD99 or NSL-KDD. The two
 detectors built with an \gls{ltn} that we read use KDD99 with the duplicates
 removed and CIC-IDS2017 \citep{onchis2022neurosymbolic}, and CIC-IDS2017 alone
-\citep{bizzarri2024nsaids}. A replication on NSL-KDD, experiment E1, places the
-pipeline of the thesis next to published work on the same lineage of data.
-% FIXME(open): experiment E1 is defined in Ch. 10, \cref{ch:results}, Sec. 10.1; check the wording there.
+\citep{bizzarri2024nsaids}. Experiment E1 runs the pipeline of the thesis on
+NSL-KDD under the corrected protocol, on the lineage of data of most published work
+(\cref{sec:res-e1}).
 
 The third reason is the role of the dataset. NSL-KDD serves for R2L and U2R and
-for the replication. The thesis does not draw its general conclusions from
+for E1. The thesis does not draw its general conclusions from
 NSL-KDD alone, and it reads a result that rests on content features as specific
 to NSL-KDD.
-% FIXME(open): Ch. 10 must keep this commitment, that the general conclusions rest on the flow datasets and not on NSL-KDD alone (Ch. 8 states the rule in \cref{sec:friedman}).
 
 The limit is the one set out above. NSL-KDD is old and synthetic, and a score
 that holds only there says nothing about current traffic. The benchmark reports

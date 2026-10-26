@@ -23,7 +23,7 @@ the answer to RQ1 rests on batch detection alone.
 \cref{tab:experiment-data}.}
 \label{tab:res-status}
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{2.2cm}p{7.2cm}p{1.6cm}p{2.2cm}@{}}
+\begin{tabular}{@{}p{2.2cm}p{6.9cm}p{1.6cm}p{2.2cm}@{}}
 \toprule
 Experiment & Content & Section & State \\
 \midrule
@@ -67,12 +67,22 @@ of that file, drawn per seed. The official test file is scored only in the final
 never in tuning. The primary measure is the macro-F1, and per-class results are kept, so that the
 rare classes R2L and U2R are not hidden by the large ones.
 
-The runs that carry the numbers of E1 are the NSL-KDD runs of E2, reported in
-\cref{sec:res-aggregate}. The replication of published figures is a separate step and is not
-reported here. The detectors of \cref{sec:critical-reading} use KDD99 or CIC-IDS2017 and report
-accuracy, whereas the benchmark reports macro-F1 on NSL-KDD, so a figure of the literature
-cannot be set beside a figure of this chapter without a rerun on the same data and measure.
-% FIXME(open): E1 is separated from the NSL-KDD runs of E2 in Ch. 8 (\cref{tab:experiment-data}) and in Ch. 6, Sec. 6.2.3, but the material for this chapter holds no replication run and no published figure to compare with. Decide whether E1 is the NSL-KDD part of E2, in which case Ch. 6 and Ch. 8 are reworded, or whether it needs its own run, and which published result it replicates. Then close the FIXME of Ch. 6, Sec. 6.2.3 on the wording of E1.
+E1 is read on the NSL-KDD runs of E2: it has no runs of its own, and it asks whether the
+corrected protocol changes what a reader of the usual NSL-KDD figures would conclude. Two
+observations answer it. First, the accuracy on the official test file is between 0.7727 and
+0.7805 for the six learning arms and 0.5341 for the rule-only classifier, while their macro-F1
+spans 0.5333 to 0.6033 (\cref{tab:res-macro-f1}). The accuracy is carried by Normal and DoS,
+which make up most of the test file, and it hides the failure on R2L and U2R
+(\cref{tab:res-nslkdd-classes}). Second, the macro-F1 on validation, a stratified cut of the
+training file, is between 0.8482 and 0.9553 for the learning arms, against 0.5333 to 0.6033 on
+the test file. A protocol that selected or reported on a cut of the training file would report
+the first figures. The validation and test parts are therefore never compared as the same
+quantity in this chapter.
+
+The figures of the literature are not set beside these. The detectors of
+\cref{sec:critical-reading} use KDD99 or CIC-IDS2017 and report accuracy, so a comparison on the
+same data and measure would need their runs; \cref{sec:res-related} keeps the comparison
+qualitative.
 
 % ================================================================
 % 10.2 Detection quality, batch (E2, E5, E6)
@@ -125,21 +135,40 @@ XGBoost            & 0.5333 $\pm$ 0.0209 & 0.9656 $\pm$ 0.0045 & 0.9693 $\pm$ 0.
 
 \paragraph{NSL-KDD.}
 MLP-CE with weights has the highest macro-F1 (0.6033). LTN-full (0.5678), LTN-sup (0.5670), Random
-Forest (0.5690) and MLP-CE without weights (0.5664) lie between 0.5664 and 0.5690 and are not
-distinguished from one another. XGBoost is the lowest of the learning arms (0.5333). The
+Forest (0.5690) and MLP-CE without weights (0.5664) lie within 0.0026 of one another. XGBoost is the lowest of the learning arms (0.5333). The
 rule-only classifier reaches 0.2813: it has axioms for DoS and Probe only, so R2L and U2R are never
-predicted by it (\cref{app:axioms}). On U2R the precision of MLP-CE with weights is 0.669 and that of
+predicted by it and its macro-F1 cannot exceed three fifths (\cref{app:axioms}). On U2R the precision of MLP-CE with weights is 0.669 and that of
 LTN-full is 0.173. On R2L the recall is about 0.1 for every arm on the official test file,
-whatever the loss or the family. The validation macro-F1 of the selected LTN-full configuration,
-0.8327 as the mean of the three tuning seeds, is far above its test value. Validation is a cut of
-the training file and the test file is not, so the two are not on the same footing.
-% FIXME(open): the per-class table of NSL-KDD (precision, recall and F1 per class for the seven arms) is not in the material used here; add it from summarize_runs.py, with the confusion matrices in Appendix C. The statements on ranks and on arms that are not distinguished in this paragraph rest on the Friedman and Nemenyi output of compare_runs.py; check them against the CD diagram.
+whatever the loss or the family. The validation macro-F1 of LTN-full in the final runs is 0.8542, far above its test
+value (\cref{sec:res-e1}).
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{NSL-KDD, test F1 per class, mean over seeds 0 to 9.}
+\label{tab:res-nslkdd-classes}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Arm & Normal & DoS & Probe & R2L & U2R \\
+\midrule
+Rule-only          & 0.660 & 0.366 & 0.380 & 0     & 0     \\
+MLP-CE, no weights & 0.798 & 0.888 & 0.726 & 0.151 & 0.270 \\
+MLP-CE, weights    & 0.798 & 0.886 & 0.733 & 0.196 & 0.403 \\
+LTN-sup            & 0.802 & 0.886 & 0.719 & 0.215 & 0.212 \\
+LTN-full           & 0.805 & 0.885 & 0.719 & 0.198 & 0.233 \\
+Random Forest      & 0.803 & 0.886 & 0.766 & 0.109 & 0.281 \\
+XGBoost            & 0.803 & 0.893 & 0.805 & 0.064 & 0.102 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): precision and recall per class, and the confusion matrices, go to Appendix C from summarize_runs.py.
 
 \paragraph{CIC-IDS2017.}
 Random Forest is first (0.9748) with a deviation of 0.0001, followed by XGBoost (0.9656), MLP-CE
 with weights (0.9541), MLP-CE without weights (0.9480), LTN-full (0.9431) and LTN-sup (0.9324).
 The rule-only classifier reaches 0.4242, since four of the seven classes (Probe, R2L, U2R and
-Botnet) have no axiom in the base file. The average precision per class is 1.000 for DoS and DDoS in
+Botnet) have no axiom in the base file; its macro-F1 cannot exceed three sevenths, 0.4286. The average precision per class is 1.000 for DoS and DDoS in
 all the learning arms. The differences lie in the rare classes: U2R (0.55 to 0.72 across arms),
 Botnet (0.92 to 1.00) and Probe, where LTN-full reaches 0.966, LTN-sup 0.962 and the MLP arms
 0.993. On Probe and Botnet the average precision of the LTN arms is below that of the MLP arms.
@@ -202,6 +231,10 @@ every arm (0.448 for LTN-full). The axiom calibrated on the training day, with a
 0.967, does not hold on the test day, and training with A2 does not change what the network does on
 those rows.
 
+H8 predicts fewer violations for a knowledge arm at equal quality. The one difference beyond the
+deviation is A3 on NSL-KDD, a rule that fails on the test file, and on the other axioms the arms
+do not differ. These runs do not support H8 as a merit of the knowledge arm.
+
 \subsection{Statistical significance}
 \label{sec:res-significance}
 
@@ -235,25 +268,27 @@ three datasets. After Holm it is significant on none (1.0, 0.0742 and 0.0742); t
 are 0.77 on NSL-KDD and 0.037 on each CIC. On CIC-IDS2017 the median difference is $+0.0151$
 with an interval of $[+0.0013;\,+0.0216]$ and LTN-full is better in 8 of 10 seeds. On CIC-DDoS2019
 it is $+0.0017$ with $[+0.0001;\,+0.0034]$ and 8 of 10; on NSL-KDD LTN-full is better in 6 of 10
-seeds. The gap is below the standard deviation of both arms on NSL-KDD (0.0079 against 0.0180
+seeds, with an interval of $[-0.0174;\,+0.0199]$. The gap is below the standard deviation of both arms on NSL-KDD (0.0079 against 0.0180
 and 0.0128). On the CICs it is of the same size as those deviations (0.0151 against 0.0138 and
 0.0077; 0.0017 against 0.0011 and 0.0021). The median of paired differences and the deviation of an
 arm are not the same quantity, so the comparison is loose. These runs show no demonstrated effect
 of the knowledge on the macro-F1, and they do not support the gain that H1 predicts.
-% FIXME(open): the interval and the wins out of ten of the knowledge pair on NSL-KDD, and the intervals of all pairs on NSL-KDD, are not in the material used here; copy them from compare_runs.py. The direct comparison of LTN-full with MLP-CE with weights, announced outside the family in Ch. 8 (end of the introduction), is not in that output; the means of the table are the only evidence, and no p-value is cited for it.
+% FIXME(open): the NSL-KDD intervals and wins come from the paired script of 23 October, whose medians and Holm values match compare_runs.py; confirm the intervals against compare_runs.py, whose bootstrap may use another seed.
 
 \paragraph{The effect of the loss.}
-LTN-sup is worse than MLP-CE with weights on NSL-KDD ($-0.0473$, Holm 0.0195) and on CIC-IDS2017
+LTN-sup is worse than MLP-CE with weights on NSL-KDD ($-0.0473$, Holm 0.0195, interval
+$[-0.0515;\,-0.0192]$, better in 1 of 10 seeds) and on CIC-IDS2017
 ($-0.0206$, Holm 0.0098, interval $[-0.0337;\,-0.0112]$, better in 0 of 10 seeds). On CIC-DDoS2019
 there is no difference ($+0.0002$, Holm 0.9219, 5 of 10). The LTN training without any domain axiom
 is therefore not neutral on NSL-KDD and CIC-IDS2017. On the CIC datasets
 the cap of the epochs does not explain this (\cref{sec:res-threats}). The balancing of classes in
-MLP-CE helps on NSL-KDD ($+0.0366$, Holm 0.0234) and on CIC-DDoS2019 ($+0.0014$, Holm 0.0117, 9 of 10
+MLP-CE helps on NSL-KDD ($+0.0366$, Holm 0.0234, interval $[+0.0103;\,+0.0548]$, 9 of 10 seeds) and on CIC-DDoS2019 ($+0.0014$, Holm 0.0117, 9 of 10
 seeds, interval $[+0.0009;\,+0.0042]$), and shows no difference on CIC-IDS2017.
 
 \paragraph{Classical baselines (H9).}
-The picture is mixed. On NSL-KDD LTN-full and Random Forest are tied ($+0.0004$, Holm 1.0) and
-XGBoost is worse than LTN-full ($-0.0425$). On CIC-IDS2017 the trees are better: Random Forest by
+The picture is mixed. On NSL-KDD LTN-full and Random Forest are tied ($+0.0004$, Holm 1.0, interval
+$[-0.0092;\,+0.0074]$, 5 of 10 seeds) and XGBoost is worse than LTN-full ($-0.0425$, interval
+$[-0.0531;\,-0.0201]$, 1 of 10). On CIC-IDS2017 the trees are better: Random Forest by
 $0.0335$ (interval $[+0.0187;\,+0.0425]$, 10 of 10 seeds) and XGBoost by $0.0233$ (interval
 $[+0.0069;\,+0.0361]$, 9 of 10); the differences of \cref{tab:res-pairs} are the tree minus
 LTN-full. On CIC-DDoS2019 LTN-full is better than Random Forest ($-0.0050$, interval
@@ -266,7 +301,7 @@ possible with three of them (\cref{sec:friedman}).
 The Friedman test over the six learning arms gives $p = 0.0001$ on NSL-KDD and $p < 0.0001$ on
 CIC-IDS2017, with a Nemenyi critical difference of 2.38 (\cref{sec:friedman}). The mean ranks are in
 \cref{tab:res-ranks}. On NSL-KDD MLP-CE with weights ranks first, XGBoost last, and the other four
-arms are not distinguished. On CIC-IDS2017 Random Forest is above LTN-full and LTN-sup, and
+arms are not distinguished. On CIC-IDS2017 Random Forest is above the two LTN arms and the two MLP arms, and
 XGBoost is above LTN-sup, by more than the critical difference; the MLP arms and the LTN arms are not
 separated. On CIC-DDoS2019 LTN-full ranks first, ahead of MLP-CE without weights, Random Forest and
 XGBoost by more than the critical difference as read from the ranks, and it is not separated from
@@ -340,7 +375,7 @@ appears only here (\cref{sec:matched-tuning}). The product t-norm and the Reiche
 are fixed throughout (\cref{ch:ltn}).
 
 No result is reported here yet.
-% FIXME(open): results of E4 are not available (package 2, planned for 28 October). The list of settings and of their levels in E4 is not written in Ch. 8 beyond the crisp conditions; fix it there before reporting. E4 is not tied to a hypothesis of \cref{tab:hypotheses}: decide whether to add one or to read it as a sensitivity check of the base configuration.
+% FIXME(open): results of E4 are not available (package 2, planned for 28 October). The list of settings and of their levels in E4 is not written in Ch. 8 beyond the crisp conditions; fix it there before reporting. E4 has no hypothesis in \cref{tab:hypotheses} and is read as a sensitivity check of the base configuration.
 
 % ================================================================
 % 10.4 Stress scenarios (E7-E11)
@@ -349,7 +384,7 @@ No result is reported here yet.
 \label{sec:res-stress}
 
 The stress experiments change one condition of RQ2 at a time. They keep the hyperparameters of the
-base configuration and run ten seeds on a clean commit (\cref{sec:batch-protocol}). The validation
+base configuration and run ten seeds (\cref{sec:batch-protocol}). The validation
 part is not reduced in E7 and E8. Every arm takes part unless a subsection says otherwise. Results
 are read through effect size and interval, with the knowledge effect (LTN-full minus LTN-sup) as the
 main quantity and no new Holm family (\cref{sec:effect-sizes}). The knowledge arm is an upper bound at low
@@ -402,7 +437,7 @@ the other labels.
 No result is reported here yet.
 % FIXME(open): results of E9 are not available (package 2, planned for 28 October). To confirm before reporting: the fine labels of the slow DoS and SSH scenarios, the axiom set of the transfer (axioms computable on both CIC datasets, or a declared change of knowledge base, open FIXME of Ch. 8, Sec. 8.4.2), the knowledge base of the slow scenario, and the transfer of the validation threshold to the test part, which needs a script over the saved models.
 
-\subsection{Degraded and wrong knowledge}
+\subsection{Degraded / wrong knowledge}
 \label{sec:res-degraded}
 
 E11 degrades the axioms in two ways. All thresholds are moved by $-10$, $-5$, $+5$, $+10$ and $+20$
@@ -573,8 +608,8 @@ of the domain knowledge on the macro-F1. The pair that isolates the axioms (LTN-
 positive sign on the three datasets and is significant on none after Holm
 (\cref{tab:res-pairs}). The LTN training without axioms is below MLP-CE with weights on NSL-KDD and
 CIC-IDS2017. The table of means puts LTN-full below MLP-CE with weights on those two datasets and
-above it on CIC-DDoS2019 (\cref{tab:res-macro-f1}); this pair is not tested, since it is outside the
-family. As to where a difference sits, the data do not show a class in which the knowledge helps. On
+above it on CIC-DDoS2019 (\cref{tab:res-macro-f1}); this pair is reported descriptively, without a
+test. As to where a difference sits, the data do not show a class in which the knowledge helps. On
 NSL-KDD the U2R precision of LTN-full is lower than that of MLP-CE with weights, and the differences on
 U2R, Botnet and Probe of CIC-IDS2017 rest on very few flows. H2 is still open, since it needs E3 and E8.
 
@@ -652,7 +687,6 @@ report a gain of 0.09 percentage points of accuracy on the known classes and a l
 classes. The first is small, and the knowledge pair here shows no demonstrated effect on the seen
 classes. The second is the object of E9, which has no result yet. The latency of
 \citet{alemayehu2026deployment} is the counterpart of the E12 measures, which are also pending.
-% FIXME(open): the comparison with a figure of the literature on the same data and measure needs the replication of E1 (see Sec. 10.1). Until then this subsection stays qualitative.
 
 % ================================================================
 % 10.9 Threats to validity revisited
@@ -679,7 +713,7 @@ without weights on CIC-DDoS2019 and none for the other arms there or on CIC-IDS2
 epochs. The chosen trial reached the cap in none of its three seeds in any of the twelve neural arms, and none of the 80
 final runs of the eight neural arms on the CIC datasets did. The cap does not explain the cost of the LTN loss
 (\cref{sec:res-significance}).
-% FIXME(open): the number of NSL-KDD final runs at the cap is not in the material used here. The material gives both "0 to 2" and "0 to 1" runs out of 60 at the cap; the figures above follow the decisions of 25 October (point 42), which count two for LTN-sup on NSL-KDD.
+% FIXME(open): the number of NSL-KDD final runs at the cap is not in the material used here; fill it from epoch_cap_report.py.
 
 Part of the knowledge was read from the data. Five of the nine axioms outside the weak variant have the origin
 \texttt{data}, and the knowledge bases of the CIC datasets were derived from the labels of the training and
@@ -709,12 +743,12 @@ The seeds sample neither the test part nor the datasets. Only the five pairs of 
 other comparison is descriptive.
 
 \paragraph{Reproducibility.}
-The tuning files record the commit as unknown, because the server had no repository, and so do the CIC finals; the tree was
-not modified. The recorded environment is Linux with TensorFlow 2.22.0-rc0, a release candidate, XGBoost 3.4.1 and
+The tuning files and the final runs record the commit as unknown, because the server had no repository, so the code
+of a series is identified by its date and not by a commit. The recorded environment is Linux with TensorFlow 2.22.0-rc0, a release candidate, XGBoost 3.4.1 and
 scikit-learn 1.9.1. The finals of the three datasets ran on the same machine. The deterministic operations are active in every run,
 so the same seed gives the same macro-F1 and the same epoch on that machine, and nothing is claimed across machines or
 versions (\cref{sec:reproducibility}). Runs made before tuning and the single-seed residues of local checks are not used.
-% FIXME(open): record the commit of each series before any figure is called citable (open point of Ch. 8, Sec. 8.1.5), and check that all finals used the same TF_ENABLE_ONEDNN_OPTS. Confirm that the NSL-KDD finals ran on the server too (open FIXME of Ch. 8, Sec. 8.1.5): this section states one machine for all finals as decided on 26 October.
+% FIXME(open): record the commit of each series before any figure is called citable (open point of Ch. 8, Sec. 8.1.5), and check that all finals used the same TF_ENABLE_ONEDNN_OPTS.
 
 % ================================================================
 % 10.10 Summary

@@ -141,11 +141,10 @@ model and preprocessing.
 % FIXME(open): check that the NSL-KDD final runs saved model and preprocessing too.
 Determinism holds on one machine: two runs of one configuration and seed give the same macro-F1
 and select the same epoch in our checks. Across
-machines and library versions we claim nothing. The CIC finals ran on a server (Python 3.14,
+machines and library versions we claim nothing. The final runs ran on a server (Python 3.14,
 TensorFlow 2.22.0-rc0, a release candidate) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
 compared only within one machine (\cref{sec:cost-dimension}). Code and configurations are in
 \texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
-% FIXME(open): the result files of the NSL-KDD finals show the server environment, while the plan was the laptop; confirm which machine made them and correct this paragraph.
 % FIXME(open): server runs record the commit as unknown (point 22 of the open list); record the commit of each series before any figure is called citable. Check also that all finals used the same TF_ENABLE_ONEDNN_OPTS, which the package sets to 0 unless the environment overrides it.
 
 % ================================================================
@@ -479,7 +478,7 @@ The common network is not optimal for every arm, the arms balance classes with d
 levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The tuning of CIC-IDS2017 used a thinned Normal class, and its
 validation part held labels later held out in E9. Validation has few
 rare examples, and the moving mean only damps this. The NSL-KDD thresholds were fixed on the whole
-training file, and the first threshold of A1 was changed after looking at Probe. The weak knowledge base was a planned variant, and its axiom U2 covers no U2R row of training. The CIC finals ran on the server and the early work on a
+training file, and the first threshold of A1 was changed after looking at Probe. The weak knowledge base was a planned variant, and its axiom U2 covers no U2R row of training. The finals ran on the server and the early work on a
 laptop, with unrecorded commits on the server.
 
 \paragraph{External.}
