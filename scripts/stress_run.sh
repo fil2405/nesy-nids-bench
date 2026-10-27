@@ -22,6 +22,45 @@ FILES=(configs/stress/${PAT}.yaml)
 [ "${#FILES[@]}" -gt 0 ] || { echo "nessuna config per '$PAT'"; exit 1; }
 echo "== ${#FILES[@]} config, $WORKERS processi"
 
+echo "== controllo rapido"
+"$PY" - "${FILES[@]}" <<'PY' 2>&1 | tee "logs/stress_run_check_$(date +%Y%m%d_%H%M).log"
+import sys
+
+import yaml
+
+import nesybench  # sets TF_USE_LEGACY_KERAS before tensorflow is imported
+from nesybench.data import get_spec, load_dataset
+from nesybench.data.base import LABEL_COL
+from nesybench.logic.edit import load_run_kb
+from nesybench.logic.kb import load_kb
+
+errors, frames = [], {}
+for path in sys.argv[1:]:
+    cfg = yaml.safe_load(open(path))
+    ds = cfg["dataset"]
+    spec = get_spec(ds)
+    if ds not in frames:
+        frames[ds] = load_dataset(ds, "train")
+        print(f"ok  dati {ds} train: {len(frames[ds])} righe")
+    sp = cfg.get("split_params", {})
+    missing = sorted(set(sp.get("holdout_labels") or []) - set(frames[ds][LABEL_COL]))
+    if missing:
+        errors.append(f"{path}: etichette assenti {missing}")
+    unknown = sorted(set(sp.get("train_class_fractions") or {}) - set(spec.classes))
+    if unknown:
+        errors.append(f"{path}: classi sconosciute {unknown}")
+    try:
+        if cfg.get("kb"):
+            load_run_kb(cfg, frames[ds])
+        if cfg.get("c5_kb"):
+            load_kb(cfg["c5_kb"])
+    except Exception as exc:
+        errors.append(f"{path}: KB: {type(exc).__name__}: {exc}")
+print("\n".join("KO  " + e for e in errors) if errors else "controllo OK")
+sys.exit(1 if errors else 0)
+PY
+[ "${PIPESTATUS[0]}" -eq 0 ] || { echo "controllo fallito, le run non partono"; exit 1; }
+
 FAILED=0
 for CFG in "${FILES[@]}"; do
     RUN_ID="$("$PY" -c "import sys,yaml;print(yaml.safe_load(open(sys.argv[1]))['run_id'])" "$CFG")"
