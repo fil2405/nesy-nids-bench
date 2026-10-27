@@ -99,3 +99,8 @@ def test_summary_has_a_block_per_perturbation(kb):
     summary = saved_eval.summarize({0: base}, ("enforce",))
     assert set(summary["perturbed"]) == {"noise:0.1"}
     assert summary["perturbed"]["noise:0.1"]["macro_f1"]["mean"] == pytest.approx(base["macro_f1"])
+
+
+def test_report_path_folder_or_file(tmp_path):
+    assert saved_eval.report_path(tmp_path, "r", "test", "v1") == tmp_path / "r_test_v1.json"
+    assert saved_eval.report_path(tmp_path / "e10.json", "r", "test", "v1") == tmp_path / "e10.json"

@@ -72,6 +72,12 @@ def _stored(results_dir, run_id, seed, part):
     return json.loads(path.read_text()).get("metrics", {}).get(part, {}).get("macro_f1")
 
 
+def report_path(out, run_id, part, kb_version) -> Path:
+    """`out` ending in .json is the file itself, anything else a folder."""
+    out = Path(out)
+    return out if out.suffix == ".json" else out / f"{run_id}_{part}_{kb_version}.json"
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", required=True)
@@ -81,7 +87,7 @@ def main(argv=None):
     parser.add_argument("--part", default="test", choices=["val", "test"])
     parser.add_argument("--seeds", type=int, nargs="+")
     parser.add_argument("--results-dir", default="results")
-    parser.add_argument("--out", default="results/saved_eval")
+    parser.add_argument("--out", default="results/saved_eval", help="folder, or a .json file")
     parser.add_argument("--perturb", nargs="*", default=[], help="E10: noise:S or evade:D")
     args = parser.parse_args(argv)
 
@@ -147,9 +153,8 @@ def main(argv=None):
         raise SystemExit("nessun modello trovato")
     report = {"run_id": run_id, "part": args.part, "kb": kb.version, "modes": args.modes,
               "per_seed": {str(k): v for k, v in per_seed.items()}, "summary": summarize(per_seed, args.modes)}
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
-    path = out / f"{run_id}_{args.part}_{kb.version}.json"
+    path = report_path(args.out, run_id, args.part, kb.version)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2))
     print(path)
 
