@@ -35,7 +35,7 @@ E8_CLASSES = {                               # classes made rarer in train
 }
 E8_LEVELS = (0.5, 0.25, 0.1)
 E4_P = (1, 2, 4, 6)                          # same set as the tuning
-E4_S_SCALE = (0.5, 1.0, 2.0)
+E4_S_FACTORS = (0.5, 2.0, 4.0)                # times the tuned s_scale; crisp is the narrow end
 
 
 def _derive(base: dict, suffix: str, edit: dict) -> dict:
@@ -143,7 +143,7 @@ def e8(base: dict, classes=None, levels=None, floor=E7_FLOOR) -> list[dict]:
     return out
 
 
-def e4(base: dict, p_levels=E4_P, s_levels=E4_S_SCALE) -> list[dict]:
+def e4(base: dict, p_levels=E4_P, s_factors=E4_S_FACTORS) -> list[dict]:
     """One LTN setting at a time against the base: p, crisp thresholds, width scale."""
     model = base.get("model")
     if model not in ("ltn_sup", "ltn_full"):
@@ -160,11 +160,11 @@ def e4(base: dict, p_levels=E4_P, s_levels=E4_S_SCALE) -> list[dict]:
             config = _derive(base, "e4_crisp", None)
             config["training"] = {**training, "crisp": True}
             out.append(config)
-            for s in s_levels:
-                if s != training.get("s_scale", 1.0):
-                    config = _derive(base, f"e4_s{s:g}".replace(".", "p"), None)
-                    config["training"] = {**training, "s_scale": s}
-                    out.append(config)
+            s_base = training.get("s_scale", 1.0)
+            for f in s_factors:
+                config = _derive(base, f"e4_sx{f:g}".replace(".", "p"), None)
+                config["training"] = {**training, "s_scale": round(s_base * f, 6)}
+                out.append(config)
     return out
 
 

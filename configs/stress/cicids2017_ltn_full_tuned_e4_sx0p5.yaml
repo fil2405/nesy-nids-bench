@@ -1,4 +1,4 @@
-run_id: cicids2017_ltn_full_tuned_e4_s1
+run_id: cicids2017_ltn_full_tuned_e4_sx0p5
 dataset: cicids2017
 split: stratified_random
 split_params:
@@ -38,4 +38,4 @@ training:
   domain_weight: 0.5
   crisp: false
   p: 4
-  s_scale: 1.0
+  s_scale: 0.26685

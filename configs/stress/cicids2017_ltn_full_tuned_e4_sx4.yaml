@@ -1,10 +1,12 @@
-run_id: nslkdd_ltn_full_tuned_e4_s2
-dataset: nslkdd
-split: official_test_with_stratified_val
+run_id: cicids2017_ltn_full_tuned_e4_sx4
+dataset: cicids2017
+split: stratified_random
 split_params:
-  val_fraction: 0.15
+  val_fraction: 0.2
+  test_fraction: 0.2
+  test_seed: 0
 model: ltn_full
-kb: kb/nslkdd_v1.yaml
+kb: kb/cicids2017_v1.yaml
 evaluate_test: false
 seeds:
 - 0
@@ -25,15 +27,15 @@ network:
   activation: relu
 training:
   optimizer: adam
-  learning_rate: 0.0005045
+  learning_rate: 0.0003334
   batch_size: 256
   max_epochs: 100
   early_stopping_patience: 10
   selection_window: 5
   imbalance: none
-  sampling_power: 0.02776
-  min_per_class: 16
-  domain_weight: 0.1
+  sampling_power: 0.1542
+  min_per_class: 8
+  domain_weight: 0.5
   crisp: false
-  p: 6
-  s_scale: 2.0
+  p: 4
+  s_scale: 2.1348

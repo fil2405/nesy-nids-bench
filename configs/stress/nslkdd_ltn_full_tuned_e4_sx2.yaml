@@ -1,4 +1,4 @@
-run_id: nslkdd_ltn_full_tuned_e4_s0p5
+run_id: nslkdd_ltn_full_tuned_e4_sx2
 dataset: nslkdd
 split: official_test_with_stratified_val
 split_params:
@@ -36,4 +36,4 @@ training:
   domain_weight: 0.1
   crisp: false
   p: 6
-  s_scale: 0.5
+  s_scale: 2.58
