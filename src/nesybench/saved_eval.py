@@ -17,9 +17,9 @@ import numpy as np
 
 from nesybench.export import artifact_dir
 from nesybench.latency import load_predictor
-from nesybench.logic.kb import load_kb
+from nesybench.logic.kb import load_kb, target_index
 from nesybench import perturb
-from nesybench.logic.postcheck import MODES, run_postcheck
+from nesybench.logic.postcheck import BENIGN, MODES, enforce, fired_rules, run_postcheck
 from nesybench.metrics import compute_metrics
 
 BATCH = 8192
@@ -27,6 +27,19 @@ BATCH = 8192
 
 def predict_all(predict, x, size=BATCH) -> np.ndarray:
     return np.vstack([np.asarray(predict(x[i:i + size])) for i in range(0, len(x), size)])
+
+
+def rule_predictor(directory, class_names):
+    """Raw rows -> one-hot of the rule_only arm saved in `directory` (kb.yaml, rules.json)."""
+    rules_kb = load_kb(Path(directory) / "kb.yaml")
+    targets = target_index(rules_kb, class_names)
+
+    def predict(raw):
+        pred = enforce(np.full(len(raw), BENIGN), fired_rules(rules_kb, raw), targets)
+        out = np.zeros((len(raw), len(class_names)))
+        out[np.arange(len(raw)), pred] = 1.0
+        return out
+    return predict
 
 
 def score(proba, y, raw, kb, class_names, modes) -> dict:
@@ -121,9 +134,17 @@ def main(argv=None):
         raw = frames[2 if args.part == "test" else 1].reset_index(drop=True)
         features, y = _split_xy(raw, spec)
         transformer = joblib.load(directory / "preprocessing.joblib")
-        x = np.asarray(transformer.transform(features), dtype=np.float32)
-        predict, _ = load_predictor(directory, n_classes=len(spec.classes))
-        proba = predict_all(predict, x)
+        if (directory / "rules.json").exists():  # rule_only reads the raw columns
+            on_raw = rule_predictor(directory, list(spec.classes))
+
+            def model_proba(raw_rows, feats):
+                return on_raw(raw_rows)
+        else:
+            predict, _ = load_predictor(directory, n_classes=len(spec.classes))
+
+            def model_proba(raw_rows, feats):
+                return predict_all(predict, np.asarray(transformer.transform(feats), dtype=np.float32))
+        proba = model_proba(raw, features)
         result = score(proba, y, raw, kb, list(spec.classes), args.modes)
         if perturbations:
             _, _, num_cols = transformer.transformers_[0]
@@ -135,8 +156,7 @@ def main(argv=None):
                 else:
                     raw_p, moved = perturb.evade(raw, y, kb, list(spec.classes), level)
                 feats_p, _ = _split_xy(raw_p, spec)
-                x_p = np.asarray(transformer.transform(feats_p), dtype=np.float32)
-                result["perturbed"][name] = score(predict_all(predict, x_p), y, raw_p, kb,
+                result["perturbed"][name] = score(model_proba(raw_p, feats_p), y, raw_p, kb,
                                                   list(spec.classes), args.modes)
                 if kind == "evade":
                     result["perturbed"][name]["rows_moved"] = moved

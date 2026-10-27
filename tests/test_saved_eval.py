@@ -104,3 +104,10 @@ def test_summary_has_a_block_per_perturbation(kb):
 def test_report_path_folder_or_file(tmp_path):
     assert saved_eval.report_path(tmp_path, "r", "test", "v1") == tmp_path / "r_test_v1.json"
     assert saved_eval.report_path(tmp_path / "e10.json", "r", "test", "v1") == tmp_path / "e10.json"
+
+
+def test_rule_predictor_reads_the_raw_rows(tmp_path):
+    (tmp_path / "kb.yaml").write_text(KB_YAML)
+    predict = saved_eval.rule_predictor(tmp_path, NAMES)
+    proba = predict(pd.DataFrame({"rate": [0.9, 0.1]}))
+    assert proba.tolist() == [[0, 1, 0], [1, 0, 0]]
