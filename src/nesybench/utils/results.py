@@ -71,6 +71,7 @@ def save_run(
     overwrite: bool = False,
     training: dict | None = None,
     artifacts: dict | None = None,
+    split_sizes: dict | None = None,
 ) -> Path:
     """`metrics` is keyed by part ("val", "test"). Refuses to overwrite by default."""
     path = run_path(results_dir, run_id, seed)
@@ -91,6 +92,7 @@ def save_run(
         "timings": timings,
         "training": training,
         "artifacts": artifacts,
+        "split_sizes": split_sizes,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(record, indent=2, default=_jsonable))

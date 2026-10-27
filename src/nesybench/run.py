@@ -88,6 +88,12 @@ def _evaluate(model, splits, part: str, timings: dict, kb=None, postcheck=()):
     return metrics
 
 
+def split_sizes(splits) -> dict:
+    """Rows per class of each part, in class order."""
+    return {part: np.bincount(splits.part(part)[1], minlength=len(splits.class_names)).tolist()
+            for part in ("train", "val", "test")}
+
+
 def _save_artifacts(model, splits, root, run_id: str, seed: int) -> dict:
     if not hasattr(model, "save"):
         raise ValueError(f"model {type(model).__name__} has no save()")
@@ -134,6 +140,7 @@ def run_one(config: dict, seed: int, results_dir, overwrite: bool = False, model
     path = save_run(
         str(results_dir), config["run_id"], config, seed, metrics, timings,
         overwrite=overwrite, training=training, artifacts=artifacts,
+        split_sizes=split_sizes(splits),
     )
     return path, metrics, timings
 

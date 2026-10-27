@@ -112,6 +112,14 @@ def test_record_has_metrics_timings_and_training_info(env):
     assert rec["training"] == {"n_parameters": 0, "epochs_run": 1}
 
 
+def test_record_has_rows_per_class_of_each_part(env):
+    _main(env, "--seeds", "0")
+    sizes = _record(env, 0)["split_sizes"]
+    assert sizes["val"] == [10, 10, 10]
+    assert sizes["train"] == [30, 30, 30]
+    assert sizes["test"] == [N_PER_CLASS] * 3
+
+
 def test_split_params_reach_the_split_strategy(env):
     _main(env, "--seeds", "0")
     n_val = sum(_record(env, 0)["metrics"]["val"]["support"])
