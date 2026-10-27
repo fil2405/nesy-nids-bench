@@ -2,6 +2,7 @@
 
     python analysis/stress_tables.py e9 --dataset cicids2017 [--tex out/e9.tex]
     python analysis/stress_tables.py e4 --dataset nslkdd [--metric macro_f1] [--tex out/e4.tex]
+    python analysis/stress_tables.py e3|e11|e13 --dataset nslkdd [--tag _weak]
     python analysis/stress_tables.py unseen --dataset cicddos2019 --labels Portmap
 
 E9: per variant and arm, macro-F1 and, pooled over the held-out labels, detection
@@ -30,9 +31,9 @@ from nesybench.data.splits import ATTEMPTED_SUFFIX  # noqa: E402
 LTN_ARMS = ("ltn_sup", "ltn_full")
 
 
-def by_variant(runs, dataset, exp, arms=ARMS):
-    """{variant: {arm: run_id}} for <dataset>_<arm>_tuned_<exp>_<variant>."""
-    pat = re.compile(rf"^{dataset}_(?P<arm>{'|'.join(arms)})_tuned_{exp}_(?P<var>.+)$")
+def by_variant(runs, dataset, exp, arms=ARMS, tag=""):
+    """{variant: {arm: run_id}} for <dataset>_<arm>_tuned<tag>_<exp>_<variant>."""
+    pat = re.compile(rf"^{dataset}_(?P<arm>{'|'.join(arms)})_tuned{tag}_{exp}_(?P<var>.+)$")
     out = {}
     for run_id in runs:
         m = pat.match(run_id)
@@ -125,11 +126,11 @@ def saved_eval_runs(folder):
     return out
 
 
-def e4_rows(runs, dataset, variants, part, metric):
-    """(arm, setting, n, mean, std, paired diff from the finals or None)."""
+def e4_rows(runs, dataset, variants, part, metric, arms=LTN_ARMS, tag=""):
+    """(arm, setting, n, mean, std, paired diff from the base run or None)."""
     out = []
-    for arm in LTN_ARMS:
-        final = f"{dataset}_{arm}_tuned"
+    for arm in arms:
+        final = f"{dataset}_{arm}_tuned{tag}"
         for var, arms in variants.items():
             if arm not in arms:
                 continue
@@ -192,7 +193,8 @@ def write_tex(path, text):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument("exp", choices=["e9", "e4", "unseen"])
+    ap.add_argument("exp", choices=["e9", "e4", "e3", "e11", "e13", "unseen"])
+    ap.add_argument("--tag", default="", help="e3/e11/e13 on another base, e.g. _weak")
     ap.add_argument("--labels", nargs="+", help="unseen: fine labels absent from train (e.g. Portmap)")
     ap.add_argument("--saved-eval", help="unseen: folder of saved_eval reports, for finals without by_label")
     ap.add_argument("--dataset", required=True)
@@ -232,17 +234,18 @@ def main():
         if args.tex:
             write_tex(args.tex, tex_e9(rows))
     else:
-        variants = by_variant(runs, args.dataset, "e4", LTN_ARMS)
+        arms = LTN_ARMS if args.exp == "e4" else ("ltn_full",)
+        variants = by_variant(runs, args.dataset, args.exp, arms, args.tag)
         if not variants:
-            raise SystemExit(f"no e4 runs for {args.dataset} in {args.results_dir}")
-        rows = e4_rows(runs, args.dataset, variants, args.part, args.metric)
-        print(f"{args.dataset} e4 {args.metric} ({args.part}); diff = setting minus finals")
-        for arm in LTN_ARMS:
+            raise SystemExit(f"no {args.exp} runs for {args.dataset}{args.tag} in {args.results_dir}")
+        rows = e4_rows(runs, args.dataset, variants, args.part, args.metric, arms, args.tag)
+        print(f"{args.dataset}{args.tag} {args.exp} {args.metric} ({args.part}); diff = variant minus base run")
+        for arm in arms:
             print(f"  {arm} base: {base_setting(runs, args.dataset, arm) or 'finals not found'}")
         for arm, var, n, m, s, d in rows:
             tail = "" if d is None else (f"  diff {d.median:+.4f} [{d.low:+.4f}, {d.high:+.4f}]"
                                          f"  wins {d.wins}/{d.n}  p {d.p:.4f}")
-            print(f"  {arm:9} {var:7} n={n:2d}  {m:.4f} +- {s:.4f}{tail}")
+            print(f"  {arm:9} {var:12} n={n:2d}  {m:.4f} +- {s:.4f}{tail}")
         if args.tex:
             write_tex(args.tex, tex_e4(rows, args.metric))
 

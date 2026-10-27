@@ -86,3 +86,17 @@ def test_saved_eval_reports_read_as_runs(tmp_path):
     runs = st.saved_eval_runs(tmp_path)
     rows = st.unseen_rows(runs, "cicddos2019", ["Portmap"])
     assert rows[0][0] == "xgb" and rows[0][2][0] == pytest.approx(0.6)
+
+
+def test_e3_rows_against_the_base_and_the_weak_tag():
+    runs = {"nslkdd_ltn_full_tuned": {s: e4_rec("f", s, 0.57) for s in range(3)},
+            "nslkdd_ltn_full_tuned_e3_no_A1": {s: e4_rec("a", s, 0.56) for s in range(3)},
+            "nslkdd_ltn_full_tuned_weak": {s: e4_rec("w", s, 0.58) for s in range(3)},
+            "nslkdd_ltn_full_tuned_weak_e3_no_R1": {s: e4_rec("r", s, 0.55) for s in range(3)}}
+    v = st.by_variant(runs, "nslkdd", "e3", ("ltn_full",))
+    assert list(v) == ["no_A1"]
+    (row,) = st.e4_rows(runs, "nslkdd", v, "test", "macro_f1", ("ltn_full",))
+    assert row[5].median == pytest.approx(-0.01)
+    w = st.by_variant(runs, "nslkdd", "e3", ("ltn_full",), "_weak")
+    (row,) = st.e4_rows(runs, "nslkdd", w, "test", "macro_f1", ("ltn_full",), "_weak")
+    assert row[1] == "no_R1" and row[5].median == pytest.approx(-0.03)
