@@ -160,3 +160,10 @@ def test_shipped_kb_fits_its_dataset(name, dataset):
     assert target_index(kb, list(spec.classes)).min() >= 0
     used = {c.col for a in kb.axioms for c in a.conditions}
     assert not used & set(spec.non_features)  # never a column the models do not see
+
+
+def test_old_ddos_group_reads_as_dos(tmp_path):
+    path = tmp_path / "kb.yaml"
+    path.write_text("version: v\naxioms:\n  - {id: A1, group: ddos, origin: mechanism, target: DDoS,\n"
+                    "     all: [{col: x, op: gt, tau: 1, s: 0.1}]}\n")
+    assert load_kb(path).axioms[0].group == "dos"

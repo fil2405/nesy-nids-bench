@@ -8,6 +8,7 @@ from scipy.special import expit
 
 OPS = ("eq", "gt", "le")
 GROUPS = ("domain", "dos", "dataset")
+OLD_GROUPS = {"ddos": "dos"}  # KB copies saved with models before 6c62a01
 ORIGINS = ("mechanism", "data", "internship")
 
 
@@ -63,6 +64,7 @@ def _axiom(raw: dict) -> Axiom:
     ident = raw.get("id")
     if not ident:
         raise ValueError(f"axiom without id: {raw}")
+    raw = {**raw, "group": OLD_GROUPS.get(raw.get("group"), raw.get("group"))}
     for key, known in (("group", GROUPS), ("origin", ORIGINS)):
         if raw.get(key) not in known:
             raise ValueError(f"{ident}: {key} {raw.get(key)!r}, known: {list(known)}")
