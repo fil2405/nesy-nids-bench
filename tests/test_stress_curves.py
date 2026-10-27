@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -6,12 +7,15 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "analysis"))
 import stress_curves as sc  # noqa: E402
+import summarize_runs  # noqa: E402
 
 CLASSES = ["Normal", "DoS", "R2L"]
+E7_5 = {"train_fraction": 0.05, "min_keep_per_class": 5}
+E7_50 = {"train_fraction": 0.5, "min_keep_per_class": 5}
 
 
-def rec(run_id, seed, macro, train=None):
-    r = {"seed": seed, "config": {"run_id": run_id},
+def rec(run_id, seed, macro, train=None, sp=None):
+    r = {"seed": seed, "config": {"run_id": run_id, "split_params": sp or {}},
          "metrics": {"test": {"class_names": CLASSES, "macro_f1": macro, "f1": [macro] * 3}}}
     if train:
         r["split_sizes"] = {"train": train, "val": [1, 1, 1], "test": [1, 1, 1]}
@@ -19,24 +23,23 @@ def rec(run_id, seed, macro, train=None):
 
 
 def runs_for(spec):
-    """spec: {run_id: ([macro per seed], train sizes or None)}"""
-    out = {}
-    for run_id, (scores, train) in spec.items():
-        out[run_id] = {s: rec(run_id, s, m, train) for s, m in enumerate(scores)}
-    return out
+    """spec: {run_id: ([macro per seed], train sizes or None, split_params or None)}"""
+    return {run_id: {s: rec(run_id, s, m, train, sp) for s, m in enumerate(scores)}
+            for run_id, (scores, train, sp) in spec.items()}
 
 
 @pytest.fixture
 def runs():
     return runs_for({
-        "nslkdd_ltn_full_tuned_e7_f5": ([0.60, 0.62, 0.61], [500, 300, 50]),
-        "nslkdd_ltn_sup_tuned_e7_f5": ([0.55, 0.57, 0.56], [500, 300, 50]),
-        "nslkdd_ltn_full_tuned_e7_f50": ([0.70, 0.71, 0.72], [5000, 3000, 500]),
-        "nslkdd_ltn_sup_tuned_e7_f50": ([0.69, 0.70, 0.70], [5000, 3000, 500]),
-        "nslkdd_ltn_full_tuned": ([0.80, 0.81, 0.79], None),
-        "nslkdd_ltn_sup_tuned": ([0.79, 0.80, 0.79], None),
-        "nslkdd_xgb_tuned_e8_f10": ([0.5, 0.5, 0.5], [900, 800, 90]),
-        "cicids2017_xgb_tuned_e7_f1": ([0.5, 0.5, 0.5], [1, 1, 1]),
+        "nslkdd_ltn_full_tuned_e7_f5": ([0.60, 0.62, 0.61], [500, 300, 50], E7_5),
+        "nslkdd_ltn_sup_tuned_e7_f5": ([0.55, 0.57, 0.56], [500, 300, 50], E7_5),
+        "nslkdd_ltn_full_tuned_e7_f50": ([0.70, 0.71, 0.72], [5000, 3000, 500], E7_50),
+        "nslkdd_ltn_sup_tuned_e7_f50": ([0.69, 0.70, 0.70], [5000, 3000, 500], E7_50),
+        "nslkdd_ltn_full_tuned": ([0.80, 0.81, 0.79], None, None),
+        "nslkdd_ltn_sup_tuned": ([0.79, 0.80, 0.79], None, None),
+        "nslkdd_xgb_tuned_e8_f10": ([0.5, 0.5, 0.5], [10000, 6000, 100],
+                                    {"train_class_fractions": {"R2L": 0.1}, "min_keep_per_class": 5}),
+        "cicids2017_xgb_tuned_e7_f1": ([0.5, 0.5, 0.5], [1, 1, 1], None),
     })
 
 
@@ -53,9 +56,21 @@ def test_level_value_decimal_tag():
     assert sc.level_value("0p1") == pytest.approx(0.001)
 
 
-def test_final_size_from_largest_level(runs):
+def test_full_sizes_e7_scale_every_class(runs):
     found = sc.collect(runs, "nslkdd", "e7")
-    assert sc.full_size(runs, found) == pytest.approx(8500 / 0.5)
+    assert sc.full_sizes(runs, found, "test") == pytest.approx([10000, 6000, 1000])
+
+
+def test_full_sizes_e8_scale_only_the_thinned_class(runs):
+    found = sc.collect(runs, "nslkdd", "e8")
+    assert sc.full_sizes(runs, found, "test") == pytest.approx([10000, 6000, 1000])
+
+
+def test_full_sizes_skip_classes_at_the_floor():
+    runs = runs_for({"nslkdd_xgb_tuned_e8_f10": ([0.5], [100, 60, 5],
+                     {"train_class_fractions": {"R2L": 0.1}, "min_keep_per_class": 5})})
+    est = sc.full_sizes(runs, sc.collect(runs, "nslkdd", "e8"), "test")
+    assert est[:2] == pytest.approx([100, 60]) and np.isnan(est[2])
 
 
 def test_table_rows_and_class_rows(runs):
@@ -66,7 +81,7 @@ def test_table_rows_and_class_rows(runs):
     assert (n, total, crows) == (3, 850, 50)
     assert mean == pytest.approx(0.61) and std == pytest.approx(0.01)
     assert by[("ltn_full", 1.0)][3] == pytest.approx(17000)
-    assert np.isnan(by[("ltn_full", 1.0)][4])
+    assert by[("ltn_full", 1.0)][4] == pytest.approx(1000)
 
 
 def test_knowledge_effect_is_full_minus_sup(runs):
@@ -87,10 +102,6 @@ def test_tex_tables_have_one_row_per_arm_and_level(runs):
 
 
 def test_load_runs_skips_files_that_are_not_runs(tmp_path):
-    import json
-
-    import summarize_runs
-
     (tmp_path / "e12.json").write_text(json.dumps({"batches": {}}))
     (tmp_path / "r_seed0.json").write_text(json.dumps(rec("r", 0, 0.5)))
     assert list(summarize_runs.load_runs(tmp_path)) == ["r"]

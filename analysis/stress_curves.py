@@ -5,7 +5,9 @@
 
 Reads <dataset>_<arm>_tuned_<exp>_f<level> and the finals <dataset>_<arm>_tuned
 (level 1). Knowledge effect: ltn_full minus ltn_sup, paired by seed, no Holm.
-The finals have no split_sizes; their train size is estimated from the largest level.
+The finals have no split_sizes; their rows per class are estimated from the run that kept
+the largest share of each class (classes at the floor give none).
+With --class the plot uses that class's train rows as x (E8), else the total (E7).
 """
 import argparse
 import re
@@ -55,31 +57,57 @@ def train_rows(recs, class_index=None):
     return float(np.mean([s[class_index] for s in sizes]))
 
 
-def full_size(runs, found):
-    """Rows of the full train part, from the largest level that has split_sizes."""
+def kept_fractions(rec, class_names):
+    """Per class: share of the train part kept by train_fraction and train_class_fractions."""
+    sp = rec["config"].get("split_params", {})
+    out = np.full(len(class_names), float(sp.get("train_fraction", 1.0)))
+    for name, frac in (sp.get("train_class_fractions") or {}).items():
+        out[class_names.index(name)] *= frac
+    return out, int(sp.get("min_keep_per_class", 0))
+
+
+def full_sizes(runs, found, part):
+    """Per class rows of the full train part, from the run that keeps the largest share of it.
+
+    Classes held at the floor give no estimate (nan)."""
     best = None
     for by_level in found.values():
         for level, run_id in by_level.items():
-            if level < 1.0:
-                rows = train_rows([runs[run_id][s] for s in seeds_of(runs, run_id)])
-                if np.isfinite(rows) and (best is None or level > best[0]):
-                    best = (level, rows)
-    return float("nan") if best is None else best[1] / best[0]
+            if level == 1.0:
+                continue
+            for seed in seeds_of(runs, run_id):
+                rec = runs[run_id][seed]
+                if "split_sizes" not in rec:
+                    continue
+                names = rec["metrics"][part]["class_names"]
+                frac, floor = kept_fractions(rec, names)
+                rows = np.asarray(rec["split_sizes"]["train"], dtype=float)
+                est = np.where(rows > floor, rows / frac, np.nan)
+                if best is None:
+                    best = (frac, est)
+                else:
+                    take = ((frac > best[0]) & np.isfinite(est)) | ~np.isfinite(best[1])
+                    best = (np.where(take, frac, best[0]), np.where(take, est, best[1]))
+    return None if best is None else best[1]
 
 
 def table(runs, found, part, metric, cls):
     """Rows (arm, level, n seeds, train rows, class rows, mean, std)."""
     class_idx = None
     out = []
-    total = full_size(runs, found)
+    full = full_sizes(runs, found, part)
     for arm in ARMS:
         for level in sorted(found[arm]):
             recs = [runs[found[arm][level]][s] for s in seeds_of(runs, found[arm][level])]
             if cls and class_idx is None:
                 class_idx = recs[0]["metrics"][part]["class_names"].index(cls)
             scores = [metric_value(r, part, metric) for r in recs]
-            rows = total if level == 1.0 else train_rows(recs)
-            crows = train_rows(recs, class_idx) if cls else float("nan")
+            if level == 1.0:  # finals: no split_sizes, estimated
+                rows = float(full.sum()) if full is not None else float("nan")
+                crows = float(full[class_idx]) if full is not None and cls else float("nan")
+            else:
+                rows = train_rows(recs)
+                crows = train_rows(recs, class_idx) if cls else float("nan")
             std = float(np.std(scores, ddof=1)) if len(scores) > 1 else 0.0
             out.append((arm, level, len(recs), rows, crows, float(np.mean(scores)), std))
     return out
@@ -124,16 +152,17 @@ def tex_effect(effect, metric):
     return "\n".join(lines) + "\n"
 
 
-def plot(rows, path, metric, x_label):
+def plot(rows, path, metric, x_label, by_class=False):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    x = 4 if by_class else 3
     fig, ax = plt.subplots(figsize=(6, 4))
     for arm in ARMS:
-        pts = [r for r in rows if r[0] == arm and np.isfinite(r[3])]
+        pts = [r for r in rows if r[0] == arm and np.isfinite(r[x])]
         if pts:
-            ax.errorbar([r[3] for r in pts], [r[5] for r in pts], [r[6] for r in pts],
+            ax.errorbar([r[x] for r in pts], [r[5] for r in pts], [r[6] for r in pts],
                         marker="o", capsize=2, label=arm)
     ax.set_xscale("log")
     ax.set_xlabel(x_label)
@@ -175,7 +204,8 @@ def main():
         base.with_name(base.stem + "_effect.tex").write_text(tex_effect(effect, args.metric))
     if args.plot:
         Path(args.plot).parent.mkdir(parents=True, exist_ok=True)
-        plot(rows, args.plot, args.metric, "train rows")
+        label = f"{args.cls} train rows" if args.cls else "train rows"
+        plot(rows, args.plot, args.metric, label, by_class=bool(args.cls))
 
 
 if __name__ == "__main__":
