@@ -120,11 +120,12 @@ def main(argv=None):
         proba = predict_all(predict, x)
         result = score(proba, y, raw, kb, list(spec.classes), args.modes)
         if perturbations:
-            _, scaler, num_cols = transformer.transformers_[0]
+            _, _, num_cols = transformer.transformers_[0]
+            bounds = perturb.column_bounds(frames[0], num_cols)
             result["perturbed"] = {}
             for name, kind, level in perturbations:
                 if kind == "noise":
-                    raw_p = perturb.noise(raw, num_cols, scaler.scale_, level, seed)
+                    raw_p = perturb.noise(raw, bounds, level, seed)
                 else:
                     raw_p, moved = perturb.evade(raw, y, kb, list(spec.classes), level)
                 feats_p, _ = _split_xy(raw_p, spec)

@@ -1,6 +1,8 @@
 """Simple perturbations of a raw test part (E10): feature noise and rule-aware evasion.
 
-noise:S    every numeric column gets Gaussian noise with std S times its train std.
+noise:S    every numeric value is scaled by (1 + S * N(0, 1)), clipped to the train range of its
+           column and rounded where the train column is integer: zeros and constant columns
+           stay as they are, bytes and counts get a relative error, not a heavy-tail std.
 evade:D    on the rows of an axiom's target class where it fires, its first numeric
            condition is moved D*|tau| past tau (D*1 when tau is 0), so the rule stops firing.
 """
@@ -22,11 +24,23 @@ def parse(spec: str) -> tuple[str, float]:
     return kind, value
 
 
-def noise(raw, columns, scales, sigma: float, seed: int):
+def column_bounds(train, columns) -> dict:
+    """Per column: (min, max, integer) on the train part."""
+    out = {}
+    for col in columns:
+        v = train[col].to_numpy(dtype=float)
+        v = v[np.isfinite(v)]
+        out[col] = (float(v.min()), float(v.max()), bool(np.all(v == np.round(v))))
+    return out
+
+
+def noise(raw, bounds: dict, sigma: float, seed: int):
     rng = np.random.default_rng(seed)
     out = raw.copy()
-    for col, scale in zip(columns, scales):
-        out[col] = out[col].astype(float) + sigma * scale * rng.standard_normal(len(out))
+    for col, (low, high, integer) in bounds.items():
+        v = out[col].to_numpy(dtype=float)
+        v = np.clip(v * (1.0 + sigma * rng.standard_normal(len(v))), low, high)
+        out[col] = np.round(v) if integer else v
     return out
 
 

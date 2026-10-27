@@ -58,14 +58,21 @@ def test_summarize_means_over_seeds(kb):
     assert summary["seeds"] == 2 and summary["enforce"]["macro_f1"]["mean"] == pytest.approx(rows[0]["postcheck"]["enforce"]["macro_f1"])
 
 
-def test_noise_is_seeded_and_scaled_by_the_train_std():
+def test_noise_is_seeded_relative_and_inside_the_train_range():
     from nesybench import perturb
-    raw = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [0, 0, 0]})
-    one = perturb.noise(raw, ["a", "b"], [2.0, 0.0], 0.5, seed=1)
-    two = perturb.noise(raw, ["a", "b"], [2.0, 0.0], 0.5, seed=1)
-    assert one.equals(two) and not one["a"].equals(raw["a"])
-    assert (one["b"] == 0).all()                       # zero scale: untouched
-    assert raw["a"].tolist() == [1.0, 2.0, 3.0]        # input not modified
+    train = pd.DataFrame({"bytes": [0, 10, 1000], "rate": [0.0, 0.5, 1.0], "const": [7, 7, 7]})
+    raw = pd.DataFrame({"bytes": [0, 100, 900] * 50, "rate": [0.0, 0.5, 0.99] * 50,
+                        "const": [7] * 150})
+    bounds = perturb.column_bounds(train, ["bytes", "rate", "const"])
+    assert bounds["bytes"] == (0.0, 1000.0, True) and bounds["rate"][2] is False
+    one = perturb.noise(raw, bounds, 0.5, seed=1)
+    two = perturb.noise(raw, bounds, 0.5, seed=1)
+    assert one.equals(two) and not one["bytes"].equals(raw["bytes"])
+    assert (one["const"] == 7).all()                   # constant column untouched
+    assert (one["bytes"][raw["bytes"] == 0] == 0).all() and (one["rate"][raw["rate"] == 0] == 0).all()
+    assert one["bytes"].between(0, 1000).all() and one["rate"].between(0, 1).all()
+    assert (one["bytes"] == one["bytes"].round()).all()
+    assert raw["bytes"].tolist()[:3] == [0, 100, 900]  # input not modified
 
 
 def test_evasion_moves_only_firing_rows_of_the_target_class(kb):
