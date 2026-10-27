@@ -4,6 +4,7 @@
         --experiment base|e3|e4|e7|e8|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
 E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... (ltn_full only).
 E8 takes any arm: --classes C ... thinned to --levels F ... of their train rows (--floor N).
+E7 and E8 cut the validation part the same way (shrink_val): the labelled budget is train plus validation.
 E4 takes an LTN arm: p, crisp thresholds and s_scale one at a time (crisp and s_scale: ltn_full).
 
 E3, E11 and the weak KB also take a rule_only base (configs/<dataset>_rules.yaml); E13 does not.
@@ -92,7 +93,8 @@ def e9(base: dict, labels, tag: str, kb=None) -> dict:
     if base.get("split") != "stratified_random":
         raise SystemExit("e9 holds labels out of a stratified_random split")
     config = _derive(base, f"e9_{tag}", None)
-    config["split_params"] = {**base.get("split_params", {}), "holdout_labels": list(labels)}
+    config["split_params"] = {**base.get("split_params", {}), "holdout_labels": list(labels),
+                              "holdout_attempted": True}
     if kb:
         config["c5_kb"] = kb
         if base.get("kb"):
@@ -105,7 +107,7 @@ def _pct(fraction: float) -> str:
 
 
 def e7(base: dict, levels=None, floor=E7_FLOOR, exclude=()) -> list[dict]:
-    """Any arm: the train part cut to a fraction (validation and test whole), floor per class."""
+    """Any arm: train and validation cut to a fraction (test whole), floor per class."""
     levels = tuple(levels or E7_LEVELS.get(base.get("dataset"), ()))
     if not levels:
         raise SystemExit(f"e7: no default levels for {base.get('dataset')!r}, use --levels")
@@ -118,13 +120,13 @@ def e7(base: dict, levels=None, floor=E7_FLOOR, exclude=()) -> list[dict]:
     for f in levels:
         config = _derive(base, f"e7{suffix}_f{_pct(f)}", {"exclude": list(exclude)} if exclude else None)
         config["split_params"] = {**base.get("split_params", {}), "train_fraction": f,
-                                  "min_keep_per_class": floor}
+                                  "min_keep_per_class": floor, "shrink_val": True}
         out.append(config)
     return out
 
 
 def e8(base: dict, classes=None, levels=None, floor=E7_FLOOR) -> list[dict]:
-    """Any arm: the listed classes cut to a fraction of their train rows, the rest untouched."""
+    """Any arm: the listed classes cut to a fraction of their train and validation rows."""
     classes = tuple(classes or E8_CLASSES.get(base.get("dataset"), ()))
     if not classes:
         raise SystemExit(f"e8: no default classes for {base.get('dataset')!r}, use --classes")
@@ -136,7 +138,7 @@ def e8(base: dict, classes=None, levels=None, floor=E7_FLOOR) -> list[dict]:
         config = _derive(base, f"e8_f{_pct(f)}", None)
         config["split_params"] = {**base.get("split_params", {}),
                                   "train_class_fractions": {c: f for c in classes},
-                                  "min_keep_per_class": floor}
+                                  "min_keep_per_class": floor, "shrink_val": True}
         out.append(config)
     return out
 

@@ -8,6 +8,7 @@ split_params:
   holdout_labels:
   - DoS Slowloris
   - DoS Slowhttptest
+  holdout_attempted: true
 model: xgb
 kb: null
 c5_kb: kb/cicids2017_v1_slow.yaml

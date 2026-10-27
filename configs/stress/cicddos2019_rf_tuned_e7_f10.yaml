@@ -5,6 +5,7 @@ split_params:
   val_fraction: 0.15
   train_fraction: 0.1
   min_keep_per_class: 5
+  shrink_val: true
 model: rf
 kb: null
 c5_kb: kb/cicddos2019_v1.yaml

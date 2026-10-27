@@ -5,6 +5,7 @@ split_params:
   val_fraction: 0.15
   train_fraction: 0.5
   min_keep_per_class: 5
+  shrink_val: true
 model: xgb
 kb: null
 c5_kb: kb/nslkdd_v1.yaml

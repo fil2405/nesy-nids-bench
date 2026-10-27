@@ -76,7 +76,8 @@ def test_e9_holds_labels_out_of_any_arm(tmp_path):
     got = yaml.safe_load(path.read_text())
     assert path.stem == "toy_mlp_e9_slow"
     assert got["split_params"] == {"test_seed": 0,
-                                   "holdout_labels": ["DoS Slowloris", "DoS Slowhttptest"]}
+                                   "holdout_labels": ["DoS Slowloris", "DoS Slowhttptest"],
+                                   "holdout_attempted": True}
     assert "kb_edit" not in got
 
 
@@ -96,7 +97,8 @@ def test_e7_levels_per_dataset_on_any_arm(tmp_path):
     assert names == ["toy_mlp_ce_e7_f1", "toy_mlp_ce_e7_f10", "toy_mlp_ce_e7_f25",
                      "toy_mlp_ce_e7_f3"]
     got = yaml.safe_load((out / "toy_mlp_ce_e7_f3.yaml").read_text())
-    assert got["split_params"] == {"test_seed": 0, "train_fraction": 0.03, "min_keep_per_class": 5}
+    assert got["split_params"] == {"test_seed": 0, "train_fraction": 0.03, "min_keep_per_class": 5,
+                                   "shrink_val": True}
     assert got["seeds"] == [0, 1] and got["evaluate_test"] is False
     assert "trial_set" not in got and "kb_edit" not in got
 
@@ -142,7 +144,8 @@ def test_e8_thins_the_rare_classes_of_any_arm(tmp_path):
     assert names == ["toy_mlp_ce_e8_f10", "toy_mlp_ce_e8_f25", "toy_mlp_ce_e8_f50"]
     got = yaml.safe_load((out / "toy_mlp_ce_e8_f25.yaml").read_text())
     assert got["split_params"] == {"test_seed": 0, "min_keep_per_class": 5,
-                                   "train_class_fractions": {"R2L": 0.25, "U2R": 0.25}}
+                                   "train_class_fractions": {"R2L": 0.25, "U2R": 0.25},
+                                   "shrink_val": True}
     assert "kb_edit" not in got and "trial_set" not in got
 
 

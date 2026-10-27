@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 
 from .base import CLASS_COL, LABEL_COL, class_index
 
+ATTEMPTED_SUFFIX = " - Attempted"  # CIC-IDS2017 improved: failed attack flows, class Normal
+
 
 def _top_up(kept, train, spec, minimum, seed):
     """Put back random dropped rows until every class has `minimum` rows (or all it had)."""
@@ -69,9 +71,20 @@ def _shrink_train(train, spec, seed, train_fraction, train_class_fractions,
     return _keep_train_fraction(train, spec, train_fraction, seed, min_keep_per_class)
 
 
+def _shrink(train, val, spec, seed, train_fraction, train_class_fractions, min_keep_per_class,
+            shrink_val):
+    """shrink_val: the validation part gets the same cut as train (labelled budget of E7, E8)."""
+    train = _shrink_train(train, spec, seed, train_fraction, train_class_fractions,
+                          min_keep_per_class)
+    if shrink_val:
+        val = _shrink_train(val, spec, seed + 1, train_fraction, train_class_fractions,
+                            min_keep_per_class)
+    return train, val
+
+
 def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fraction=0.15,
                                       train_fraction=1.0, train_class_fractions=None,
-                                      min_keep_per_class=0):
+                                      min_keep_per_class=0, shrink_val=False):
     """Official test file; validation stratified from train."""
     if test_df is None:
         raise ValueError(f"{spec.name} has no official test file")
@@ -81,16 +94,22 @@ def official_test_with_stratified_val(train_df, test_df, spec, seed, val_fractio
         stratify=class_index(train_df, spec),
         random_state=seed,
     )
-    return (_shrink_train(train_part, spec, seed, train_fraction, train_class_fractions,
-                          min_keep_per_class), val_part, test_df)
+    train_part, val_part = _shrink(train_part, val_part, spec, seed, train_fraction,
+                                   train_class_fractions, min_keep_per_class, shrink_val)
+    return train_part, val_part, test_df
 
 
-def _hold_out(train_df, labels):
-    """Rows of the given fine labels, apart; every class keeps at least one other label."""
+def _hold_out(train_df, labels, attempted=False):
+    """Rows of the given fine labels, apart; every class keeps at least one other label.
+
+    attempted: also the failed flows of those labels (`<label> - Attempted`, class Normal).
+    """
     labels = list(labels)
     unknown = sorted(set(labels) - set(train_df[LABEL_COL]))
     if unknown:
         raise ValueError(f"holdout_labels not in the data: {unknown}")
+    if attempted:
+        labels += [lab + ATTEMPTED_SUFFIX for lab in labels]
     mask = train_df[LABEL_COL].isin(labels)
     emptied = sorted(set(train_df.loc[mask, CLASS_COL]) - set(train_df.loc[~mask, CLASS_COL]))
     if emptied:
@@ -100,19 +119,21 @@ def _hold_out(train_df, labels):
 
 def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
                       test_fraction=0.2, test_seed=0, train_fraction=1.0,
-                      train_class_fractions=None, holdout_labels=None, min_keep_per_class=0):
+                      train_class_fractions=None, holdout_labels=None, min_keep_per_class=0,
+                      holdout_attempted=False, shrink_val=False):
     """One frame cut into train, validation and test, stratified by class.
 
     The test cut uses test_seed, so every run sees the same test; only the
     train/validation cut follows the run seed (as with the official test file).
     holdout_labels: fine labels never seen in train or validation; all their rows
-    are added to the test part (E9, attack variants).
+    are added to the test part (E9, attack variants). holdout_attempted: their
+    Attempted flows too, so no near copy of the variant sits in train as Normal.
     """
     if test_df is not None:
         raise ValueError(f"{spec.name} has an official test file, use another split")
     held = None
     if holdout_labels:
-        train_df, held = _hold_out(train_df, holdout_labels)
+        train_df, held = _hold_out(train_df, holdout_labels, holdout_attempted)
     rest, test = train_test_split(
         train_df,
         test_size=test_fraction,
@@ -127,8 +148,9 @@ def stratified_random(train_df, test_df, spec, seed, val_fraction=0.2,
     )
     if held is not None:
         test = pd.concat([test, held])
-    return (_shrink_train(train, spec, seed, train_fraction, train_class_fractions,
-                          min_keep_per_class), val, test)
+    train, val = _shrink(train, val, spec, seed, train_fraction, train_class_fractions,
+                         min_keep_per_class, shrink_val)
+    return train, val, test
 
 
 STRATEGIES = {

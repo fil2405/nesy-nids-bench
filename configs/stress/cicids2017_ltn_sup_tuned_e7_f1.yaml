@@ -7,6 +7,7 @@ split_params:
   test_seed: 0
   train_fraction: 0.01
   min_keep_per_class: 5
+  shrink_val: true
 model: ltn_sup
 kb: null
 c5_kb: kb/cicids2017_v1.yaml

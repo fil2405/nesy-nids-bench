@@ -139,3 +139,39 @@ def test_holdout_cannot_empty_a_class_or_name_a_missing_label():
         split_data("stratified_random", df, None, spec, 0, holdout_labels=["DDoS"])
     with pytest.raises(ValueError, match="not in the data"):
         split_data("stratified_random", df, None, spec, 0, holdout_labels=["nope"])
+
+
+def test_holdout_attempted_moves_the_failed_flows_too():
+    spec = get_spec("cicids2017")
+    rows = []
+    for cls, labels in {"Normal": ["BENIGN", "DoS Slowloris - Attempted", "DoS Hulk - Attempted"],
+                        "DoS": ["DoS Hulk", "DoS Slowloris"], "DDoS": ["DDoS"]}.items():
+        rows += [{"label": lab, "class": cls, "f": i} for lab in labels for i in range(60)]
+    df = pd.DataFrame(rows)
+    for attempted, in_test in ((False, 0), (True, 60)):
+        train, val, test = split_data("stratified_random", df, None, spec, 0,
+                                      holdout_labels=["DoS Slowloris"],
+                                      holdout_attempted=attempted)
+        seen = pd.concat([train, val])
+        assert (seen["label"] == "DoS Slowloris").sum() == 0
+        assert ((seen["label"] == "DoS Slowloris - Attempted").sum() == 0) == attempted
+        assert (test["label"] == "DoS Slowloris - Attempted").sum() >= in_test
+        assert "DoS Hulk - Attempted" in set(seen["label"])
+        assert len(train) + len(val) + len(test) == len(df)
+
+
+@pytest.mark.parametrize("params", [{"train_fraction": 0.25}, {"train_class_fractions": {"U2R": 0.25}}])
+def test_shrink_val_cuts_validation_like_train(params):
+    df = _toy(200)
+    _, val_whole, _ = split_data(SPLIT, df, _toy(), SPEC, 0, **params)
+    train, val, _ = split_data(SPLIT, df, _toy(), SPEC, 0, shrink_val=True, min_keep_per_class=3,
+                               **params)
+    whole = class_index(val_whole, SPEC).value_counts()
+    cut = class_index(val, SPEC).value_counts()
+    assert len(val) < len(val_whole)
+    assert cut.min() >= 3
+    assert set(val.index) <= set(val_whole.index)
+    assert not set(val.index) & set(train.index)
+    if "train_class_fractions" in params:
+        u2r = CLASSES.index("U2R")
+        assert cut[u2r] < whole[u2r] and cut.drop(u2r).equals(whole.drop(u2r))
