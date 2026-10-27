@@ -84,3 +84,13 @@ def test_tex_tables_have_one_row_per_arm_and_level(runs):
     assert "ltn-full" in text and "ltn-sup" in text and "xgb" not in text
     effect = sc.knowledge_effect(runs, found, "test", "macro_f1")
     assert sc.tex_effect(effect, "macro_f1").count("\\\\") == 1 + len(effect)
+
+
+def test_load_runs_skips_files_that_are_not_runs(tmp_path):
+    import json
+
+    import summarize_runs
+
+    (tmp_path / "e12.json").write_text(json.dumps({"batches": {}}))
+    (tmp_path / "r_seed0.json").write_text(json.dumps(rec("r", 0, 0.5)))
+    assert list(summarize_runs.load_runs(tmp_path)) == ["r"]

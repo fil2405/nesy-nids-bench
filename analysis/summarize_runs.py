@@ -13,6 +13,8 @@ def load_runs(results_dir):
     runs = defaultdict(dict)
     for path in sorted(Path(results_dir).glob("*.json")):
         rec = json.loads(path.read_text())
+        if "config" not in rec:  # not a run file (latency, saved_eval)
+            continue
         runs[rec["config"]["run_id"]][rec["seed"]] = rec
     return runs
 
