@@ -68,3 +68,11 @@ def test_e4_rows_diff_from_finals():
     assert rows[("ltn_sup", "p1")][5] is None
     assert st.base_setting(runs, "nslkdd", "ltn_full") == {"p": 6, "s_scale": 1.29}
     assert "ltn-full & p1" in st.tex_e4(list(rows.values()), "macro_f1")
+
+
+def test_unseen_rows_read_the_finals(e9_runs):
+    runs = {"cicids2017_ltn_full_tuned": e9_runs["cicids2017_ltn_full_tuned_e9_slow"],
+            "cicids2017_rules": {0: e9_rec("r", 0, 0.2)}}
+    rows = {r[0]: r for r in st.unseen_rows(runs, "cicids2017", ["DoS Slowloris"])}
+    assert set(rows) == {"ltn_full", "rules"}
+    assert rows["rules"][2][0] == pytest.approx(0.2)

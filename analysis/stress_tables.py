@@ -2,11 +2,13 @@
 
     python analysis/stress_tables.py e9 --dataset cicids2017 [--tex out/e9.tex]
     python analysis/stress_tables.py e4 --dataset nslkdd [--metric macro_f1] [--tex out/e4.tex]
+    python analysis/stress_tables.py unseen --dataset cicddos2019 --labels Portmap
 
 E9: per variant and arm, macro-F1 and, pooled over the held-out labels, detection
 (predicted not Normal) and class recall; detection on their Attempted flows (class Normal)
 is a false alarm. Knowledge effect on detection: ltn_full minus ltn_sup, paired by seed.
 The E9 test part differs from the finals: compare only inside a variant.
+unseen: on the finals, the same detection for labels that only the test part has.
 E4: per setting, the score and its paired difference from the finals of the same arm.
 No Holm in either (sensitivity checks, Ch. 10).
 """
@@ -95,6 +97,20 @@ def e9_effect(runs, variants, part="test", hi="ltn_full", lo="ltn_sup"):
     return out
 
 
+def unseen_rows(runs, dataset, labels, part="test"):
+    """Finals only: per arm, detection and class recall pooled over labels absent from train."""
+    out = []
+    for arm in (*ARMS, "rules"):
+        run_id = f"{dataset}_{arm}_tuned" if arm != "rules" else f"{dataset}_rules"
+        if run_id not in runs:
+            continue
+        recs = [runs[run_id][s] for s in sorted(runs[run_id])]
+        out.append((arm, len(recs),
+                    mean_std([pooled(r, labels, "detected", part) for r in recs]),
+                    mean_std([pooled(r, labels, "recall", part) for r in recs])))
+    return out
+
+
 def e4_rows(runs, dataset, variants, part, metric):
     """(arm, setting, n, mean, std, paired diff from the finals or None)."""
     out = []
@@ -162,7 +178,8 @@ def write_tex(path, text):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument("exp", choices=["e9", "e4"])
+    ap.add_argument("exp", choices=["e9", "e4", "unseen"])
+    ap.add_argument("--labels", nargs="+", help="unseen: fine labels absent from train (e.g. Portmap)")
     ap.add_argument("--dataset", required=True)
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--part", default="test", choices=["val", "test"])
@@ -171,7 +188,14 @@ def main():
     args = ap.parse_args()
 
     runs = load_runs(args.results_dir)
-    if args.exp == "e9":
+    if args.exp == "unseen":
+        if not args.labels:
+            raise SystemExit("unseen needs --labels")
+        print(f"{args.dataset} finals ({args.part}), labels {args.labels}")
+        for arm, n, det, rec in unseen_rows(runs, args.dataset, args.labels, args.part):
+            print(f"  {arm:14} n={n:2d}  detected {det[0]:.4f} +- {det[1]:.4f}"
+                  f"  recall {rec[0]:.4f} +- {rec[1]:.4f}")
+    elif args.exp == "e9":
         variants = by_variant(runs, args.dataset, "e9")
         if not variants:
             raise SystemExit(f"no e9 runs for {args.dataset} in {args.results_dir}")
