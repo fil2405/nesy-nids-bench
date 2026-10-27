@@ -70,3 +70,40 @@ def test_cli_on_a_saved_network(tmp_path):
     latency.main(["--model-dir", str(folder), "--batch-sizes", "1", "--repeats", "3",
                   "--warmup", "1", "--device", "cpu", "--out", str(out)])
     assert json.loads(out.read_text())["batches"]["1"]["p50_ms"] > 0
+
+
+def _kb(tmp_path):
+    from nesybench.logic.kb import load_kb
+    path = tmp_path / "kb.yaml"
+    path.write_text("version: toy\naxioms:\n  - id: A1\n    group: dos\n    origin: mechanism\n"
+                    "    target: DDoS\n    all:\n      - {col: rate, op: gt, tau: 0.5, s: 0.1}\n")
+    return load_kb(path)
+
+
+def test_pipeline_times_model_and_rules_on_the_same_rows(tmp_path):
+    import pandas as pd
+    x = np.zeros((4, 2), dtype=np.float32)
+    raw = pd.DataFrame({"rate": [0.9, 0.1, 0.9, 0.1], "other": list("abcd")})
+    seen = []
+
+    def predict(batch):
+        seen.append(len(batch))
+        return np.tile([0.9, 0.1], (len(batch), 1))
+
+    out = latency.measure_pipeline(predict, x, raw, _kb(tmp_path), ["Normal", "DDoS"],
+                                   batch_sizes=(1, 3), repeats=2, warmup=1)
+    assert set(out) == {"model", "annotate", "enforce"}
+    assert all(set(v) == {"1", "3"} for v in out.values())
+    assert seen == ([1] * 3 + [3] * 3) * 3
+
+
+def test_pipeline_needs_aligned_rows(tmp_path):
+    import pandas as pd
+    with pytest.raises(ValueError, match="rows"):
+        latency.measure_pipeline(lambda b: b, np.zeros((3, 1)), pd.DataFrame({"rate": [0.0]}),
+                                 _kb(tmp_path), ["Normal", "DDoS"])
+
+
+def test_postcheck_needs_a_config(tmp_path):
+    with pytest.raises(SystemExit):
+        latency.main(["--model-dir", str(tmp_path), "--postcheck"])

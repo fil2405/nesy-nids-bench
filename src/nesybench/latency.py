@@ -2,11 +2,13 @@
 
     python -m nesybench.latency --model-dir results/models/<run_id>_seed0 \
         [--batch-sizes 1 64 1024] [--repeats 200] [--warmup 20] [--device cpu|default] \
-        [--config CONFIG --seed 0 --part test] [--out FILE.json]
+        [--config CONFIG --seed 0 --part test [--postcheck [--kb FILE]]] [--out FILE.json]
 
 Times the model call on already preprocessed rows, one call per batch. Without
 --config the rows are standard normal noise of the right width (the cost of a
 network does not depend on the values, the one of trees does a little).
+--postcheck also times model + rules (annotate) and model + rules + override
+(enforce) on the same batches; the rules read the raw columns of the same rows.
 """
 import argparse
 import json
@@ -43,6 +45,33 @@ def measure(predict, x, batch_sizes=(1, 64, 1024), repeats=200, warmup=20) -> di
             "rows_per_second": float(size / seconds.mean()),
         }
     return out
+
+
+def measure_pipeline(predict, x, raw, kb, class_names, batch_sizes=(1, 64, 1024),
+                     repeats=200, warmup=20) -> dict:
+    """measure() of model, model + annotate and model + enforce on the same row batches."""
+    from nesybench.logic.kb import target_index
+    from nesybench.logic.postcheck import enforce, fired_rules
+
+    if len(raw) != len(x):
+        raise ValueError(f"raw has {len(raw)} rows, x has {len(x)}")
+    cols = sorted({c.col for a in kb.axioms for c in a.conditions})
+    raw = raw[cols].reset_index(drop=True)
+    targets = target_index(kb, class_names)
+    rows = np.arange(len(x))
+
+    def model(idx):
+        return predict(x[idx])
+
+    def annotate(idx):
+        return predict(x[idx]), fired_rules(kb, raw.iloc[idx])
+
+    def enforced(idx):
+        proba, fired = annotate(idx)
+        return enforce(np.asarray(proba).argmax(axis=1), fired, targets)
+
+    return {name: measure(step, rows, batch_sizes, repeats, warmup)
+            for name, step in (("model", model), ("annotate", annotate), ("enforce", enforced))}
 
 
 def load_predictor(directory, n_classes=None):
@@ -94,7 +123,7 @@ def _rows(config_path, seed, part):
     splits = preprocess(*split_data(config["split"], train, test, spec, seed,
                                     **config.get("split_params", {})), spec)
     x = np.asarray(splits.part(part)[0], dtype=np.float32)
-    return x
+    return x, splits.raw(part), config, list(splits.class_names)
 
 
 def main(argv=None):
@@ -107,8 +136,12 @@ def main(argv=None):
     parser.add_argument("--config", help="real rows: split and preprocessing of this config")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--part", default="test", choices=["val", "test"])
+    parser.add_argument("--postcheck", action="store_true", help="also model + rules (needs --config)")
+    parser.add_argument("--kb", help="with --postcheck; default: c5_kb or kb of the config")
     parser.add_argument("--out")
     args = parser.parse_args(argv)
+    if args.postcheck and not args.config:
+        parser.error("--postcheck needs --config (the rules read the raw rows)")
 
     directory = Path(args.model_dir)
     meta = json.loads((directory / "meta.json").read_text())
@@ -118,9 +151,11 @@ def main(argv=None):
             tf.config.set_visible_devices([], "GPU")
         except ImportError:
             pass
-    predict, kind = load_predictor(directory)
+    predict, kind = load_predictor(directory, n_classes=len(meta["class_names"]))
+    raw = config = None
     if args.config:
-        x, source = _rows(args.config, args.seed, args.part), f"{args.part} of {args.config}"
+        x, raw, config, class_names = _rows(args.config, args.seed, args.part)
+        source = f"{args.part} of {args.config}"
     else:
         rng = np.random.default_rng(0)
         x, source = rng.standard_normal((4096, len(meta["feature_names"]))).astype(np.float32), "synthetic"
@@ -135,9 +170,19 @@ def main(argv=None):
         "cpu_count": os.cpu_count(),
         "platform": platform.platform(),
         "batches": measure(predict, x, args.batch_sizes, args.repeats, args.warmup),
+        "pipeline": None,
         "size_bytes": {p.name: p.stat().st_size for p in sorted(directory.iterdir())
                        if p.is_file()},
     }
+    if args.postcheck:
+        from nesybench.logic.kb import load_kb
+        kb_path = args.kb or config.get("c5_kb") or config.get("kb")
+        if not kb_path:
+            raise SystemExit("--postcheck: no KB, pass --kb or set c5_kb in the config")
+        kb = load_kb(kb_path)
+        result["kb"] = kb.version
+        result["pipeline"] = measure_pipeline(predict, x, raw, kb, class_names, args.batch_sizes,
+                                              args.repeats, args.warmup)
     text = json.dumps(result, indent=2)
     if args.out:
         Path(args.out).write_text(text)
