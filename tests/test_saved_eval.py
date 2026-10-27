@@ -111,3 +111,13 @@ def test_rule_predictor_reads_the_raw_rows(tmp_path):
     predict = saved_eval.rule_predictor(tmp_path, NAMES)
     proba = predict(pd.DataFrame({"rate": [0.9, 0.1]}))
     assert proba.tolist() == [[0, 1, 0], [1, 0, 0]]
+
+
+def test_score_reports_by_label_when_the_rows_have_labels(kb):
+    from nesybench.data.base import LABEL_COL
+    raw = pd.DataFrame({"rate": [0.9, 0.0, 0.9, 0.0], LABEL_COL: ["a", "b", "a", "b"]})
+    y = np.array([1, 0, 1, 0])
+    proba = np.array([[.8, .1, .1], [.8, .1, .1], [.1, .8, .1], [.8, .1, .1]])
+    out = saved_eval.score(proba, y, raw, kb, NAMES, ("enforce",))
+    assert out["by_label"]["a"] == {"n": 2, "recall": 0.5, "detected": 0.5}
+    assert out["postcheck"]["enforce"]["by_label"]["a"]["detected"] == 1.0

@@ -76,3 +76,13 @@ def test_unseen_rows_read_the_finals(e9_runs):
     rows = {r[0]: r for r in st.unseen_rows(runs, "cicids2017", ["DoS Slowloris"])}
     assert set(rows) == {"ltn_full", "rules"}
     assert rows["rules"][2][0] == pytest.approx(0.2)
+
+
+def test_saved_eval_reports_read_as_runs(tmp_path):
+    import json
+    rep = {"run_id": "cicddos2019_xgb_tuned", "part": "test",
+           "per_seed": {"0": {"macro_f1": 0.7, "by_label": {"Portmap": {"n": 10, "recall": 0.5, "detected": 0.6}}}}}
+    (tmp_path / "x.json").write_text(json.dumps(rep))
+    runs = st.saved_eval_runs(tmp_path)
+    rows = st.unseen_rows(runs, "cicddos2019", ["Portmap"])
+    assert rows[0][0] == "xgb" and rows[0][2][0] == pytest.approx(0.6)

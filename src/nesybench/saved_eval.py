@@ -20,7 +20,8 @@ from nesybench.latency import load_predictor
 from nesybench.logic.kb import load_kb, target_index
 from nesybench import perturb
 from nesybench.logic.postcheck import BENIGN, MODES, enforce, fired_rules, run_postcheck
-from nesybench.metrics import compute_metrics
+from nesybench.data.base import LABEL_COL
+from nesybench.metrics import compute_metrics, recall_by_label
 
 BATCH = 8192
 
@@ -44,12 +45,17 @@ def rule_predictor(directory, class_names):
 
 def score(proba, y, raw, kb, class_names, modes) -> dict:
     """Metrics of the model alone and after each post-check mode."""
-    base = compute_metrics(y, proba.argmax(axis=1), class_names)
+    pred = proba.argmax(axis=1)
+    base = compute_metrics(y, pred, class_names)
     out = {"macro_f1": base["macro_f1"], "accuracy": base["accuracy"], "postcheck": {}}
+    if LABEL_COL in raw.columns:
+        out["by_label"] = recall_by_label(raw[LABEL_COL], y, pred)
     for mode in modes:
         after, report = run_postcheck(kb, raw, proba, class_names, mode)
         scores = compute_metrics(y, after, class_names)
         out["postcheck"][mode] = {**report, "macro_f1": scores["macro_f1"], "accuracy": scores["accuracy"]}
+        if LABEL_COL in raw.columns and mode == "enforce":
+            out["postcheck"][mode]["by_label"] = recall_by_label(raw[LABEL_COL], y, after)
     return out
 
 

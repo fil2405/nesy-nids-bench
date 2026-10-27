@@ -111,6 +111,20 @@ def unseen_rows(runs, dataset, labels, part="test"):
     return out
 
 
+def saved_eval_runs(folder):
+    """saved_eval reports as runs: {run_id: {seed: {"metrics": {part: {"by_label": ...}}}}}."""
+    import json
+    out = {}
+    for path in sorted(Path(folder).glob("*.json")):
+        rep = json.loads(path.read_text())
+        if "per_seed" not in rep:
+            continue
+        out[rep["run_id"]] = {int(s): {"metrics": {rep["part"]: {"by_label": r.get("by_label", {}),
+                                                                 "macro_f1": r["macro_f1"]}}}
+                              for s, r in rep["per_seed"].items()}
+    return out
+
+
 def e4_rows(runs, dataset, variants, part, metric):
     """(arm, setting, n, mean, std, paired diff from the finals or None)."""
     out = []
@@ -180,6 +194,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("exp", choices=["e9", "e4", "unseen"])
     ap.add_argument("--labels", nargs="+", help="unseen: fine labels absent from train (e.g. Portmap)")
+    ap.add_argument("--saved-eval", help="unseen: folder of saved_eval reports, for finals without by_label")
     ap.add_argument("--dataset", required=True)
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--part", default="test", choices=["val", "test"])
@@ -191,6 +206,8 @@ def main():
     if args.exp == "unseen":
         if not args.labels:
             raise SystemExit("unseen needs --labels")
+        if args.saved_eval:
+            runs = saved_eval_runs(args.saved_eval)
         print(f"{args.dataset} finals ({args.part}), labels {args.labels}")
         for arm, n, det, rec in unseen_rows(runs, args.dataset, args.labels, args.part):
             print(f"  {arm:14} n={n:2d}  detected {det[0]:.4f} +- {det[1]:.4f}"
