@@ -170,9 +170,11 @@ def main():
               f"  wins {r.wins}/{r.n} ties {r.ties}  p {r.p:.4f}")
     if args.tex:
         base = Path(args.tex)
+        base.parent.mkdir(parents=True, exist_ok=True)
         base.with_name(base.stem + "_scores.tex").write_text(tex_scores(rows, args.metric))
         base.with_name(base.stem + "_effect.tex").write_text(tex_effect(effect, args.metric))
     if args.plot:
+        Path(args.plot).parent.mkdir(parents=True, exist_ok=True)
         plot(rows, args.plot, args.metric, "train rows")
 
 
