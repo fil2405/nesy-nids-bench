@@ -2,6 +2,7 @@
 # Runs stress configs with the test scored; finished seeds are skipped on restart.
 #   bash stress_run.sh <pattern> [workers]
 # pattern: glob on configs/stress, e.g. 'cicids2017_ltn_full_tuned_e9_*' (quote it)
+# CHECK_ONLY=1: only the data/label/KB check, no runs.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 [ -d configs ] || cd .. || exit 1
@@ -60,6 +61,7 @@ print("\n".join("KO  " + e for e in errors) if errors else "controllo OK")
 sys.exit(1 if errors else 0)
 PY
 [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "controllo fallito, le run non partono"; exit 1; }
+[ "${CHECK_ONLY:-0}" = 1 ] && exit 0
 
 FAILED=0
 for CFG in "${FILES[@]}"; do
