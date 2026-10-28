@@ -3,6 +3,7 @@
 #   bash stress_run.sh <pattern> [workers]
 # pattern: glob on configs/stress, e.g. 'cicids2017_ltn_full_tuned_e9_*' (quote it)
 # CHECK_ONLY=1: only the data/label/KB check, no runs.
+# MODELS_DIR=dir: also save model and preprocessing of each run there.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 [ -d configs ] || cd .. || exit 1
@@ -74,6 +75,7 @@ for CFG in "${FILES[@]}"; do
     for seed in $SEEDS; do
         while [ "$(jobs -rp | wc -l)" -ge "$WORKERS" ]; do sleep 5; done
         "$PY" -m nesybench.run --config "$CFG" --evaluate-test --resume --seeds "$seed" \
+            ${MODELS_DIR:+--save-model-dir "$MODELS_DIR"} \
             > "logs/stress_${RUN_ID}_s${seed}.log" 2> "logs/stress_${RUN_ID}_s${seed}.err" &
         PIDS+=($!); PSEED+=("$seed")
     done
