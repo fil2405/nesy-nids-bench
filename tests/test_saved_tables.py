@@ -53,3 +53,12 @@ def test_e17_and_latency(folder, tmp_path):
     (tmp_path / "lat").mkdir()
     (tmp_path / "lat" / "nslkdd_xgb_tuned.json").write_text(json.dumps(lat))
     assert st.latency_rows(tmp_path / "lat", "nslkdd") == [("xgb", {"1": (1.0, 1.5, 1.6), "64": (2.0, 3.0, 3.2)})]
+
+
+def test_postcheck_without_annotate(tmp_path):
+    rec = seed_rec(0.6, 0.62, 0.5)
+    del rec["postcheck"]["annotate"]
+    rep = {"run_id": "nslkdd_xgb_tuned", "part": "test", "per_seed": {"0": rec, "1": rec}}
+    (tmp_path / "x.json").write_text(json.dumps(rep))
+    (row,) = st.postcheck_rows(st.load_reports(tmp_path, "nslkdd"))
+    assert row[4][0] == pytest.approx(0.62)

@@ -63,7 +63,7 @@ def postcheck_rows(reports):
         base = values(rep, lambda r: r["macro_f1"])
         enf = values(rep, lambda r: r["postcheck"]["enforce"]["macro_f1"])
         out.append((arm, len(base), ms(base),
-                    ms(values(rep, lambda r: r["postcheck"]["annotate"]["macro_f1"])), ms(enf),
+                    ms(values(rep, lambda r: r["postcheck"].get("annotate", {}).get("macro_f1", np.nan))), ms(enf),
                     paired(base, enf) if len(base) > 1 else None,
                     ms(values(rep, lambda r: r["postcheck"]["enforce"].get("fixed", np.nan))),
                     ms(values(rep, lambda r: r["postcheck"]["enforce"].get("broken", np.nan)))))
