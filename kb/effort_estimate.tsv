@@ -1,11 +1,11 @@
 kb	axioms	kb_lines	estimate_low_h	estimate_high_h	steps
-per_axiom	1	-	3	4	study the attack mechanism and the columns (1-2 h), threshold checked on train and validation (1-1.5 h), YAML and launcher check (0.5 h)
+per_axiom	1	-	3	3.5	study the attack mechanism and the columns (1-2 h), threshold checked on train and validation (1-1.5 h), YAML and launcher check (0.5 h)
 nslkdd_v1	3	25	10	10	A1-A3 and a search without a usable axiom for R2L and U2R
-nslkdd_v1_weak	9	67	2	4	six broad R2L and U2R rules on top of nslkdd_v1
-cicddos2019_v1	2	17	6	8	two axioms, candidate analysis on the training day
-cicids2017_v1	2	20	6	8	two axioms from per-class scans and depth-3 trees
-cicids2017_v1_slow	3	28	2	3	Slow DoS from mechanism with thresholds fixed in advance (negative)
-cicids2017_v1_r2l	3	29	2	3	R2L axiom of the same analysis
-cicids2017_v1_e9ssh	3	29	1	2	A3 derived again without SSH-Patator
-cic_transfer_xfer, _mech	2, 3	18, 25	3	4	common column schema across the two CICFlowMeter versions, axioms renamed and retargeted
+nslkdd_v1_weak	9	67	3	3.5	six broad R2L and U2R rules on top of nslkdd_v1
+cicddos2019_v1	2	17	5	5.5	two axioms, candidate analysis on the training day
+cicids2017_v1	2	20	5	5.5	two axioms from per-class scans and depth-3 trees
+cicids2017_v1_slow	3	28	2	2.5	Slow DoS from mechanism with thresholds fixed in advance (negative)
+cicids2017_v1_r2l	3	29	2	2.5	R2L axiom of the same analysis
+cicids2017_v1_e9ssh	3	29	1	1.5	A3 derived again without SSH-Patator
+cic_transfer_xfer, _mech	2, 3	18, 25	3	3.5	common column schema across the two CICFlowMeter versions, axioms renamed and retargeted
 change_one_rule	-	-	0.5	1	edit one condition, train and validation check again, launcher check
