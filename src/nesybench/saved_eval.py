@@ -50,10 +50,19 @@ def score(proba, y, raw, kb, class_names, modes) -> dict:
     out = {"macro_f1": base["macro_f1"], "accuracy": base["accuracy"], "postcheck": {}}
     if LABEL_COL in raw.columns:
         out["by_label"] = recall_by_label(raw[LABEL_COL], y, pred)
+    y = np.asarray(y)
+    fired = fired_rules(kb, raw)
+    targets = target_index(kb, class_names)
+    out["rules"] = {a.id: {"fired": int(fired[:, j].sum()),
+                           "precision": float((y[fired[:, j]] == targets[j]).mean()) if fired[:, j].any()
+                           else float("nan")}
+                    for j, a in enumerate(kb.axioms)}
     for mode in modes:
         after, report = run_postcheck(kb, raw, proba, class_names, mode)
         scores = compute_metrics(y, after, class_names)
-        out["postcheck"][mode] = {**report, "macro_f1": scores["macro_f1"], "accuracy": scores["accuracy"]}
+        out["postcheck"][mode] = {**report, "macro_f1": scores["macro_f1"], "accuracy": scores["accuracy"],
+                                  "fixed": int(((pred != y) & (after == y)).sum()),
+                                  "broken": int(((pred == y) & (after != y)).sum())}
         if LABEL_COL in raw.columns and mode == "enforce":
             out["postcheck"][mode]["by_label"] = recall_by_label(raw[LABEL_COL], y, after)
     return out

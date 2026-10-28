@@ -121,3 +121,13 @@ def test_score_reports_by_label_when_the_rows_have_labels(kb):
     out = saved_eval.score(proba, y, raw, kb, NAMES, ("enforce",))
     assert out["by_label"]["a"] == {"n": 2, "recall": 0.5, "detected": 0.5}
     assert out["postcheck"]["enforce"]["by_label"]["a"]["detected"] == 1.0
+
+
+def test_score_counts_fixed_and_broken_overrides_and_rule_precision(kb):
+    raw = pd.DataFrame({"rate": [0.9, 0.9, 0.9, 0.0]})
+    y = np.array([1, 0, 1, 0])
+    proba = np.array([[.8, .1, .1], [.8, .1, .1], [.1, .8, .1], [.8, .1, .1]])
+    out = saved_eval.score(proba, y, raw, kb, NAMES, ("enforce",))
+    enf = out["postcheck"]["enforce"]
+    assert (enf["fixed"], enf["broken"], enf["n_changed"]) == (1, 1, 2)
+    assert out["rules"]["A1"] == {"fired": 3, "precision": pytest.approx(2 / 3)}
