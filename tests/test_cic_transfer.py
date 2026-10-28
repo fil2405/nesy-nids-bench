@@ -56,3 +56,18 @@ def test_ambiguous_names_raise():
 def test_registered_with_a_fixed_test():
     spec = get_spec("cic_transfer")
     assert spec.classes == ("Normal", "Attack") and spec.fixed_test
+
+
+def test_rename_pairs_are_not_already_matched_and_unique():
+    assert len(ct.RENAME) == 16 and len(set(ct.RENAME.values())) == 16
+    assert all(ct.norm(a) != ct.norm(b) for a, b in ct.RENAME.items())
+
+
+def test_rename_wins_over_normalisation():
+    cols = ct.common_columns(["Bwd Segment Size Avg", "Flow Duration"],
+                             ["Avg Bwd Segment Size", "Flow Duration", "Inbound"])
+    assert cols == {"Bwd Segment Size Avg": "Avg Bwd Segment Size", "Flow Duration": "Flow Duration"}
+
+
+def test_rename_to_a_missing_target_column_is_dropped():
+    assert ct.common_columns(["Fwd Seg Size Min"], ["Flow Duration"]) == {}

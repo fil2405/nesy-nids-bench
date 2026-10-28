@@ -1,0 +1,28 @@
+# group: domain | dos | dataset   origin: mechanism | data | internship
+# cic_transfer_xfer plus the UDP-without-reply mechanism axiom (A1 of cicddos2019_v1, Ch. 3).
+# Its tau was set on the CIC-DDoS2019 training day, never on the test day.
+version: cic_transfer_xfer_mech
+axioms:
+  - id: A1
+    group: dataset
+    origin: data
+    target: Attack
+    all:
+      - {col: Total Length of Fwd Packets, op: le, tau: 21, s: 1}
+      - {col: Fwd Packet Length Max, op: gt, tau: 19.5, s: 1}
+      - {col: Avg Bwd Segment Size, op: gt, tau: 1644.15, s: 80}
+  - id: A2
+    group: dataset
+    origin: data
+    target: Attack
+    all:
+      - {col: Bwd Packet Length Std, op: gt, tau: 1302.36, s: 65}
+      - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
+      - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}
+  - id: M1
+    group: dos
+    origin: mechanism
+    target: Attack
+    all:
+      - {col: Protocol, op: eq, value: udp}
+      - {col: Total Backward Packets, op: le, tau: 0.5, s: 0.1}

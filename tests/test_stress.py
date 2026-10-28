@@ -212,3 +212,19 @@ def test_rule_only_base_takes_e3_and_e11_but_not_e13(tmp_path):
     assert "toy_rule_only_e3_no_A1" in names and "toy_rule_only_e11_tau_p20" in names
     with pytest.raises(SystemExit):
         stress.main(["--base", str(base), "--experiment", "e13", "--out", str(out)])
+
+
+def test_xfer_keeps_hyperparameters_and_names_the_arm():
+    base = {"run_id": "cicids2017_mlp_weights_tuned_e9_slow", "dataset": "cicids2017",
+            "split": "stratified_random", "split_params": {"holdout_labels": ["X"]},
+            "model": "mlp_ce", "c5_kb": "kb/cicids2017_v1.yaml", "training": {"learning_rate": 0.1}}
+    c = stress.xfer(base, "kb/cic_transfer_xfer.yaml", "xfer")
+    assert c["run_id"] == "cic_transfer_mlp_weights_tuned_e9_xfer"
+    assert c["dataset"] == "cic_transfer" and c["split_params"] == {"val_fraction": 0.15}
+    assert c["training"] == base["training"] and "kb" not in c
+    assert c["c5_kb"] == "kb/cic_transfer_xfer.yaml"
+    rules = stress.xfer({"run_id": "cicids2017_rules", "dataset": "cicids2017", "model": "rule_only",
+                         "kb": "kb/cicids2017_v1.yaml"}, "kb/k.yaml", "xfer_mech")
+    assert rules["run_id"] == "cic_transfer_rules_e9_xfer_mech" and rules["kb"] == "kb/k.yaml"
+    with pytest.raises(SystemExit):
+        stress.xfer({"run_id": "nslkdd_rf_tuned", "dataset": "nslkdd"}, "kb/k.yaml", "xfer")

@@ -1,0 +1,34 @@
+run_id: cic_transfer_mlp_noweights_tuned_e9_xfer
+dataset: cic_transfer
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+model: mlp_ce
+kb: null
+c5_kb: kb/cic_transfer_xfer.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+network:
+  hidden_units:
+  - 256
+  - 128
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 0.00075
+  batch_size: 256
+  max_epochs: 100
+  early_stopping_patience: 10
+  selection_window: 5
+  imbalance: none

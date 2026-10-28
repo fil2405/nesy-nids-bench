@@ -1,0 +1,21 @@
+run_id: cic_transfer_rules_e9_xfer_mech
+dataset: cic_transfer
+split: official_test_with_stratified_val
+split_params:
+  val_fraction: 0.15
+model: rule_only
+kb: kb/cic_transfer_xfer_mech.yaml
+evaluate_test: false
+seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+training: {}
+c5_kb: kb/cic_transfer_xfer_mech.yaml

@@ -14,7 +14,24 @@ from .base import CLASS_COL, LABEL_COL, DatasetSpec
 SOURCE_CLASSES = {"Normal": "Normal", "DoS": "Attack", "DDoS": "Attack"}
 TARGET_CLASSES = {"Normal": "Normal", "DDoS": "Attack"}
 # source name -> target name where normalisation does not match them
-RENAME: dict[str, str] = {}
+RENAME = {
+    "Total Bwd packets": "Total Backward Packets",
+    "Packet Length Min": "Min Packet Length",
+    "Packet Length Max": "Max Packet Length",
+    "CWR Flag Count": "CWE Flag Count",  # misspelt in the CIC-DDoS2019 header
+    "Fwd Segment Size Avg": "Avg Fwd Segment Size",
+    "Bwd Segment Size Avg": "Avg Bwd Segment Size",
+    "Fwd Bytes/Bulk Avg": "Fwd Avg Bytes/Bulk",
+    "Fwd Packet/Bulk Avg": "Fwd Avg Packets/Bulk",
+    "Fwd Bulk Rate Avg": "Fwd Avg Bulk Rate",
+    "Bwd Bytes/Bulk Avg": "Bwd Avg Bytes/Bulk",
+    "Bwd Packet/Bulk Avg": "Bwd Avg Packets/Bulk",
+    "Bwd Bulk Rate Avg": "Bwd Avg Bulk Rate",
+    "FWD Init Win Bytes": "Init_Win_bytes_forward",
+    "Bwd Init Win Bytes": "Init_Win_bytes_backward",
+    "Fwd Act Data Pkts": "act_data_pkt_fwd",
+    "Fwd Seg Size Min": "min_seg_size_forward",
+}
 
 SPEC = DatasetSpec(
     name="cic_transfer",
@@ -38,10 +55,11 @@ def common_columns(source_cols, target_cols) -> dict:
         if key in target:
             raise ValueError(f"target columns {target[key]!r} and {col!r} normalise alike")
         target[key] = col
+    names = set(target.values())
     out = {}
     for col in source_cols:
         name = RENAME.get(col)
-        if name is None:
+        if name not in names:
             name = target.get(norm(col))
         if name is not None:
             if name in out.values():

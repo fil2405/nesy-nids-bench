@@ -1,0 +1,21 @@
+# group: domain | dos | dataset   origin: mechanism | data | internship
+# E9 transfer: A1 and A2 of cicids2017_v1 (found on CIC-IDS2017 train + validation),
+# target Attack, columns named as in CIC-DDoS2019. Nothing here looked at CIC-DDoS2019.
+version: cic_transfer_xfer
+axioms:
+  - id: A1
+    group: dataset
+    origin: data
+    target: Attack
+    all:
+      - {col: Total Length of Fwd Packets, op: le, tau: 21, s: 1}
+      - {col: Fwd Packet Length Max, op: gt, tau: 19.5, s: 1}
+      - {col: Avg Bwd Segment Size, op: gt, tau: 1644.15, s: 80}
+  - id: A2
+    group: dataset
+    origin: data
+    target: Attack
+    all:
+      - {col: Bwd Packet Length Std, op: gt, tau: 1302.36, s: 65}
+      - {col: Fwd Packet Length Max, op: gt, tau: 214.5, s: 10}
+      - {col: Bwd PSH Flags, op: le, tau: 2.5, s: 0.3}

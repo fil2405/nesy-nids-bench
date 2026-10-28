@@ -1,17 +1,20 @@
 """Configs of the stress runs (E3, E4, E7, E8, E9, E11, E13) from a tuned config.
 
     python -m nesybench.stress --base results/tuning/tune_nslkdd_ltn_full_best.yaml \
-        --experiment base|e3|e4|e7|e8|e9|e11|e13 [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
+        --experiment base|e3|e4|e7|e8|e9|e11|e13|xfer [--kb FILE --tag NAME] [--holdout LABEL ...] [--out configs/stress]
 E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... (ltn_full only).
 E8 takes any arm: --classes C ... thinned to --levels F ... of their train rows (--floor N).
 E7 and E8 cut the validation part the same way (shrink_val): the labelled budget is train plus validation.
 E4 takes an LTN arm: p, crisp thresholds and s_scale one at a time (crisp and s_scale: ltn_full).
 
+xfer (E9 transfer) takes any CIC-IDS2017 base: same hyperparameters, dataset cic_transfer,
+validation cut from the source, the CIC-DDoS2019 test day as test; --kb and --tag name the KB.
 E3, E11 and the weak KB also take a rule_only base (configs/<dataset>_rules.yaml); E13 does not.
 The hyperparameters stay those of the base config, nothing is tuned again.
 """
 import argparse
 import copy
+import re
 from pathlib import Path
 
 import yaml
@@ -102,6 +105,28 @@ def e9(base: dict, labels, tag: str, kb=None) -> dict:
     return config
 
 
+XFER_VAL = 0.15
+
+
+def xfer(base: dict, kb: str, tag: str) -> dict:
+    """E9 transfer: train on CIC-IDS2017, test on the CIC-DDoS2019 test day; nothing re-tuned."""
+    m = re.match(r"^cicids2017_(.+?)(_tuned)?(?:_e\d+_.+)?$", base.get("run_id", ""))
+    if base.get("dataset") != "cicids2017" or not m:
+        raise SystemExit("xfer needs a cicids2017 base config")
+    if not kb or tag == "kb":
+        raise SystemExit("xfer needs --kb FILE and --tag NAME")
+    config = _derive(base, "", None)
+    config["run_id"] = f"cic_transfer_{m[1]}{m[2] or ''}_e9_{tag}"
+    config["dataset"] = "cic_transfer"
+    config["split"] = "official_test_with_stratified_val"
+    config["split_params"] = {"val_fraction": XFER_VAL}
+    config["c5_kb"] = kb
+    if base.get("kb"):
+        config["kb"] = kb
+    config.pop("kb_edit", None)
+    return config
+
+
 def _pct(fraction: float) -> str:
     return f"{fraction * 100:.6g}".replace(".", "p")
 
@@ -179,7 +204,7 @@ def _write(configs, out):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
-    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e4", "e7", "e8", "e9", "e11", "e13"])
+    parser.add_argument("--experiment", required=True, choices=["base", "e3", "e4", "e7", "e8", "e9", "e11", "e13", "xfer"])
     parser.add_argument("--out", default="configs/stress")
     parser.add_argument("--kb", help="another KB file, e.g. the weak-knowledge variant (E9: the one derived without the held-out labels)")
     parser.add_argument("--tag", default="kb", help="run_id suffix with --kb")
@@ -196,6 +221,9 @@ def main(argv=None):
     if args.experiment == "e9":
         configs = [e9(base, args.holdout, args.tag, args.kb)]
         _write(configs, args.out)
+        return
+    if args.experiment == "xfer":
+        _write([xfer(base, args.kb, args.tag)], args.out)
         return
     if args.experiment == "e7":
         _write(e7(base, args.levels, args.floor, args.exclude), args.out)
