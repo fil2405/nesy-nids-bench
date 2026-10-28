@@ -105,3 +105,15 @@ def test_load_runs_skips_files_that_are_not_runs(tmp_path):
     (tmp_path / "e12.json").write_text(json.dumps({"batches": {}}))
     (tmp_path / "r_seed0.json").write_text(json.dumps(rec("r", 0, 0.5)))
     assert list(summarize_runs.load_runs(tmp_path)) == ["r"]
+
+
+def test_collect_ltn_full_edit_tag(runs):
+    extra = runs_for({
+        "nslkdd_ltn_full_tuned_e7_no_A3_f5": ([0.58, 0.6, 0.59], [500, 300, 50], E7_5),
+        "nslkdd_ltn_full_tuned_e3_no_A3": ([0.78, 0.8, 0.79], None, None),
+    })
+    both = {**runs, **extra}
+    assert sc.collect(both, "nslkdd", "e7")["ltn_full"][0.05] == "nslkdd_ltn_full_tuned_e7_f5"
+    found = sc.collect(both, "nslkdd", "e7", "no_A3")
+    assert found["ltn_full"] == {0.05: "nslkdd_ltn_full_tuned_e7_no_A3_f5", 1.0: "nslkdd_ltn_full_tuned_e3_no_A3"}
+    assert found["ltn_sup"][0.05] == "nslkdd_ltn_sup_tuned_e7_f5"

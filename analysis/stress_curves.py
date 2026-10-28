@@ -8,6 +8,8 @@ Reads <dataset>_<arm>_tuned_<exp>_f<level> and the finals <dataset>_<arm>_tuned
 The finals have no split_sizes; their rows per class are estimated from the run that kept
 the largest share of each class (classes at the floor give none).
 With --class the plot uses that class's train rows as x (E8), else the total (E7).
+--ltn-full no_A3: ltn_full read from the runs with that edit (<exp>_no_A3_f<level>), level 1
+from the E3 run e3_no_A3; the other arms are unchanged.
 """
 import argparse
 import re
@@ -24,23 +26,29 @@ from nesybench.compare import paired  # noqa: E402
 
 ARMS = ("mlp_noweights", "mlp_weights", "rf", "xgb", "ltn_sup", "ltn_full")
 RUN_ID = re.compile(r"^(?P<ds>[a-z0-9]+)_(?P<arm>" + "|".join(ARMS)
-                    + r")_tuned_(?P<exp>e\d+)_f(?P<level>\d+(?:p\d+)?)$")
+                    + r")_tuned_(?P<exp>e\d+)(?:_(?P<var>no_\w+?))?_f(?P<level>\d+(?:p\d+)?)$")
 
 
 def level_value(tag):
     return float(tag.replace("p", ".")) / 100  # f5 -> 0.05, f0p1 -> 0.001
 
 
-def collect(runs, dataset, exp):
-    """{arm: {level: run_id}}, the finals as level 1."""
+def collect(runs, dataset, exp, ltn_full=None):
+    """{arm: {level: run_id}}, the finals as level 1; ltn_full: an edit tag such as no_A3."""
     found = {arm: {} for arm in ARMS}
     for run_id in runs:
         m = RUN_ID.match(run_id)
-        if m and m["ds"] == dataset and m["exp"] == exp:
+        if not m or m["ds"] != dataset or m["exp"] != exp:
+            continue
+        want = ltn_full if m["arm"] == "ltn_full" else None
+        if m["var"] == want:
             found[m["arm"]][level_value(m["level"])] = run_id
     for arm in ARMS:
-        if f"{dataset}_{arm}_tuned" in runs:
-            found[arm][1.0] = f"{dataset}_{arm}_tuned"
+        final = f"{dataset}_{arm}_tuned"
+        if arm == "ltn_full" and ltn_full:
+            final = f"{final}_e3_{ltn_full}"
+        if final in runs:
+            found[arm][1.0] = final
     return found
 
 
@@ -181,10 +189,11 @@ def main():
     ap.add_argument("--class", dest="cls", help="class whose train rows are listed (e.g. R2L)")
     ap.add_argument("--tex", help="writes <tex>_scores.tex and <tex>_effect.tex")
     ap.add_argument("--plot")
+    ap.add_argument("--ltn-full", help="edit tag of the ltn_full runs, e.g. no_A3 (data axioms out)")
     args = ap.parse_args()
 
     runs = load_runs(args.results_dir)
-    found = collect(runs, args.dataset, args.exp)
+    found = collect(runs, args.dataset, args.exp, args.ltn_full)
     if not any(found.values()):
         raise SystemExit(f"no {args.exp} runs for {args.dataset} in {args.results_dir}")
     rows = table(runs, found, args.part, args.metric, args.cls)
