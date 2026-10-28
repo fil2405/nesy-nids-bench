@@ -147,9 +147,9 @@ def e4_rows(runs, dataset, variants, part, metric, arms=LTN_ARMS, tag=""):
     return out
 
 
-def base_setting(runs, dataset, arm):
-    """p, crisp, s_scale of the finals of `arm`, as written in their config."""
-    final = f"{dataset}_{arm}_tuned"
+def base_setting(runs, dataset, arm, tag=""):
+    """p, crisp, s_scale of the base run of `arm`, as written in its config."""
+    final = f"{dataset}_{arm}_tuned{tag}"
     if final not in runs:
         return {}
     training = next(iter(runs[final].values()))["config"].get("training", {})
@@ -241,7 +241,7 @@ def main():
         rows = e4_rows(runs, args.dataset, variants, args.part, args.metric, arms, args.tag)
         print(f"{args.dataset}{args.tag} {args.exp} {args.metric} ({args.part}); diff = variant minus base run")
         for arm in arms:
-            print(f"  {arm} base: {base_setting(runs, args.dataset, arm) or 'finals not found'}")
+            print(f"  {arm} base: {base_setting(runs, args.dataset, arm, args.tag) or 'base run not found'}")
         for arm, var, n, m, s, d in rows:
             tail = "" if d is None else (f"  diff {d.median:+.4f} [{d.low:+.4f}, {d.high:+.4f}]"
                                          f"  wins {d.wins}/{d.n}  p {d.p:.4f}")
