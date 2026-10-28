@@ -157,3 +157,31 @@ def test_predict_batches_matches_predict():
     expected = model.model.predict(X, batch_size=64, verbose=0)
     assert np.allclose(predict_batches(model.model, X, batch_size=64), expected, atol=1e-6)
     assert np.allclose(predict_batches(model.model, X, batch_size=7), expected, atol=1e-6)
+
+
+def _cnn_config(max_epochs, patience):
+    config = _config(max_epochs, patience)
+    config["network"] = {"conv_filters": [4], "kernel_size": 2, "hidden_units": [8],
+                         "dropout": 0.0, "activation": "relu"}
+    return config
+
+
+def test_cnn_learns_with_the_same_loop():
+    splits = _splits(spread=6.0)
+    model = get_model("cnn1d")()
+    info = model.fit(splits, _cnn_config(max_epochs=40, patience=2))
+    # conv 2*1*4+4, pool 2 -> 1x4, dense 4*8+8, out 8*3+3
+    assert info["n_parameters"] == 12 + 40 + 27
+    assert len(info["epoch_seconds"]) == info["epochs_run"]
+    proba = model.predict_proba(splits, "test")
+    assert (proba.argmax(axis=1) == splits.y_test).mean() > 0.9
+
+
+def test_cnn_saves_a_keras_model_the_latency_tool_loads(tmp_path):
+    from nesybench.latency import load_predictor
+    splits = _splits(spread=6.0)
+    model = get_model("cnn1d")()
+    model.fit(splits, _cnn_config(max_epochs=2, patience=2))
+    model.save(tmp_path)
+    predict, kind = load_predictor(tmp_path, n_classes=3)
+    assert kind == "keras" and predict(splits.X_test[:5]).shape == (5, 3)

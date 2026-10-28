@@ -1,0 +1,19 @@
+# 1D-CNN with class weights; the power is part of the search.
+# Same budget in every arm: 20 trials x 3 seeds, Latin hypercube, validation macro-F1 only.
+tuning_id: tune_cicddos2019_cnn
+base: configs/cicddos2019_cnn.yaml
+final_run_id: cicddos2019_cnn_tuned
+trials: 20
+search_seed: 0
+seeds: [100, 101, 102]   # not among the 10 final seeds
+set:
+  network.conv_filters: [32, 64]
+  network.kernel_size: 3
+  network.hidden_units: [128]
+  network.dropout: 0.2
+  training.batch_size: 256
+  training.max_epochs: 100
+  training.imbalance: class_weight
+space:
+  training.learning_rate: {loguniform: [3.0e-4, 3.0e-3]}
+  training.class_weight_power: {uniform: [0.25, 1.0]}

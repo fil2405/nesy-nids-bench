@@ -38,6 +38,11 @@ class _EarlyStopping(tf_keras.callbacks.Callback):
 
 class MLPCE:
 
+    def build(self, input_dim, n_classes, network, seed):
+        return build_mlp(input_dim=input_dim, n_classes=n_classes,
+                         hidden_units=network["hidden_units"], dropout=network["dropout"],
+                         activation=network["activation"], seed=seed)
+
     def fit(self, splits, config):
         network = config["network"]
         training = config["training"]
@@ -51,14 +56,8 @@ class MLPCE:
 
         tf_keras.utils.set_random_seed(config["seed"])
         self.batch_size = training["batch_size"]
-        self.model = build_mlp(
-            input_dim=splits.X_train.shape[1],
-            n_classes=len(splits.class_names),
-            hidden_units=network["hidden_units"],
-            dropout=network["dropout"],
-            activation=network["activation"],
-            seed=config["seed"],
-        )
+        self.model = self.build(splits.X_train.shape[1], len(splits.class_names), network,
+                                config["seed"])
         self.model.compile(
             optimizer=tf_keras.optimizers.Adam(learning_rate=training["learning_rate"]),
             loss="sparse_categorical_crossentropy",

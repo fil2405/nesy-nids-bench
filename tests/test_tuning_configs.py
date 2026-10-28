@@ -14,6 +14,7 @@ NEURAL = ("mlp_ce", "ltn_sup", "ltn_full")
 COMMON = ("network.hidden_units", "network.dropout", "training.batch_size",
           "training.max_epochs")
 PACKAGE = Path(nesybench.__file__).parent
+INHERITS = {"cnn1d": ["nesybench.models.mlp_ce"]}  # the CNN reuses the MLP-CE training loop
 
 
 def _load(path):
@@ -45,8 +46,8 @@ def test_config_is_valid(path):
 @pytest.mark.parametrize("path", CONFIGS, ids=lambda p: p.stem)
 def test_every_searched_key_is_read_by_the_model(path):
     tuning, base = _load(path)
-    module = models._MODELS[base["model"]].partition(":")[0]
-    source = (PACKAGE.parent / (module.replace(".", "/") + ".py")).read_text()
+    modules = [models._MODELS[base["model"]].partition(":")[0], *INHERITS.get(base["model"], [])]
+    source = "".join((PACKAGE.parent / (m.replace(".", "/") + ".py")).read_text() for m in modules)
     keys = [*tuning["space"], *tuning.get("set", {})]
     unread = [k for k in keys if f'"{k.rpartition(".")[2]}"' not in source]
     assert not unread, f"{base['model']} never reads {unread}"

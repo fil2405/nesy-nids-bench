@@ -5,7 +5,7 @@
 E7 takes any arm: --levels F ... (train fractions), --floor N, --exclude ID ... (ltn_full only).
 E8 takes any arm: --classes C ... thinned to --levels F ... of their train rows (--floor N).
 E7 and E8 cut the validation part the same way (shrink_val): the labelled budget is train plus validation.
-E4 takes an LTN arm: p, crisp thresholds and s_scale one at a time (crisp and s_scale: ltn_full).
+E4 takes an LTN arm: p, crisp thresholds, s_scale and domain_weight one at a time (all but p: ltn_full).
 
 xfer (E9 transfer) takes any CIC-IDS2017 base: same hyperparameters, dataset cic_transfer,
 validation cut from the source, the CIC-DDoS2019 test day as test; --kb and --tag name the KB.
@@ -39,6 +39,7 @@ E8_CLASSES = {                               # classes made rarer in train
 E8_LEVELS = (0.5, 0.25, 0.1)
 E4_P = (1, 2, 4, 6)                          # same set as the tuning
 E4_S_FACTORS = (0.5, 2.0, 4.0)                # times the tuned s_scale; crisp is the narrow end
+E4_W = (0.1, 0.25, 0.5, 0.75)                 # weight of the domain axioms in the loss
 
 
 def _derive(base: dict, suffix: str, edit: dict) -> dict:
@@ -168,8 +169,8 @@ def e8(base: dict, classes=None, levels=None, floor=E7_FLOOR) -> list[dict]:
     return out
 
 
-def e4(base: dict, p_levels=E4_P, s_factors=E4_S_FACTORS) -> list[dict]:
-    """One LTN setting at a time against the base: p, crisp thresholds, width scale."""
+def e4(base: dict, p_levels=E4_P, s_factors=E4_S_FACTORS, w_levels=E4_W) -> list[dict]:
+    """One LTN setting at a time against the base: p, crisp thresholds, width scale, domain weight."""
     model = base.get("model")
     if model not in ("ltn_sup", "ltn_full"):
         raise SystemExit("e4 needs an ltn_sup or ltn_full base config")
@@ -189,6 +190,11 @@ def e4(base: dict, p_levels=E4_P, s_factors=E4_S_FACTORS) -> list[dict]:
             for f in s_factors:
                 config = _derive(base, f"e4_sx{f:g}".replace(".", "p"), None)
                 config["training"] = {**training, "s_scale": round(s_base * f, 6)}
+                out.append(config)
+        for w in w_levels:
+            if w != training.get("domain_weight"):
+                config = _derive(base, f"e4_w{w:g}".replace(".", "p"), None)
+                config["training"] = {**training, "domain_weight": w}
                 out.append(config)
     return out
 

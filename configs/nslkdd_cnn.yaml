@@ -1,0 +1,26 @@
+# 1D-CNN with class weights: the MLP-CE loop with a convolutional network. Same protocol as nslkdd_mlp_cw10.
+run_id: nslkdd_cnn
+dataset: nslkdd
+split: official_test_with_stratified_val
+split_params:          # passed to the split strategy
+  val_fraction: 0.15
+model: cnn1d
+kb: null
+c5_kb: kb/nslkdd_v1.yaml   # axioms for the C5 report only
+evaluate_test: false   # true only for final runs; tuning runs never touch the test set
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # 10 seeds: Wilcoxon needs at least 6
+network:
+  conv_filters: [32, 64]
+  kernel_size: 3
+  hidden_units: [128]
+  dropout: 0.2
+  activation: relu
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 512
+  max_epochs: 100
+  early_stopping_patience: 10   # monitored: macro-F1 of the validation set
+  selection_window: 5           # criterion = mean macro-F1 of the last 5 epochs (1 = raw)
+  imbalance: class_weight       # one point of the weight grid; the final power is tuned on validation
+  class_weight_power: 1
