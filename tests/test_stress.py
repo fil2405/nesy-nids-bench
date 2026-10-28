@@ -165,16 +165,20 @@ def test_e4_one_setting_at_a_time(tmp_path):
     out = tmp_path / "o"
     kb = tmp_path / "kb.yaml"
     kb.write_text(KB_YAML)
-    base = _arm(tmp_path, "nslkdd", "ltn_full", kb=str(kb), training={"p": 4, "s_scale": 0.5337})
+    base = _arm(tmp_path, "nslkdd", "ltn_full", kb=str(kb),
+                training={"p": 4, "s_scale": 0.5337, "domain_weight": 0.5})
     stress.main(["--base", str(base), "--experiment", "e4", "--out", str(out)])
     names = sorted(p.stem for p in out.glob("*.yaml"))
     assert names == ["toy_ltn_full_e4_crisp", "toy_ltn_full_e4_p1", "toy_ltn_full_e4_p2",
                      "toy_ltn_full_e4_p6", "toy_ltn_full_e4_sx0p5", "toy_ltn_full_e4_sx2",
-                     "toy_ltn_full_e4_sx4"]
+                     "toy_ltn_full_e4_sx4", "toy_ltn_full_e4_w0p1", "toy_ltn_full_e4_w0p25",
+                     "toy_ltn_full_e4_w0p75"]
     got = yaml.safe_load((out / "toy_ltn_full_e4_crisp.yaml").read_text())
-    assert got["training"] == {"p": 4, "s_scale": 0.5337, "crisp": True}
+    assert got["training"] == {"p": 4, "s_scale": 0.5337, "domain_weight": 0.5, "crisp": True}
     got = yaml.safe_load((out / "toy_ltn_full_e4_sx2.yaml").read_text())
-    assert got["training"] == {"p": 4, "s_scale": 1.0674}
+    assert got["training"] == {"p": 4, "s_scale": 1.0674, "domain_weight": 0.5}
+    got = yaml.safe_load((out / "toy_ltn_full_e4_w0p25.yaml").read_text())
+    assert got["training"] == {"p": 4, "s_scale": 0.5337, "domain_weight": 0.25}
 
 
 def test_e4_sup_only_varies_p_and_refuses_other_arms(tmp_path):
