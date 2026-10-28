@@ -1,0 +1,10 @@
+kb	axioms	kb_lines	window_from	window_to	estimate_low_h	estimate_high_h	steps
+nslkdd_v1	3	25	2026-10-18 11:47	2026-10-18 17:10	4.5	5.5	A1-A3 from candidate scans and a depth-3 tree (about 1 h, see effort_log.tsv); R2L and U2R searched without a usable axiom (about 4 h)
+nslkdd_v1_weak	9	67	2026-10-24 09:00	2026-10-24 09:54	1.0	1.5	broad R2L and U2R rules as OR terms, train stats filled
+cicddos2019_v1	2	17	2026-10-22 19:59	2026-10-23 12:16	2.0	3.0	candidate script, mechanism candidates (no reply, SYN, UDP size), one data rule
+cicids2017_v1	2	20	2026-10-23 12:29	2026-10-23 14:32	1.5	2.0	single-column scans and depth-3 trees per class, two rules kept at precision 0.90
+cicids2017_v1_slow	3	28	2026-10-23 14:32	2026-10-23 15:02	0.5	0.5	Slow DoS from mechanism with thresholds fixed in advance (negative)
+cicids2017_v1_r2l	3	29	2026-10-23 12:29	2026-10-23 14:32	0.3	0.5	R2L leaf of the same trees
+cicids2017_v1_e9ssh	3	29	2026-10-25 10:00	2026-10-25 10:59	0.5	1.0	A3 derived again without SSH-Patator
+cic_transfer_xfer, _mech	2, 3	18, 25	2026-10-27 10:00	2026-10-28 11:36	1.0	1.5	common column schema (16 renames), axioms renamed and retargeted
+change_one_rule	-	-	-	-	0.2	0.3	edit one condition, train stats again, launcher check
