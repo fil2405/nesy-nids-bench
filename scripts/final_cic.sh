@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Final runs of one arm on a CIC dataset: test scored, model and preprocessing saved.
+# Final runs of one arm: test scored, model and preprocessing saved.
 #   bash final_cic.sh <dataset> <arm> [workers]
-# dataset: cicids2017 | cicddos2019
-# arm: mlp_noweights | mlp_weights | ltn_sup | ltn_full | rf | xgb | rule_only
+# dataset: cicids2017 | cicddos2019 | nslkdd
+# arm: mlp_noweights | mlp_weights | ltn_sup | ltn_full | rf | xgb | rule_only | cnn
 # workers: seeds running at the same time (default 1). Finished seeds are skipped on restart.
 # BEST_DIR: where the tune_<dataset>_<arm>_best.yaml files are (default results/tuning, then results/tuning_cic).
 set -uo pipefail
@@ -10,8 +10,8 @@ cd "$(dirname "$0")" || exit 1
 [ -d configs ] || cd .. || exit 1
 ROOT="$PWD"
 
-DATASETS="cicids2017 cicddos2019"
-ARMS="mlp_noweights mlp_weights ltn_sup ltn_full rf xgb rule_only"
+DATASETS="cicids2017 cicddos2019 nslkdd"
+ARMS="mlp_noweights mlp_weights ltn_sup ltn_full rf xgb rule_only cnn"
 DS="${1:-}"
 ARM="${2:-}"
 WORKERS="${3:-1}"
@@ -40,12 +40,14 @@ mkdir -p "$RES" "$MODELS" "$LOGS"
 case "$DS" in
     cicids2017) PARTS="train:1715341" ;;
     cicddos2019) PARTS="train:340560 test:79083" ;;
+    nslkdd) PARTS="train:125973 test:22544" ;;
 esac
 
 # config: the best one of the tuning; rule_only has its own, no tuning
 case "$ARM" in
     rule_only) CFG="configs/${DS}_rules.yaml"; MODEL="rule_only" ;;
     mlp_noweights|mlp_weights) MODEL="mlp_ce" ;;
+    cnn) MODEL="cnn1d" ;;
     *) MODEL="$ARM" ;;
 esac
 if [ "$ARM" != rule_only ]; then
@@ -97,7 +99,7 @@ if "network" in cfg:
     print(f"ok  rete        {cfg['network']['hidden_units']} dropout {cfg['network']['dropout']}, "
           f"batch {cfg['training']['batch_size']}, max_epochs {cfg['training']['max_epochs']}")
 
-if model in ("mlp_ce", "ltn_sup", "ltn_full"):
+if model in ("mlp_ce", "cnn1d", "ltn_sup", "ltn_full"):
     import tensorflow as tf
 
     gpus = tf.config.list_physical_devices("GPU")

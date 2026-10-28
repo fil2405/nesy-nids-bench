@@ -18,7 +18,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from nesybench.compare import paired  # noqa: E402
 
-ORDER = ("mlp_noweights", "mlp_weights", "ltn_sup", "ltn_full", "rf", "xgb", "rules")
+ORDER = ("mlp_noweights", "mlp_weights", "cnn", "ltn_sup", "ltn_full", "rf", "xgb", "rules")
 
 
 def arm_of(run_id, dataset):

@@ -22,7 +22,7 @@ export PYTHONUNBUFFERED=1
 mkdir -p results/saved_eval results/latency results/configs_finals logs
 
 FAILED=0
-for ARM in mlp_noweights mlp_weights ltn_sup ltn_full rf xgb rules; do
+for ARM in mlp_noweights mlp_weights cnn ltn_sup ltn_full rf xgb rules; do
     RUN_ID="${DS}_${ARM}_tuned"; [ "$ARM" = rules ] && RUN_ID="${DS}_rules"
     SRC="results/${RUN_ID}_seed0.json"
     CFG="results/configs_finals/${RUN_ID}.yaml"
