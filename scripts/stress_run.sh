@@ -51,10 +51,12 @@ for path in sys.argv[1:]:
     if unknown:
         errors.append(f"{path}: classi sconosciute {unknown}")
     try:
-        if cfg.get("kb"):
-            load_run_kb(cfg, frames[ds])
+        kbs = [load_run_kb(cfg, frames[ds])] if cfg.get("kb") else []
         if cfg.get("c5_kb"):
-            load_kb(cfg["c5_kb"])
+            kbs.append(load_kb(cfg["c5_kb"]))
+        cols = {c.col for kb in kbs for a in kb.axioms for c in a.conditions}
+        if cols - set(frames[ds].columns):
+            errors.append(f"{path}: colonne KB assenti {sorted(cols - set(frames[ds].columns))}")
     except Exception as exc:
         errors.append(f"{path}: KB: {type(exc).__name__}: {exc}")
 print("\n".join("KO  " + e for e in errors) if errors else "controllo OK")
