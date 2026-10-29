@@ -232,10 +232,11 @@ The protocol is a one-hot input in all three datasets and for every arm. In CIC-
 shortcut: every Botnet, DDoS, DoS, R2L and U2R flow is TCP, as are 7\,629 of the 7\,810 Probe
 flows, while 58.9\,\% of the Normal flows are not. In CIC-DDoS2019, 261\,613 of the 290\,011 DDoS
 rows of the training day are UDP, against 28\,211 of 33\,940 in the test day. A result that rests
-on the protocol is no evidence about the knowledge. No window or source statistic is computed, as
-\cref{ch:usecases-design} states.
+on the protocol is no evidence about the knowledge. The network of CIC-IDS2017 has 85 inputs, 81
+numeric flow features and the four values of the protocol. No window or source statistic is
+computed, as \cref{ch:usecases-design} states.
 % FIXME(open): keeping the protocol as an input is in the code but not yet confirmed as a decision. Confirm, and extend the threats of Ch. 8, Sec. 8.8.
-% FIXME(open): the number of network inputs of CIC-IDS2017 and CIC-DDoS2019 is in no table; read it from n_features of the latency reports. The parameter count of the 1D-CNN on CIC-IDS2017 implies 84 or 85 inputs.
+% FIXME(open): the number of network inputs of CIC-DDoS2019 is in no table; read it from n_features of results/latency/cicddos2019_mlp_noweights_tuned.json.
 
 \subsection{Split strategy: train / validation / test, temporal and random variants}
 \label{sec:impl-splits}
