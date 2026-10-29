@@ -266,8 +266,8 @@ NFR9 & Sustain the arrival rate of flows in streaming
   & E14 & C & Throughput in flows per second; latency quantiles \\
 NFR10 & Detect a DDoS attack early
   & E15 & C & Time from the start of the attack to the first alert \\
-NFR11 & Record the effort of writing and revising the axioms
-  & E16 & U & Effort log: time, revisions, lines per axiom \\
+NFR11 & Report the effort of writing and revising the axioms
+  & E16 & U & Estimated hours per axiom, per base and per rule change; axioms and lines per base \\
 NFR12 & Make a run reproducible from its configuration and its seed, with the version of the knowledge base recorded
   & E1, E2 & Q & Equality of the metrics of two runs of one seed on one machine \\
 NFR13 & Summarise the usability of each arm on a scorecard whose anchors are written before the measurements
@@ -286,8 +286,9 @@ use NSL-KDD, E5 CIC-IDS2017 and E6 CIC-DDoS2019; the datasets of the other
 experiments are assigned in \cref{ch:benchmarking-methodology}. Rows on UC3 are run
 only where a rare class exists, which excludes CIC-DDoS2019 (\cref{sec:uc2}). Every
 row that compares arms covers the four neural arms, which share one network and one
-batch size, and Random Forest, XGBoost and the rule-only arm; a one-dimensional
-convolutional network is optional.
+batch size, and Random Forest, XGBoost and the rule-only arm. A one-dimensional
+convolutional network enters the final runs and the experiments on saved models as a
+further deep baseline, outside matched capacity.
 
 % ================================================================
 % 7.7 Reference architecture
@@ -454,8 +455,8 @@ a statistic over a window or a source. NSL-KDD ships window statistics as column
 (\cref{sec:time-window-connection-aggregates}), and an axiom can read them. The CIC
 datasets hold statistics of single flows, so there a candidate that needs a window or
 a source cannot be written in this version. Adding window statistics means defining
-the window once for training and streaming (\cref{sec:uc2}).
-% FIXME(open): the mapping of every condition predicate to the columns of NSL-KDD, CIC-IDS2017 and CIC-DDoS2019 is given in Ch. 9, \cref{ch:implementation}.
+the window once for training and streaming (\cref{sec:uc2}). The columns read by each
+axiom are listed in \cref{app:axioms}.
 Second, the thresholds are fixed, on training data only. For a candidate of
 \cref{ch:attacks-ddos} the condition comes from the mechanism. Its threshold is
 either fixed before the attacks are looked at, as for the slow DoS axiom, whose cuts
@@ -531,19 +532,20 @@ learned, as in \cref{ch:ltn}; a run can scale all widths by one factor, so the
 widths in the file are starting values.
 
 \Cref{tab:kb-versions} in \cref{app:axioms} lists the knowledge bases of the thesis.
-Each variant contains its base and adds axioms. \texttt{\_r2l} and \texttt{\_slow}
-add one axiom each to \texttt{cicids2017\_v1}. \texttt{\_weak} adds to
+Each variant contains its base and adds axioms. \texttt{\_r2l}, \texttt{\_slow} and
+\texttt{\_e9ssh} add one axiom each to \texttt{cicids2017\_v1}. \texttt{\_weak} adds to
 \texttt{nslkdd\_v1} one axiom for each term of the two disjunctions of
 \cref{sec:axiom-set-internship}, since an axiom of the file is a conjunction; U2
 covers no U2R flow of the training part and is kept as the disjunction has it. Of
-the nine axioms of the other bases, four state a mechanism and five were found in the
+the ten axioms of the other bases, four state a mechanism and six were found in the
 data. Only DoS and Probe are covered on NSL-KDD outside the weak variant, and only
 DDoS on CIC-DDoS2019, whose knowledge base has a single target class, so the
 comparison of knowledge on rare classes cannot be made there (\cref{sec:uc2}). The
 three knowledge bases are not the same set. An experiment that moves a model between
 datasets (E9) needs the axioms computable on both, or must declare that the
-knowledge base changes.
-% FIXME(open): the axiom set of the E9 transfer is a proposal in Ch. 8, \cref{sec:knowledge-sensitivity}; confirm it.
+knowledge base changes. The transfer of E9 uses the two axioms of
+\texttt{cicids2017\_v1} written in the common columns, and a variant that adds the UDP
+axiom of \texttt{cicddos2019\_v1}.
 
 The knowledge base is also a factor of the benchmark. A run records the version of
 the knowledge base, the identifiers of its axioms, any edit applied to it, the weight
@@ -570,8 +572,8 @@ comparable. The experiments use the factor in five ways.
     steps on either side. The cost of a training step does not depend on what an
     axiom says, so copies measure cost against the number of axioms. The use of
     copies is declared where the result is read.
-  \item E16 reads the log of the effort of writing each version.
-% FIXME(open): the times of the effort log were reconstructed after the fact and are being corrected, and the log has no entries for the CIC bases; do not report figures from it in Ch. 10 before the correction.
+  \item E16 estimates the effort of writing each version and of changing one rule,
+    beside the number of axioms and lines of each version, which are counted.
 \end{itemize}
 
 The settings of the logic belong to the run, not to the file: the weight of the

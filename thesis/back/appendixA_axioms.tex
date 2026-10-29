@@ -47,6 +47,9 @@ Version & Id & Conditions & Target & Gr./Or. & Conf. \\
 \texttt{\_slow} & S1
   & \texttt{Flow Duration} $>$ 116\,011\,844; \texttt{Flow Packets/s} $\le$ 0.382333
   & DoS & D/M & 0.008 \\
+\texttt{\_e9ssh} & A3
+  & \texttt{Bwd RST Flags} $>$ 1.5; \texttt{Down/Up Ratio} $>$ 1.49074; \texttt{Fwd IAT Max} $>$ 2\,907\,070
+  & R2L & S/Da & 0.995 \\
 \midrule
 \texttt{cicddos2019\_v1} & A1
   & \texttt{Protocol} = udp; \texttt{Total Backward Packets} $\le$ 0.5
@@ -55,3 +58,11 @@ Version & Id & Conditions & Target & Gr./Or. & Conf. \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The A3 of \texttt{\_e9ssh} was found without the SSH-Patator flows, on 1\,369\,905
+flows, and its confidence is the sum over the two halves on which it was found and
+checked. The transfer of E9 uses two bases written in the column names of
+CIC-DDoS2019: \texttt{cic\_transfer\_xfer}, with A1 and A2 of \texttt{cicids2017\_v1}
+and target Attack, and \texttt{cic\_transfer\_xfer\_mech}, which adds the A1 of
+\texttt{cicddos2019\_v1}. Their conditions are those of the table, with the columns
+renamed as in \cref{sec:impl-schema}.

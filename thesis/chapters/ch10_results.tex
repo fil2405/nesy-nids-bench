@@ -364,17 +364,34 @@ and DDoS only, the classes on which every learning arm reaches an average precis
 \cref{sec:res-aggregate}. The reading of E3 has to take both facts into account.
 
 No result is reported here yet.
-% FIXME(open): results of E3 are not available. Package 1 of the co-supervisor (E3, E11, E13) was sent on 26 October and has to be completed; fill this paragraph from its output with the per-run tables and the C5 block. Do not state a conclusion on H2 or H3 before then.
+% FIXME(open): fill E3 from stress_tables.py e3 with the per-run tables and the C5 block. Do not state a conclusion on H2 or H3 before then.
+
+\paragraph{Mechanism axioms on single flows of CIC-IDS2017.}
+The knowledge base of CIC-IDS2017 is extracted from the data because axioms built on an attack
+mechanism did not hold on single flows of that dataset. Three were written with thresholds set by
+a rule fixed before the measurement, with a precision of 0.90 as the criterion of acceptance, and
+measured on the training and validation parts of seed 0, 1\,372\,272 flows. The slow DoS axiom,
+kept as the variant \texttt{\_slow} for E9, reached a precision of 0.008 and covered 4\,\% of the
+Slowloris flows. A scan axiom, a TCP flow with at most two forward packets, at most one backward
+packet and no forward payload, fired on 9\,720 flows with a precision of 0.092 and covered 14\,\%
+of Probe; 7\,771 of its flows were BENIGN and 829 were Botnet flows labelled Attempted. A
+half-open axiom, a TCP flow with a SYN flag and no backward packet, fired on 5\,233 flows with a
+precision of 0.000. It hit no DoS flow, but 83\,\% of the DoS Slowhttptest flows labelled
+Attempted and 89\,\% of the DoS Slowloris ones. In our reading, the axiom describes the attempt,
+while the labels of the corrected version mark as Normal every attempt that had no effect
+(\cref{sec:impl-cic}). On this dataset the effect of the knowledge in E3, E5, E7 and E9 is
+therefore that of rules distilled from the labels the network also sees.
 
 \paragraph{E4, sensitivity to the semantics.}
-E4 varies one setting of the logic at a time on NSL-KDD and CIC-IDS2017. The settings that tuning
-chooses (the exponent $p$, the weight of the domain axioms and the factor on the widths of the
-graded conditions) are fixed in every other experiment, and the crisp reading of the conditions
-appears only here (\cref{sec:matched-tuning}). The product t-norm and the Reichenbach implication
+E4 varies one setting of the logic at a time on NSL-KDD and CIC-IDS2017, against the tuned
+configuration (\cref{sec:knowledge-sensitivity}): the exponent $p$ for both LTN arms, and for
+LTN-full the crisp reading of the conditions, the factor on the widths and the weight of the domain
+axioms. These settings are fixed by tuning in every other experiment, and the crisp reading appears
+only here (\cref{sec:matched-tuning}). The product t-norm and the Reichenbach implication
 are fixed throughout (\cref{ch:ltn}).
 
 No result is reported here yet.
-% FIXME(open): results of E4 are not available (package 2, planned for 28 October). The list of settings and of their levels in E4 is not written in Ch. 8 beyond the crisp conditions; fix it there before reporting. E4 has no hypothesis in \cref{tab:hypotheses} and is read as a sensitivity check of the base configuration.
+% FIXME(open): fill E4 from stress_tables.py e4, including the runs on the weight w. E4 has no hypothesis in \cref{tab:hypotheses} and is read as a sensitivity check of the base configuration.
 
 % ================================================================
 % 10.4 Stress scenarios (E7-E11)
@@ -383,8 +400,9 @@ No result is reported here yet.
 \label{sec:res-stress}
 
 The stress experiments change one condition of RQ2 at a time. They keep the hyperparameters of the
-base configuration and run ten seeds (\cref{sec:batch-protocol}). The validation
-part is not reduced in E7 and E8. Every arm takes part unless a subsection says otherwise. Results
+base configuration and run ten seeds (\cref{sec:batch-protocol}). In E7 and E8 the validation
+part is cut like the training part, with a floor of five rows per class, and the test part stays
+whole. Every arm takes part unless a subsection says otherwise. Results
 are read through effect size and interval, with the knowledge effect (LTN-full minus LTN-sup) as the
 main quantity and no new Holm family (\cref{sec:effect-sizes}). The knowledge arm is an upper bound at low
 data, because its hyperparameters were tuned on the full training part
@@ -396,34 +414,44 @@ data, because its hyperparameters were tuned on the full training part
 E7 trains on a fraction of the training part, on NSL-KDD, CIC-IDS2017 and CIC-DDoS2019, to test H4:
 the gain of the knowledge arms grows as labelled data shrink and fades as the training set grows.
 There is one axis, since with supervised arms the label fraction and the training size are one
-operation, and rows removed are lost. The subsample is stratified and the validation and test parts
-stay whole. Sizes above the full training part are not run, so the large-data side of H4 is not
-tested. A class that is absent from truth and prediction at a small fraction scores an F1 of zero.
+operation, and rows removed are lost. The subsample is stratified, the levels are 5, 10, 20 and
+50\,\% on NSL-KDD, 1, 3, 10 and 25\,\% on CIC-IDS2017 and 0.1, 1 and 10\,\% on CIC-DDoS2019, and
+the x axis is the number of rows actually trained on. Sizes above the full training part are not run,
+so the large-data side of H4 is not tested. The data axioms were extracted on the whole training part,
+so the knowledge effect is read on LTN-full with the mechanism axioms only, NSL-KDD without A3 and
+CIC-DDoS2019 without A2; on CIC-IDS2017, which has no mechanism axiom, E7 of LTN-full is an upper
+bound (\cref{sec:batch-protocol}).
 
 No result is reported here yet.
-% FIXME(open): results of E7 are not available (package 2, planned for 28 October). The fractions are not fixed in Ch. 8; list them. Decide before E7 whether an absent class keeps the zero F1 or is left out of the mean (open FIXME of Ch. 8, Sec. 8.2.1; the code uses the zero), and report the seeds used for any class whose PR-AUC is undefined.
+% FIXME(open): fill E7 from stress_curves.py --exp e7, with --ltn-full no_A3 on NSL-KDD and no_A2 on CIC-DDoS2019.
 
 \subsection{Imbalance and rare classes}
 \label{sec:res-imbalance}
 
-E8 thins the rare classes of the training part, again with validation and test whole, on the three
-datasets. On CIC-DDoS2019 only Normal is thinned, since the dataset has two classes. The question is
+E8 keeps 10, 25 and 50\,\% of the training and validation rows of the rare classes, R2L and U2R
+on NSL-KDD and R2L, U2R and Botnet on CIC-IDS2017, with the test part whole. On CIC-DDoS2019 only
+Normal is thinned, since the dataset has two classes. A class at the floor of five rows, as U2R of
+NSL-KDD at 10\,\%, has a noisy F1. The question is
 H2: whether the gain of the knowledge arms sits in the rare classes. H2 cannot be tested on
 CIC-DDoS2019, which has no rare class (\cref{tab:hypotheses}). The per-class results of
 \cref{sec:res-aggregate} are the reference at full size.
 
 No result is reported here yet.
-% FIXME(open): results of E8 are not available (package 2, planned for 28 October). The classes thinned and the thinning levels are not fixed in Ch. 8; list them, and note that U2R of CIC-IDS2017 has 36 flows in the whole dataset.
+% FIXME(open): fill E8 from stress_curves.py --exp e8 --class, and note that U2R of CIC-IDS2017 has 36 flows in the whole dataset.
 
 \subsection{Unseen attacks and cross-dataset transfer}
 \label{sec:res-unseen}
 
 E9 has two parts. In the first, fine labels are held out of training and validation and join the test
-part: the slow DoS attacks and the SSH password guessing of CIC-IDS2017, and Portmap of
-CIC-DDoS2019, which is present only in the test part of that dataset. For each held-out label we report the
+part, together with their flows labelled Attempted, which join it as Normal: the slow DoS attacks
+and the SSH password guessing of CIC-IDS2017. Portmap of CIC-DDoS2019, present only in the test part
+of that dataset, is read on the final runs. The test part of the held-out scenarios is not that of
+the final runs, so they are compared only within themselves. For each held-out label we report the
 recall and the share detected, that is predicted as not Normal. The recall on an unseen attack is
 read at the threshold fixed on validation, as proposed in \cref{sec:operating-point}. In the second part
-a model trained on CIC-IDS2017 is tested on CIC-DDoS2019, on the two classes the datasets share. The
+a model trained on CIC-IDS2017 is tested on CIC-DDoS2019, Normal against Attack, on the 77 columns
+the two datasets share (\cref{sec:impl-schema}), with the two axioms of CIC-IDS2017 and a variant
+that adds the UDP axiom of CIC-DDoS2019. The
 transfer changes the attacks and the flow extractor at the same time, so it does not isolate one cause.
 E9 serves H5.
 
@@ -434,7 +462,7 @@ from the labels of the training part, so a held-out label tests a base that is a
 the other labels.
 
 No result is reported here yet.
-% FIXME(open): results of E9 are not available (package 2, planned for 28 October). To confirm before reporting: the fine labels of the slow DoS and SSH scenarios, the axiom set of the transfer (axioms computable on both CIC datasets, or a declared change of knowledge base, open FIXME of Ch. 8, Sec. 8.4.2), the knowledge base of the slow scenario, and the transfer of the validation threshold to the test part, which needs a script over the saved models.
+% FIXME(open): fill E9 from stress_tables.py e9 and unseen; the transfer has no table script yet. The transfer of the validation threshold to the test part needs a script over the saved models.
 
 \subsection{Degraded / wrong knowledge}
 \label{sec:res-degraded}
@@ -448,18 +476,21 @@ and H6. The shape of the curve is described and not proved. As in E3, the knowle
 datasets start from thresholds read from training labels.
 
 No result is reported here yet.
-% FIXME(open): results of E11 are not available (package 1, to be completed). The grid and the target swap are a proposal to confirm (decisions of 25 October, point 40): why A1 is swapped to Probe (the class nearest in features, not Normal) and why the grid is asymmetric (+20 but not $-$20) are not recorded in the files read. The swap is defined for NSL-KDD only; decide whether the CIC datasets have one.
+% FIXME(open): fill E11 from stress_tables.py e11. Why A1 is swapped to Probe and why the grid is asymmetric (+20 but not $-$20) are not recorded; the swap is defined for NSL-KDD only (open FIXME of Ch. 8, Sec. 8.4.2).
 
 \subsection{Noise and simple evasion}
 \label{sec:res-noise}
 
-E10 perturbs the test features with noise and with simple evasion changes, on CIC-IDS2017 and
-NSL-KDD. It is the only place where the thesis touches adversarial machine learning, and its scope is
-set in \cref{sec:scope-limitations}. A result here is a statement about these perturbations and not
+E10 perturbs the raw columns of the test part and scores the saved models of the final runs on
+them, with and without the post-check. The noise multiplies each numeric value by $1+S\,z$ with
+$S$ of 0.1, 0.25 and 0.5, within the range of the column in training; the evasion moves the first
+comparison condition of an axiom past its threshold on the rows of its target, with $D=0.1$
+(\cref{sec:batch-protocol}). E10 is the only place where the thesis touches adversarial machine
+learning, and its scope is set in \cref{sec:scope-limitations}. A result here is a statement about these perturbations and not
 about an adaptive adversary.
 
 No result is reported here yet.
-% FIXME(open): E10 has low priority and its perturbations are not defined in Ch. 8. The definition in the practical notes (one noise perturbation and one evasion perturbation, three levels each) is a proposal; fix it in Ch. 8 and Ch. 9 before any result is reported, or drop E10 and amend the scope of Ch. 1, Sec. 1.6.
+% FIXME(open): fill E10 from saved_tables.py e10 on the three datasets of Ch. 8, tab:experiment-data.
 
 % ================================================================
 % 10.5 Computational performance (E13)
@@ -468,21 +499,22 @@ No result is reported here yet.
 \label{sec:res-cost}
 
 RQ3 asks what the neurosymbolic approach costs in training and in inference. The measures are
-defined in \cref{sec:cost-dimension}. Times are compared only within one machine and one software
-stack, and the energy proxy is not measured (\cref{sec:energy}). The training times of every neural arm
+defined in \cref{sec:cost-dimension}. Times are compared only within one environment, and the energy proxy is not measured (\cref{sec:energy}). The training times of every neural arm
 were taken with the deterministic operations of TensorFlow switched on, which slows the accelerator, and
-how much it costs was not measured. The finals ran on one server with TensorFlow 2.22.0-rc0, a release
+how much it costs was not measured. The finals ran on the server with TensorFlow 2.22.0-rc0, a release
 candidate.
-% FIXME(open): the sentence on determinism follows the correction of 25 October (point 43); the determinism remark and the TensorFlow release candidate are in Ch. 9, Sec. 9.1, and belong also in Appendix E. The times of the finals are not reported here yet, since the per-epoch times and the fit times were not part of the material used.
+% FIXME(open): the determinism remark and the TensorFlow release candidate belong also in Appendix E. The times of the finals are not reported here yet, since the per-epoch times and the fit times were not part of the material used.
 
 \paragraph{Training cost (E13 and the final runs).}
 E13 adds 2, 4, 6 or 8 copies of one axiom to the training knowledge base, with thresholds moved by
-small steps on either side, up to 10 percentile points of the training column. A line is fitted to the
-time per epoch against the number of axioms, and the slope and the residuals are reported (H7). Copies
+small steps on either side, up to 10 percentile points of the training column. The time per epoch is
+taken in one process on the laptop, five epochs per run over three seeds, and reported as the median
+without the first epoch and its ratio to the base; a line fitted to the five levels describes the
+trend (H7). Copies
 measure cost and not knowledge. Peak RAM and VRAM are measured in dedicated runs on CIC-IDS2017.
 
 No result of E13 is reported here yet.
-% FIXME(open): results of E13 are not available (package 1, to be completed). The 2 to 8 copies and the axiom copied (the first of the file) are a proposal to confirm (Ch. 8, Sec. 8.3.1). The share of distinct examples per LTN epoch is an estimate and has not been measured on the sampler.
+% FIXME(open): fill E13 from stress_tables.py e13 (macro-F1) and from e13_time.sh (time per epoch), with the device of the timings. The share of distinct examples per LTN epoch is an estimate and has not been measured on the sampler.
 
 What the final runs already give is the epoch selected by the rule of \cref{sec:matched-tuning}.
 \Cref{tab:res-epochs} lists the range over the ten seeds on the two CIC datasets. No run ended at the
@@ -513,15 +545,16 @@ LTN-full           & -- & 16--53 & 13--42 \\
 
 \paragraph{Inference cost (E13 and E12).}
 Inference is measured on the saved models of the final runs, on preprocessed rows, for batch sizes 1,
-64 and 1024, with latency at p50, p95 and p99, the mean and rows per second, on the CPU and on the
-default device, and with the size of the model files. An LTN-trained network is a plain network at
+64 and 1024, with latency at p50, p95 and p99, the mean and rows per second, on the CPU of the
+laptop, and with the size of the model files. An LTN-trained network is a plain network at
 inference, so the same cost as the same network trained with cross-entropy is a control and not a
-finding (\cref{sec:inference-cost}). E12 compares the network alone with the network followed by the
-post-check and reports the added time per row. The two are not summed into an end-to-end latency.
+finding (\cref{sec:inference-cost}). E12 times, on the same batches, the network alone, the network
+with the post-check in annotate mode and in enforce mode; the difference is the cost of the symbolic
+component. The two are not summed into an end-to-end latency.
 The latency runs discard 20 warm-up calls and keep 200 repetitions (\cref{sec:measurement-hygiene}).
 
 No result of E12 on latency is reported here yet.
-% FIXME(open): results of E12 on latency are not available (package 3, planned for 31 October); the models of the final runs have to be downloaded from the server first. H7 can be read only when both E13 and E12 are in.
+% FIXME(open): fill E12 on latency from saved_tables.py e12. H7 can be read only when both E13 and E12 are in.
 
 % ================================================================
 % 10.6 Real-time behaviour (E14, E15)
@@ -550,14 +583,12 @@ No result of E14 or E15 is reported here yet.
 \label{sec:res-usability}
 
 \paragraph{Effort (E16).}
-E16 is the log of the work of writing and tuning the axioms: for each axiom the start and end time,
-the lines of the knowledge base, the revisions, the origin, and the training support and confidence.
-The cost of changing a rule is measured with a trial edit (\cref{sec:effort}). The times of the
-NSL-KDD log were reconstructed after the fact and are not measured live, and the log of the CIC
-knowledge bases is not complete.
+E16 reports the cost of writing and tuning the axioms as an estimate, in hours for one axiom, for
+each knowledge base and for the change of one rule, beside the number of axioms and the lines of each
+base, which are measured (\cref{sec:effort}). The hours are an estimate and not a measure.
 
 No figure of E16 is reported here yet.
-% FIXME(open): the log has no entries yet for the CIC bases, and the correction announced in Ch. 7 is pending: no figure from the log before it. The log also shows that the first threshold of A1 on NSL-KDD was changed after looking at Probe; keep that in the threats of Sec. 10.9. The effort of the e9ssh scenario was not measured.
+% FIXME(open): fill E16 from the effort estimate of the repository (kb/effort_estimate.tsv). The first threshold of A1 on NSL-KDD was changed after looking at Probe; keep that in the threats of Sec. 10.9.
 
 \paragraph{Explanations (E17) and the post-check (E12).}
 The post-check evaluates the knowledge base on the raw flow after the model has decided, for any arm.
@@ -566,14 +597,13 @@ prediction by the target of the rule that fires, and the first axiom of the file
 Over the alerts, coverage is the share with at least one rule firing, faithfulness is the share of
 covered alerts where a firing rule has the predicted class as target, and conciseness is the mean
 number of rules firing per covered alert (\cref{sec:explanation-quality}). Faithfulness tests
-agreement with the prediction and is not a causal explanation. The runs are on CIC-IDS2017 and
-NSL-KDD. Where a rule is wrong on a flow, enforce replaces a correct prediction, so with imprecise
+agreement with the prediction and is not a causal explanation. The runs are on the three datasets. Where a rule is wrong on a flow, enforce replaces a correct prediction, so with imprecise
 rules it can lower the macro-F1, and we report that as a result. The rule precision on the test part
 is the figure to read beside the enforce results: it is 0.130 for A3 on the NSL-KDD test file
 (\cref{sec:res-aggregate}).
 
 No result of E17, or of E12 on the quality of the post-check, is reported here yet.
-% FIXME(open): results of E17 and of the post-check of E12 are not available (package 3, planned for 31 October).
+% FIXME(open): fill E17 and the post-check from saved_tables.py e17 and postcheck, with the overrides that correct and break a prediction and the precision of each axiom on the test part.
 
 \paragraph{Rule-level measures as a signal on the knowledge.}
 The measures of C5 already say something about the knowledge bases themselves.
@@ -702,7 +732,7 @@ Random Forests of both CIC datasets pick the smallest number of trees and the sm
 LTN-full pick values at one end of some of their ranges, and LTN-sup of CIC-IDS2017 picks the smallest sampling
 power (\cref{app:hyperparameters}). The true optimum may lie outside the space. The budget was fixed and the tuning was not repeated. The same Latin
 hypercube is used for an arm on every dataset, so one trial can win on two datasets (trial 9 for Random Forest and
-trial 5 for MLP-CE with weights on both CIC datasets), and the similarity of hyperparameters across datasets is not
+trial 5 for MLP-CE with weights on both CIC datasets, trial 6 for LTN-full on NSL-KDD and CIC-DDoS2019), and the similarity of hyperparameters across datasets is not
 independent evidence. The tuning of CIC-IDS2017 trained on a quarter of the Normal rows and the final runs use all of
 them, so the validation scores of tuning are not comparable with the finals.
 
@@ -714,10 +744,11 @@ final runs of the eight neural arms on the CIC datasets did. The cap does not ex
 (\cref{sec:res-significance}).
 % FIXME(open): the number of NSL-KDD final runs at the cap is not in the material used here; fill it from epoch_cap_report.py.
 
-Part of the knowledge was read from the data. Five of the nine axioms outside the weak variant have the origin
-\texttt{data}, and the knowledge bases of the CIC datasets were derived from the labels of the training and
-validation parts. The thresholds of NSL-KDD were fixed on the whole training file, and the first threshold of A1 was
-changed after looking at Probe (\cref{sec:effort}). E3, E9 on the slow attacks and E11 are therefore sensitivity checks
+Part of the knowledge was read from the data. Four of the seven axioms of the three main bases have the origin
+\texttt{data}, the base of CIC-IDS2017 is extracted from the data in full (\cref{sec:res-knowledge}), and the
+knowledge bases of the CIC datasets were derived from the labels of the training and validation parts. The thresholds
+of NSL-KDD were fixed on the whole training file, and the first threshold of A1 was changed after looking at Probe
+(\cref{sec:threats}). E3, E9 on the slow attacks and E11 are therefore sensitivity checks
 on bases that were already calibrated.
 
 \paragraph{External.}

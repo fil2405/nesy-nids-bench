@@ -158,8 +158,8 @@ machines and library versions we claim nothing.
 
 Two environments are used. The runs that train a model, final and stress, ran on a server
 (Python 3.14, TensorFlow 2.22.0-rc0, a release candidate). The evaluations of saved models (E10,
-E12, E17 and the post-check) and the timings of E13 ran on the CPU of a laptop under WSL2
-(Python 3.11, TensorFlow 2.21). An evaluation on the laptop recomputes the macro-F1 stored by
+E12, E17 and the post-check) and the timings of E13 ran on a laptop under WSL2 (Python 3.11,
+TensorFlow 2.21), the latency on its CPU. An evaluation on the laptop recomputes the macro-F1 stored by
 the run, in our checks to within $10^{-4}$. The cells of one table come from one environment,
 each table of results states it, and times are compared only within one
 (\cref{sec:cost-dimension}). Code and configurations are in
@@ -623,7 +623,7 @@ the three main bases, three take their form from an attack mechanism and four we
 the data, and all thresholds but one were calibrated on training labels. The base of CIC-IDS2017 is
 extracted from the data in full, so on that dataset the effect of the knowledge (E3, E5, E7, E9) is
 that of rules distilled from the labels the network also sees. A mechanism axiom on single flows
-did not hold on CIC-IDS2017, which is why its base has none (\cref{sec:impl-cic}).
+did not hold on CIC-IDS2017, which is why its base has none (\cref{sec:res-knowledge}).
 The axioms of the weak variant come from the author's internship, whose report is not used as a
 source of this thesis. The noise of E10 is not a model of measurement error, and its evasion assumes
 an adversary who knows the thresholds. The alert budget per day is a day of a laboratory network.
