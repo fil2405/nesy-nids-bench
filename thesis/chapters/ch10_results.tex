@@ -8,13 +8,16 @@ protocol measured and reads it against the five research questions and the nine 
 % FIXME(open): H1-H9 is the internal shorthand of the meeting of 14 October; decide how the hypotheses are named and defined in the thesis text (here and in Ch. 8, \cref{tab:hypotheses}) before the final wording.
 
 \paragraph{State of the evidence.}
-Final results exist for four experiments: E1, E2, E5 and E6. They are the runs of the seven
-arms on the three datasets, with ten seeds and the test part scored. The other experiments of
-the protocol (E3, E4 and E7 to E17) have not produced results at the time of writing
-(\cref{tab:res-status}). Their sections give the design fixed in
-\cref{ch:benchmarking-methodology} and mark where the result goes. They hold no number and no
-conclusion. The answers to RQ2, RQ3 and RQ4 in \cref{sec:res-discussion} are therefore partial, and
-the answer to RQ1 rests on batch detection alone.
+The final runs of E1, E2, E5 and E6 are the runs of the seven arms on the three datasets, with ten
+seeds and the test part scored. On top of them, results exist for the axiom ablation E3, the degraded
+knowledge E11 and the macro-F1 of E13, which retrain LTN-full, and for the experiments on the saved
+models of the final runs: noise and evasion (E10), the post-check and its latency (E12) and the
+explanations (E17). The training cost of E13 and the effort estimate of E16 are in too. E4, E7, E8,
+E9 and the streaming runs of E14 and E15 have no result at the time of writing
+(\cref{tab:res-status}); their sections give the design and mark where the result goes, with no
+number and no conclusion. The answers to RQ2 and RQ3 in \cref{sec:res-discussion} are therefore
+partial.
+% FIXME(open): the 1D-CNN arm of Ch. 8 and Ch. 9 has no result in this chapter yet; add it to the tables of the final runs, E10, E12 and E17 when its runs are in, and replace "seven arms" accordingly.
 
 \begin{table}[t]
 \centering
@@ -29,21 +32,28 @@ Experiment & Content & Section & State \\
 \midrule
 E1 & Baseline replication and protocol, NSL-KDD & \ref{sec:res-e1} & Final runs \\
 E2, E5, E6 & Seven arms on NSL-KDD, CIC-IDS2017, CIC-DDoS2019 & \ref{sec:res-detection} & Final runs \\
-E3, E4 & Axiom ablation; sensitivity to the semantics & \ref{sec:res-knowledge} & Pending \\
+E3 & Axiom ablation & \ref{sec:res-knowledge} & Ten seeds \\
+E4 & Sensitivity to the semantics & \ref{sec:res-knowledge} & Pending \\
 E7, E8 & Label scarcity; imbalance and rare classes & \ref{sec:res-scarcity}, \ref{sec:res-imbalance} & Pending \\
 E9 & Held-out labels and transfer & \ref{sec:res-unseen} & Pending \\
-E11 & Degraded or wrong knowledge & \ref{sec:res-degraded} & Pending \\
-E10 & Noise and simple evasion & \ref{sec:res-noise} & Pending \\
-E13, E12 & Training cost; inference cost and post-check & \ref{sec:res-cost} & Pending \\
+E11 & Degraded or wrong knowledge & \ref{sec:res-degraded} & Ten seeds \\
+E10 & Noise and simple evasion & \ref{sec:res-noise} & Saved models \\
+E13 & Training cost & \ref{sec:res-cost} & Ten seeds; timings \\
+E12 & Inference cost and post-check & \ref{sec:res-cost}, \ref{sec:res-usability} & Saved models \\
 E14, E15 & Streaming & \ref{sec:res-realtime} & Pending \\
-E16, E17 & Effort; explanations & \ref{sec:res-usability} & Pending \\
+E16 & Effort & \ref{sec:res-usability} & Estimate \\
+E17 & Explanations & \ref{sec:res-usability} & Saved models \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{How the numbers are read.}
 All figures of the final runs are copied from the output of \texttt{compare\_runs.py} and
-\texttt{summarize\_runs.py} with their rounding. Runs made before tuning are not used. The primary
+\texttt{summarize\_runs.py} with their rounding, those of E3, E11 and E13 from
+\texttt{stress\_tables.py} and \texttt{e13\_time.sh}, and those on saved models from
+\texttt{saved\_tables.py}. The runs that train a model ran on the server, and the evaluations of saved
+models and the timings of E13 on the laptop (\cref{tab:impl-environments}). Runs made before tuning are
+not used. The primary
 measure is the test macro-F1, given as the mean and the sample standard deviation over seeds 0 to
 9 (\cref{sec:repetition}). A difference is B minus A. The confirmatory family is the five pairs of
 \cref{sec:wilcoxon}, corrected with Holm within one dataset. Intervals are bootstrap intervals of
@@ -344,8 +354,8 @@ a gap and its size for an operator are different things.
 \label{sec:res-knowledge}
 
 \Cref{sec:res-significance} found no demonstrated effect of the knowledge as a whole. E3 and E4
-ask where inside the knowledge base, and under which semantics, an effect could be located. No
-result of either experiment is available yet, and this section holds the design.
+ask where inside the knowledge base, and under which semantics, an effect could be located. E3 has
+its results; E4 has none yet.
 
 \paragraph{E3, axiom ablation.}
 E3 starts from the tuned LTN-full of each dataset and removes one axiom or one group of axioms
@@ -363,8 +373,95 @@ of them tests an axiom that is already calibrated. On CIC-IDS2017 the base file 
 and DDoS only, the classes on which every learning arm reaches an average precision of 1.000 in
 \cref{sec:res-aggregate}. The reading of E3 has to take both facts into account.
 
-No result is reported here yet.
-% FIXME(open): fill E3 from stress_tables.py e3 with the per-run tables and the C5 block. Do not state a conclusion on H2 or H3 before then.
+\Cref{tab:res-e3} gives the mean test macro-F1 of each ablation over the ten seeds, beside the final
+runs of LTN-full and LTN-sup. On NSL-KDD the group \texttt{dos} holds A1 alone, and its removal gave
+the same macro-F1 as the removal of A1 seed by seed, so the table keeps one row for the two.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{E3, test macro-F1 of LTN-full with one axiom or group removed from the training copy of the
+main knowledge base, mean over seeds 0 to 9, with the deviation where the seeds split. The first two
+rows are the final runs. A group is written as \texttt{g} and its name.}
+\label{tab:res-e3}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Run & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+LTN-sup, no axiom    & 0.5670 & 0.9324 & 0.9914 \\
+LTN-full, all axioms & 0.5678 & 0.9431 & 0.9933 \\
+\midrule
+without A1           & 0.5630 & 0.807 $\pm$ 0.144 & 0.9926 \\
+without A2           & 0.5667 & 0.9395 & 0.9927 \\
+without A3           & 0.5703 & -- & -- \\
+without \texttt{g}\,\texttt{dataset} & 0.5686 & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): the paired differences of each ablation from LTN-full and from LTN-sup, with intervals and wins, and the C5 block of the ablated runs are not in the material used here; add them from stress_tables.py e3 run beside the final runs.
+
+On NSL-KDD and CIC-DDoS2019 no ablation moves the mean out of the spread of the final runs. On NSL-KDD
+the four values lie between 0.5630 and 0.5703, against a deviation of 0.0180 for LTN-full, and on
+CIC-DDoS2019 between 0.9926 and 0.9933. Removing one axiom of these bases changes nothing that can be
+read, which matches the small knowledge effect of the final runs.
+
+On CIC-IDS2017 the removal of A1, the axiom whose target is DDoS, gives 0.807 with a deviation of
+0.144, and the seeds split in two groups. In seeds 0, 1, 3, 6 and 7 the network never predicts DDoS:
+all the 19\,024 DDoS flows of the test part are predicted as DoS, the F1 of DDoS is zero and the
+macro-F1 lies between 0.62 and 0.70. In the other five seeds it lies between 0.91 and 0.96. LTN-sup,
+trained with no domain axiom, does not show this collapse. With A2 alone, whose target is DoS, LTN-full
+merges DDoS into DoS in half of the seeds. Read crisp, A2 covers no DDoS flow of the test part; whether
+its graded degree on the DDoS rows of training is above zero, which would push them towards DoS, was
+not checked. A1 is close to the label DDoS itself (\cref{tab:kb-versions}), so the run without it shows
+how much LTN-full of CIC-IDS2017 leans on it. The removal of A2 gives 0.9395, as the final runs.
+
+The weak variant of NSL-KDD adds six broad axioms for R2L and U2R. LTN-full trained on it reaches
+$0.5796 \pm 0.0133$; the difference from LTN-full with the main base was not computed paired. Within the
+weak base, the removal of A1 changes the macro-F1 by $-0.014$, interval $[-0.024;\,+0.005]$, with the
+ablated run better in 3 of 10 seeds, and the removal of A2 by $-0.010$, interval $[-0.018;\,+0.002]$. E3 is descriptive and outside
+the Holm family. Even if a Holm correction were applied to the eleven ablations of the weak base, only
+the removal of U3 would stay below 0.05, so the other differences are not distinguished from the seeds.
+
+For H2 and H3 these runs give a narrow answer. No ablation shows a gain located in one axiom on
+NSL-KDD or CIC-DDoS2019. On CIC-IDS2017 one axiom matters, but it restates a label, and a model with
+part of such a base can do worse than a model with none.
+
+\paragraph{Origin of the axioms.}
+What an ablation can show depends on where the axioms come from (\cref{sec:knowledge-sensitivity}). An
+axiom of origin \texttt{mechanism} takes its form from an attack mechanism of \cref{ch:attacks-ddos}, and
+its thresholds were calibrated on the training data, except the UDP axiom of CIC-DDoS2019, whose threshold
+means no backward packet. An axiom of origin \texttt{data} is a rule extracted from the training data. Of
+the seven axioms of the three main bases, three are of the first kind and four of the second, and the base
+of CIC-IDS2017 is extracted from the data in full. The test part separates the two kinds.
+\Cref{tab:res-rules} gives the precision of every axiom of the main bases on the rows of the test part
+where it fires. The three mechanism axioms keep a precision between 0.950 and 0.984. The two data axioms
+of CIC-IDS2017 keep theirs on an in-distribution test, while the data axioms of the two datasets with a
+separate test part fall: A3 of NSL-KDD from 0.900 to 0.130 and A2 of CIC-DDoS2019 from 0.967 to 0.547.
+Seven axioms do not make a rate, and the statement holds for these.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Axioms of the main knowledge bases on the test part: origin, confidence on the training data
+(\cref{tab:kb-versions}), rows where the axiom fires and its precision on them. The rows are the same
+for every arm.}
+\label{tab:res-rules}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llllrl@{}}
+\toprule
+Dataset & Axiom & Origin & Train conf. & Rows fired & Precision \\
+\midrule
+NSL-KDD      & A1, DoS   & mechanism & 0.999 & 1\,704  & 0.984 \\
+             & A2, Probe & mechanism & 0.960 & 662     & 0.950 \\
+             & A3, Probe & data      & 0.900 & 669     & 0.130 \\
+CIC-IDS2017  & A1, DDoS  & data      & 1.000 & 18\,922 & 1.000 \\
+             & A2, DoS   & data      & 0.997 & 33\,228 & 0.9964 \\
+CIC-DDoS2019 & A1, DDoS  & mechanism & 0.999 & 28\,692 & 0.9832 \\
+             & A2, DDoS  & data      & 0.967 & 887     & 0.5468 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{Mechanism axioms on single flows of CIC-IDS2017.}
 The knowledge base of CIC-IDS2017 is extracted from the data because axioms built on an attack
@@ -406,7 +503,7 @@ whole. Every arm takes part unless a subsection says otherwise. Results
 are read through effect size and interval, with the knowledge effect (LTN-full minus LTN-sup) as the
 main quantity and no new Holm family (\cref{sec:effect-sizes}). The knowledge arm is an upper bound at low
 data, because its hyperparameters were tuned on the full training part
-(\cref{sec:threats}). None of the five subsections has a result yet.
+(\cref{sec:threats}). E10 and E11 have results; E7, E8 and E9 have none yet.
 
 \subsection{Label scarcity}
 \label{sec:res-scarcity}
@@ -475,8 +572,23 @@ over seeds, its area over the levels and the level where it turns negative. Thes
 and H6. The shape of the curve is described and not proved. As in E3, the knowledge bases of the CIC
 datasets start from thresholds read from training labels.
 
-No result is reported here yet.
-% FIXME(open): fill E11 from stress_tables.py e11. Why A1 is swapped to Probe and why the grid is asymmetric (+20 but not $-$20) are not recorded; the swap is defined for NSL-KDD only (open FIXME of Ch. 8, Sec. 8.4.2).
+E11 ran on LTN-full of the three datasets with ten seeds. Over the five shifts of the thresholds the
+mean test macro-F1 lies between 0.562 and 0.574 on NSL-KDD, between 0.932 and 0.944 on CIC-IDS2017
+and between 0.991 and 0.993 on CIC-DDoS2019, against 0.5678, 0.9431 and 0.9933 for LTN-full with the
+original base. On NSL-KDD the swap of the target of A1 to Probe gives 0.581, above the original base and
+not below it. No level moves the mean by more than two deviations of the final runs of LTN-full, and
+the wrong target does not lower it.
+
+Two features of the grid limit what these numbers say about H6. On NSL-KDD the threshold of A2 lies so
+close to the top of its column that every upward shift moves it to 1.0, the largest value, and A2 no
+longer fires; the levels $+5$, $+10$ and $+20$ then remove A2 rather than degrade it. On CIC-DDoS2019 the
+shifts of $-5$ and $-10$ points gave the same runs seed by seed, so the threshold did not move between
+them, the case of a column with many equal values foreseen in \cref{sec:knowledge-sensitivity}. The
+levels are therefore not a graded scale of wrongness, and no shape of a curve is read from them. What
+the runs do show is that, at full size, neither shifted thresholds nor a swapped target change the
+macro-F1 of LTN-full beyond the spread of the seeds, which is consistent with a knowledge that has
+little grip on the trained network.
+% FIXME(open): the difference LTN-full minus LTN-sup per level with its interval, its area over the levels and the level where it turns negative are not in the material used here; add them from stress_tables.py e11. Why A1 is swapped to Probe and why the grid is asymmetric (+20 but not $-$20) are not recorded; the swap is defined for NSL-KDD only (open FIXME of Ch. 8, Sec. 8.4.2).
 
 \subsection{Noise and simple evasion}
 \label{sec:res-noise}
@@ -489,8 +601,61 @@ comparison condition of an axiom past its threshold on the rows of its target, w
 learning, and its scope is set in \cref{sec:scope-limitations}. A result here is a statement about these perturbations and not
 about an adaptive adversary.
 
-No result is reported here yet.
-% FIXME(open): fill E10 from saved_tables.py e10 on the three datasets of Ch. 8, tab:experiment-data.
+The saved models of the ten seeds of each arm were scored on the laptop. The macro-F1 recomputed on the
+clean test part agrees with the one stored by the final runs to within $10^{-4}$. \Cref{tab:res-e10} gives the change of the
+macro-F1 of the model alone under the strongest noise, as the median of the paired differences from
+the clean test part.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{E10, change of the test macro-F1 of the model alone under the noise $S=0.5$, perturbed minus
+clean, median of the paired differences over seeds 0 to 9. Saved models of the final runs, scored on
+the laptop.}
+\label{tab:res-e10}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+MLP-CE, no weights & $-$0.046 & $-$0.303 & $-$0.028 \\
+MLP-CE, weights    & $-$0.063 & $-$0.368 & $-$0.027 \\
+LTN-sup            & $-$0.043 & $-$0.352 & $-$0.017 \\
+LTN-full           & $-$0.041 & $-$0.356 & $-$0.015 \\
+Random Forest      & $-$0.068 & $-$0.462 & $-$0.016 \\
+XGBoost            & $-$0.023 & $-$0.514 & $-$0.037 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): the level S = 0.25, the scores with the post-check under perturbation and the rule-only arm under noise are not in the material used here; add them from saved_tables.py e10, or to Appendix C.
+
+\paragraph{Noise.}
+The noise costs little on NSL-KDD and on CIC-DDoS2019 and a great deal on CIC-IDS2017. At $S=0.1$ every
+arm of NSL-KDD stays within $-0.012$ of its clean value, and MLP-CE with weights moves by $+0.002$. On
+CIC-IDS2017 the networks lose between 0.007 and 0.012 at that level, while Random Forest loses 0.178 and
+XGBoost 0.157. At $S=0.5$ the order of the families is not the same on the three datasets: XGBoost loses
+least on NSL-KDD and most on the two CIC datasets, and on CIC-IDS2017 the two trees are the most fragile
+arms. The knowledge pair does not separate under noise. LTN-full and LTN-sup lose $-0.041$ and $-0.043$ on
+NSL-KDD, $-0.356$ and $-0.352$ on CIC-IDS2017 and $-0.015$ and $-0.017$ on CIC-DDoS2019. On the last
+dataset LTN-full is the least affected arm, ahead of LTN-sup by 0.002. Training with the axioms does not
+give a robustness to this noise that can be read.
+
+\paragraph{Evasion.}
+The evasion moves the rows where an axiom fires on its own target past the threshold of its first
+comparison: 28\,696 rows on CIC-DDoS2019 and 52\,032 on CIC-IDS2017. It breaks the rule-only classifier, as
+it must. Its macro-F1 falls from 0.2813 to 0.1338 on NSL-KDD, from 0.4242 to 0.1300 on CIC-IDS2017 and
+from 0.9205 to 0.3594 on CIC-DDoS2019. The networks do not react on any dataset or seed: on NSL-KDD the
+changes of the learned arms lie between $-0.0012$ and $+0.0004$, and on the CIC datasets the networks and
+Random Forest do not move. XGBoost reacts in some seeds, so its results are given per seed and not as a
+mean. On CIC-IDS2017 seed 2 falls from 0.9623 to 0.8158 and seed 8 by 0.004, and the other eight stay
+within 0.002. On CIC-DDoS2019 seeds 5, 8 and 9 fall by 0.029, 0.046 and 0.026, and the other seven move
+between $-0.002$ and $+0.004$. XGBoost is thus sensitive to this evasion in one seed of ten on CIC-IDS2017
+and in three of ten on CIC-DDoS2019. A possible reading, which we did not check, is that some of its trees
+split near the thresholds of the rules; on CIC-IDS2017 the rules themselves come from a tree.
+
+The fragility to an adversary who knows the thresholds is that of the symbolic part. The knowledge in
+training neither protects the network nor exposes it, since the trained LTN-full does not evaluate the
+rules at inference.
 
 % ================================================================
 % 10.5 Computational performance (E13)
@@ -513,8 +678,40 @@ without the first epoch and its ratio to the base; a line fitted to the five lev
 trend (H7). Copies
 measure cost and not knowledge. Peak RAM and VRAM are measured in dedicated runs on CIC-IDS2017.
 
-No result of E13 is reported here yet.
-% FIXME(open): fill E13 from stress_tables.py e13 (macro-F1) and from e13_time.sh (time per epoch). The share of distinct examples per LTN epoch is an estimate and has not been measured on the sampler.
+The copies do not change the model. Over the four levels the mean test macro-F1 of the ten seeds lies
+between 0.565 and 0.573 on NSL-KDD, 0.935 and 0.944 on CIC-IDS2017 and 0.991 and 0.992 on CIC-DDoS2019,
+around the values of LTN-full with the original base. \Cref{tab:res-e13} gives the time per epoch.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{E13, time per epoch of LTN-full against the number of copies added to the training knowledge
+base, whose base holds $K$ axioms: median over three seeds and four epochs each, the first epoch left
+out, in seconds, and its ratio to the base. One process on the laptop.}
+\label{tab:res-e13}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{NSL-KDD, $K=3$} & \multicolumn{2}{c}{CIC-IDS2017, $K=2$} & \multicolumn{2}{c}{CIC-DDoS2019, $K=2$} \\
+Copies & s/epoch & ratio & s/epoch & ratio & s/epoch & ratio \\
+\midrule
+0 & 2.897 & 1.000 & 43.926 & 1.000 & 7.548  & 1.000 \\
+2 & 3.105 & 1.072 & 45.769 & 1.042 & 8.223  & 1.089 \\
+4 & 3.219 & 1.111 & 46.207 & 1.052 & 9.608  & 1.273 \\
+6 & 3.118 & 1.076 & 49.227 & 1.121 & 10.295 & 1.364 \\
+8 & 3.617 & 1.249 & 50.681 & 1.154 & 9.749  & 1.292 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+From the base to eight copies the epoch costs about 25\,\% more on NSL-KDD, 15\,\% more on CIC-IDS2017 and
+29\,\% more on CIC-DDoS2019. Each added axiom costs about 2 to 4\,\% of the time of an epoch: about 2\,\% on
+CIC-IDS2017, 3\,\% on NSL-KDD, about 0.09\,s, and 3 to 4\,\% on CIC-DDoS2019. The growth is small and close to
+linear, which is what H7 predicts for training. It is not monotone in two places, six copies below four on
+NSL-KDD and eight below six on CIC-DDoS2019, and on NSL-KDD the differences are of the order of 0.1\,s, which is
+the spread of the measurement there. The ratios hold for copies of one axiom on one machine, and the absolute
+times are those of the laptop.
+% FIXME(open): the line fitted to the five levels (slope and residuals) and the peak RAM and VRAM of the dedicated runs on CIC-IDS2017 are not in the material used here. The share of distinct examples per LTN epoch is an estimate and has not been measured on the sampler.
 
 What the final runs already give is the epoch selected by the rule of \cref{sec:matched-tuning}.
 \Cref{tab:res-epochs} lists the range over the ten seeds on the two CIC datasets. No run ended at the
@@ -553,8 +750,28 @@ with the post-check in annotate mode and in enforce mode; the difference is the 
 component. The two are not summed into an end-to-end latency.
 The latency runs discard 20 warm-up calls and keep 200 repetitions (\cref{sec:measurement-hygiene}).
 
-No result of E12 on latency is reported here yet.
-% FIXME(open): fill E12 on latency from saved_tables.py e12. H7 can be read only when both E13 and E12 are in.
+The latency was taken for seed 0 of each arm on the CPU of the laptop. On this machine two repeated
+measurements of one setting differ by up to about 0.5\,ms: LTN-full of CIC-IDS2017 took 2.39\,ms per call
+alone and 1.83\,ms with the rules added. Differences below 0.5\,ms are therefore not read.
+
+At the median and with one row per call, the four networks take 2.0 to 2.2\,ms on NSL-KDD, 1.3 to 1.7\,ms on
+CIC-IDS2017 and 1.4 to 1.5\,ms on CIC-DDoS2019. With 1024 rows per call they take 4.0 to 4.9\,ms on NSL-KDD, so
+the time of a call grows far less than the number of rows. XGBoost takes 0.43\,ms per call on NSL-KDD and 0.2 to 0.3\,ms
+on the CIC datasets, and 1.2\,ms with 1024 rows on NSL-KDD. Random Forest is the slowest arm, 61\,ms per row
+and 109\,ms per 1024 rows on NSL-KDD, and 24\,ms per row and 34\,ms per 1024 rows on the CIC datasets. On NSL-KDD it is faster with 64
+rows than with one, which we take as noise or as a fixed cost of the library, and do not interpret.
+
+LTN-full costs as an MLP at inference. On NSL-KDD with one row it takes 2.00\,ms against 2.05 to 2.19\,ms for the
+MLP arms, and on the CIC datasets no difference between LTN-full and the other networks exceeds the noise of the
+machine. The axioms act only in training, so this is the control announced above and not a finding. The cost of
+LTN for RQ3 lies in training.
+
+The post-check adds 0.8 to 1.5\,ms per call with one row and 0.7 to 2.2\,ms with 1024 rows to the networks of
+NSL-KDD, and 1.0\,ms to XGBoost with one row. On the CIC datasets it adds 0.3 to 0.6\,ms to the networks, at the
+edge of the noise. Annotate and enforce do not separate, and enforce is at times the faster one, so they are not
+reported as two costs. These are times of one laptop and one software stack, and they are not compared with times
+of another machine.
+% FIXME(open): the p95 and p99, the rows per second and the size of the model files are not in the material used here; add them from saved_tables.py e12 and the latency reports, or to Appendix C.
 
 % ================================================================
 % 10.6 Real-time behaviour (E14, E15)
@@ -587,8 +804,40 @@ E16 reports the cost of writing and tuning the axioms as an estimate, in hours f
 each knowledge base and for the change of one rule, beside the number of axioms and the lines of each
 base, which are measured (\cref{sec:effort}). The hours are an estimate and not a measure.
 
-No figure of E16 is reported here yet.
-% FIXME(open): fill E16 from the effort estimate of the repository (kb/effort_estimate.tsv). The first threshold of A1 on NSL-KDD was changed after looking at Probe; keep that in the threats of Sec. 10.9.
+\Cref{tab:res-e16} gives the estimates. They are an order of magnitude, not a measure.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{E16, estimates of the effort of knowledge engineering, beside the number of axioms and the lines
+of each knowledge base, which are counted. The hours are estimates.}
+\label{tab:res-e16}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Item & Axioms & Lines & Hours (estimate) \\
+\midrule
+One axiom                                    & 1    & --     & 3--3.5 \\
+\texttt{nslkdd\_v1}                          & 3    & 25     & 10 \\
+\texttt{nslkdd\_v1\_weak}                    & 9    & 67     & 3--3.5 \\
+\texttt{cicddos2019\_v1}                     & 2    & 17     & 5--5.5 \\
+\texttt{cicids2017\_v1}                      & 2    & 20     & 5--5.5 \\
+\texttt{cicids2017\_v1\_slow}                & 3    & 28     & 2--2.5 \\
+\texttt{cicids2017\_v1\_r2l}                 & 3    & 29     & 2--2.5 \\
+\texttt{cicids2017\_v1\_e9ssh}               & 3    & 29     & 1--1.5 \\
+\texttt{cic\_transfer\_xfer}, \texttt{\_mech} & 2, 3 & 18, 25 & 3--3.5 \\
+Change of one rule                           & --   & --     & 0.5--1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The hours of a variant are those added to its base. The three main bases take 20 to 21 hours together, and
+with the variants and the bases of the transfer 31 to 34.5 hours. The estimate for \texttt{nslkdd\_v1}
+includes a search for axioms of R2L and U2R that found none usable, and that for \texttt{\_slow} a slow DoS
+axiom that failed. For RQ4 the reading is that one axiom costs hours, a knowledge base about one or two days of
+work and the change of a rule less than an hour. The dearest part is the search for axioms that are not
+found, as for R2L and U2R on NSL-KDD and for the slow DoS attacks on CIC-IDS2017. The baselines do not pay this
+cost.
 
 \paragraph{Explanations (E17) and the post-check (E12).}
 The post-check evaluates the knowledge base on the raw flow after the model has decided, for any arm.
@@ -597,25 +846,110 @@ prediction by the target of the rule that fires, and the first axiom of the file
 Over the alerts, coverage is the share with at least one rule firing, faithfulness is the share of
 covered alerts where a firing rule has the predicted class as target, and conciseness is the mean
 number of rules firing per covered alert (\cref{sec:explanation-quality}). Faithfulness tests
-agreement with the prediction and is not a causal explanation. The runs are on the three datasets. Where a rule is wrong on a flow, enforce replaces a correct prediction, so with imprecise
-rules it can lower the macro-F1, and we report that as a result. The rule precision on the test part
-is the figure to read beside the enforce results: it is 0.130 for A3 on the NSL-KDD test file
-(\cref{sec:res-aggregate}).
+agreement with the prediction and is not a causal explanation. Where a rule is wrong on a flow,
+enforce replaces a correct prediction, so with imprecise rules it can lower the macro-F1, and the
+rule precision on the test part (\cref{tab:res-rules}) is the figure to read beside it. The runs use
+the saved models of the ten seeds of each arm on the three datasets, scored on the laptop with the
+knowledge base of the final runs.
 
-No result of E17, or of E12 on the quality of the post-check, is reported here yet.
-% FIXME(open): fill E17 and the post-check from saved_tables.py e17 and postcheck, with the overrides that correct and break a prediction and the precision of each axiom on the test part.
+\paragraph{Explanations.}
+\Cref{tab:res-e17} gives the three measures over the alerts of the learned arms in annotate mode. On NSL-KDD
+only about one alert in three has a rule that fires, since the base has axioms for DoS and Probe only. On
+the CIC datasets eight to nine alerts in ten are covered and no firing rule contradicts the prediction. On
+CIC-IDS2017 this is expected, since the rules were distilled from the labels the networks learn. The
+differences between arms are small: on NSL-KDD the faithfulness is 0.843 for LTN-full, 0.845 for XGBoost and
+0.802 for MLP-CE without weights, within deviations of 0.03 to 0.05, and on CIC-DDoS2019 LTN-full has the
+highest coverage, 0.844, within 0.02 of the others. Conciseness is 1.000 or 1.001 everywhere. With two or
+three axioms in a base, two rules almost never fire on one alert, so the measure says nothing on these
+bases. For the rule-only classifier coverage and faithfulness are 1 by construction.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{E17, explanation measures over the alerts in annotate mode, range over the six learned arms of the
+mean over seeds 0 to 9.}
+\label{tab:res-e17}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Measure & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+Coverage     & 0.31--0.32 & 0.918--0.921 & 0.824--0.844 \\
+Faithfulness & 0.80--0.85 & 1.000        & 1.000 \\
+Conciseness  & 1.001      & 1.000        & 1.001 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The post-check in enforce mode.}
+Enforce lowers the macro-F1 of every learned arm on the three datasets, and in no seed does it raise it.
+\Cref{tab:res-postcheck} gives the arms of NSL-KDD. The loss is between 0.018 and 0.025, and in each arm the
+model alone is better in 10 of 10 seeds. An override corrects a prediction where the rule is right and the
+model wrong, and breaks one where the model is right and the rule wrong. On NSL-KDD an arm has 53 to 170
+overrides that correct a prediction per seed and 455 to 570 that break one.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{NSL-KDD, post-check in enforce mode with the main knowledge base: test macro-F1 after enforce, its
+difference from the model alone as the median of the paired differences with a 95\,\% bootstrap interval,
+and the mean per seed of the overrides that correct and that break a prediction. Seeds 0 to 9.}
+\label{tab:res-postcheck}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Arm & Enforce & Enforce minus model & Correct & Break \\
+\midrule
+MLP-CE, no weights & 0.5460 & $-$0.0208 $[-0.0214;\,-0.0193]$ & 170 & 570 \\
+MLP-CE, weights    & 0.5818 & $-$0.0221 $[-0.0234;\,-0.0211]$ & 89  & 513 \\
+LTN-sup            & 0.5479 & $-$0.0191 $[-0.0221;\,-0.0182]$ & 155 & 497 \\
+LTN-full           & 0.5503 & $-$0.0179 $[-0.0208;\,-0.0142]$ & 111 & 464 \\
+Random Forest      & 0.5468 & $-$0.0224 $[-0.0228;\,-0.0214]$ & 152 & 523 \\
+XGBoost            & 0.5094 & $-$0.0250 $[-0.0253;\,-0.0238]$ & 53  & 455 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On CIC-IDS2017 the loss is 0.0002 to 0.0003 for every learned arm, with 1 to 3 overrides that correct and 101
+to 117 that break per seed. The two rules fire almost only where the model is already right, so they can only
+take away. On CIC-DDoS2019 the loss is between 0.0065, for LTN-sup, and 0.0090, for Random Forest, with 3 to 39
+overrides that correct and 523 to 706 that break.
+
+The precision of the rules on the test part (\cref{tab:res-rules}) explains these counts. On NSL-KDD A3 has a
+precision of 0.130 on 669 rows. On CIC-IDS2017 A2 errs on about 120 of its 33\,228 rows. On CIC-DDoS2019 the
+mechanism axiom A1 errs on about 480 of its 28\,692 rows and the data axiom A2 on about 400 of its 887.
+
+After these results we scored the same models once more with one data axiom removed, A3 on NSL-KDD and A2 on
+CIC-DDoS2019. The choice of the axiom was made by looking at the test part, so this is a diagnosis of where the
+loss comes from and not a configuration of the benchmark, and it is used nowhere else. On NSL-KDD without A3 the
+overrides that break a prediction fall to 36 to 42 per seed, and enforce raises the macro-F1 of five arms by
+0.0011 to 0.0040, better than the model in 9 or 10 of 10 seeds. XGBoost still loses 0.0013, with 53 overrides
+that correct and 40 that break; in our reading the broken ones fall on classes that weigh more in the macro-F1,
+which we did not check class by class. On CIC-DDoS2019 without A2 the loss is about halved, from 0.0028 for
+LTN-sup to 0.0054 for Random Forest, still in no seed a gain, with 1 to 4 overrides that correct and 238 to
+422 that break, all of them from A1.
+
+The rule that the counts suggest is that enforce helps only where the rule is more precise than the model on
+the rows where it fires. On NSL-KDD, with models at a macro-F1 of about 0.57, the two mechanism axioms are more
+precise than the models on their rows, and with them alone enforce gives a small gain. On the CIC datasets the
+models are at 0.93 to 0.99 and no rule beats them on its rows, not even a mechanism axiom with a precision of
+0.983. A data axiom whose precision falls outside the training data harms most: A3 carries the whole loss on
+NSL-KDD and A2 about half of it on CIC-DDoS2019. On these datasets the post-check is more useful to explain an alert than to
+change it.
 
 \paragraph{Rule-level measures as a signal on the knowledge.}
 The measures of C5 already say something about the knowledge bases themselves.
 In two cases a rule shows on the test part a rule precision far below its confidence on the training
 part: A3 on NSL-KDD (0.130 against 0.900) and A2 on CIC-DDoS2019 (0.547 against 0.967,
-\cref{sec:res-aggregate}). The rule precision flags the failure of a rule on new data without any
-reference to the macro-F1. Two cases are not a rate, and the statement holds for these two axioms.
+\cref{tab:res-rules}). Both are data axioms, and both carry the harm of the post-check in enforce mode. The
+rule precision flags the failure of a rule on new data without any reference to the macro-F1, and before the
+rule is used to change a decision. Two cases are not a rate, and the statement holds for these two axioms.
 
 \paragraph{Scorecard and maintenance.}
 The scorecard of \cref{sec:scorecard} scores each arm from 0 to 2 on four criteria, each score citing
-its measure. No score is given yet, since the measures behind most criteria are pending. We ran no drift
-experiment, and E11 stands as a proxy for domain shift (\cref{sec:drift}).
+its measure. No score is given yet: the anchors are still to be confirmed, and the criterion on the
+sensitivity to knowledge needs the curves of E11 per level. We ran no drift experiment, and E11 stands
+as a proxy for domain shift (\cref{sec:drift}).
 % FIXME(open): the scorecard anchors are our proposal and must be confirmed with the co-supervisor before any score is written (Ch. 8, Sec. 8.4.5).
 
 % ================================================================
@@ -624,9 +958,9 @@ experiment, and E11 stands as a proxy for domain shift (\cref{sec:drift}).
 \section{Cross-cutting discussion}
 \label{sec:res-discussion}
 
-This discussion rests on E1, E2, E5 and E6. The stress, cost, streaming and usability parts have
-no result yet, so each answer below says what the batch runs show and what is still open. The
-reading is descriptive and holds for the three datasets.
+This discussion rests on the final runs of E1, E2, E5 and E6, on E3, E10, E11, E12, E13, E16 and E17. E4,
+E7, E8, E9 and the streaming runs have no result yet, so each answer below says what the runs show and what
+is still open. The reading is descriptive and holds for the three datasets.
 
 \subsection{Answering RQ1--RQ5}
 \label{sec:res-rqs}
@@ -640,46 +974,73 @@ CIC-IDS2017. The table of means puts LTN-full below MLP-CE with weights on those
 above it on CIC-DDoS2019 (\cref{tab:res-macro-f1}); this pair is reported descriptively, without a
 test. As to where a difference sits, the data do not show a class in which the knowledge helps. On
 NSL-KDD the U2R precision of LTN-full is lower than that of MLP-CE with weights, and the differences on
-U2R, Botnet and Probe of CIC-IDS2017 rest on very few flows. H2 is still open, since it needs E3 and E8.
+U2R, Botnet and Probe of CIC-IDS2017 rest on very few flows. The ablations of E3 locate no gain in one axiom on
+NSL-KDD or CIC-DDoS2019, and the broad axioms of the weak base for R2L and U2R do not separate from the
+seeds. H2 still needs E8.
 
 \paragraph{RQ2, operating regime.}
-Open. The conditions of RQ2 are the content of E7 to E11, and none has a result. The one shift in the
-batch runs, the training day and the test day of E6, comes with a nearly saturated dataset and
-no temporal claim.
+Partly open. Of the conditions of RQ2, degraded knowledge, noise and evasion have results; scarce labels,
+imbalance and unseen attacks, the content of E7 to E9, do not. At full size, neither shifted thresholds nor
+a swapped target move the macro-F1 of LTN-full beyond the spread of the seeds (E11), and the grid of shifts is
+not a graded scale, so H6 is not tested in the form it was written. Under noise LTN-full and LTN-sup lose
+the same on every dataset, so the knowledge in training gives no robustness that can be read. The evasion
+breaks the rules and leaves the networks as they are; XGBoost gives way in one seed of ten on CIC-IDS2017 and
+in three of ten on CIC-DDoS2019. The one shift of the final runs, the training day and the test day of E6,
+comes with a nearly saturated dataset and no temporal claim.
 
 \paragraph{RQ3, cost.}
-Open. E13, the latency part of E12 and the streaming runs of E14 and E15 are pending. The final runs
-give the epoch selected (\cref{tab:res-epochs}), which is not a measure of cost.
+Partly open. In training, each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of an
+epoch, with a growth close to linear over the levels of E13; this holds for copies of one axiom. At inference
+an LTN-trained network costs as an MLP, 1.3 to 2.2\,ms per call with one row on the CPU of the laptop, and the post-check adds
+0.3 to 2.2\,ms per call. Both halves of H7 agree with these runs. The times of the final runs and the
+streaming runs of E14 and E15 are still missing, so the comparison of the total training cost of the arms and
+the real-time half of RQ3 are open. The epoch selected by the final runs (\cref{tab:res-epochs}) is not a
+measure of cost.
 
 \paragraph{RQ4, usability.}
-Partly open. The measures of C5 give a first signal: two axioms fail on the test part (A3 on NSL-KDD and
-A2 on CIC-DDoS2019), and the measures saturate on CIC-IDS2017 (\cref{sec:res-aggregate}). The effort
-log, the explanations and the scorecard are pending.
+One axiom costs hours to write, a knowledge base one or two days and the change of a rule less than an hour,
+as estimates; the dearest part is the search for axioms that do not exist (E16). The explanations cover one
+alert in three on NSL-KDD and eight to nine in ten on the CIC datasets, and on the CIC datasets they never
+contradict the prediction (E17). In enforce mode the post-check lowers the macro-F1 of every learned arm, and
+it would help only with rules more precise than the model on the rows where they fire. The measures of C5 and
+the rule precision on the test part single out the two data axioms that fail outside the training data. The
+scorecard is pending.
 
 \paragraph{RQ5, methodology.}
 The protocol produced the comparison above with matched arms, a fixed family of tests and ten seeds.
-Two of its choices showed their worth. Reading the threshold-free measures next to the macro-F1 exposed
+Three of its choices showed their worth. Reading the threshold-free measures next to the macro-F1 exposed
 a different order of the arms on NSL-KDD and on CIC-DDoS2019, which the macro-F1 alone hides. Reporting
 the rule precision next to the violation rate exposed two axioms that do not hold on the test part and
-showed that a lower violation rate is not a merit. The limits of the protocol are in
-\cref{sec:res-threats}.
+showed that a lower violation rate is not a merit. Counting the overrides that correct and those that break
+a prediction turned the loss of the post-check into a comparison of the rule with the model on the rows
+where the rule fires. Reporting the per-seed results of E3 and of the evasion showed effects that a mean
+hides: a collapse in half of the seeds, and a learned arm that gives way in a few of them. The limits of the
+protocol are in \cref{sec:res-threats}.
 
 \subsection{When does NeSy win, when does it not, and why}
 \label{sec:res-when}
 
-The batch runs give no single answer. LTN-full has the highest macro-F1 on CIC-DDoS2019 only, with two
+The runs give no single answer. LTN-full has the highest macro-F1 on CIC-DDoS2019 only, with two
 classes and all learning arms but XGBoost above 0.987, and there its false alarms at a true positive
 rate of 0.90 are about ten times those of the MLP arms. On CIC-IDS2017 the trees are above it, and on
-NSL-KDD it is tied with Random Forest, below MLP-CE with weights, and above XGBoost. Whether it pays under
-scarce labels, imbalance, unseen attacks or degraded knowledge is not known until E7 to E11 are in.
+NSL-KDD it is tied with Random Forest, below MLP-CE with weights, and above XGBoost. Under degraded knowledge
+and noise it behaves as LTN-sup. Whether it pays under scarce labels, imbalance or unseen attacks is not
+known until E7 to E9 are in.
 
-Four readings of ours could explain why the knowledge effect is small. They are not tested by these
-runs, and E3, E9 and E11 can test some of them. The knowledge bases of CIC-IDS2017 cover classes on
-which every learning arm is already at an average precision of 1.000, and where there is margin (U2R,
-Botnet, Probe) there are no axioms. Five of the nine axioms outside the weak variant have the origin
-\texttt{data}, so part of the knowledge was read from the training labels and is not independent
-information (\cref{sec:threats}). Two axioms do not hold on the test part. The LTN training without
-axioms has its own cost on two datasets.
+Four readings of ours could explain why the knowledge effect is small. The knowledge bases of CIC-IDS2017
+cover classes on which every learning arm is already at an average precision of 1.000, and where there is
+margin (U2R, Botnet, Probe) there are no axioms. Six of the ten axioms outside the weak variant have the
+origin \texttt{data}, so part of the knowledge was read from the training labels and is not independent
+information (\cref{sec:threats}); on CIC-IDS2017 an axiom of the base restates a label, and the run without it
+collapses in half of the seeds. Two axioms do not hold on the test part. The LTN training without axioms has
+its own cost on two datasets. E3 and E11 agree with these readings without testing them: removing an axiom,
+moving its threshold or swapping its target leaves the macro-F1 within the seeds, which is what a knowledge
+with little grip on the network would give. E9 can test the first two readings further.
+
+The same runs suggest where the knowledge does act. Its rules are read at inference by the rule-only arm
+and the post-check, and there they decide. The evasion breaks them; the post-check helps where a rule is more
+precise than the model, as the diagnosis with the mechanism axioms of NSL-KDD shows, and harms where it is not. In the
+neurosymbolic arm, the axioms shape a training whose network does not read them later.
 
 The pattern of H9, trees below LTN-full on NSL-KDD (XGBoost) and CIC-DDoS2019 and above it on CIC-IDS2017,
 matches the type of split, a shifted test on the first two and an in-distribution test on the third.
@@ -689,7 +1050,7 @@ is possible.
 \subsection{Negative results, honestly reported}
 \label{sec:res-negative}
 
-The batch runs contain these negative or null results.
+The runs contain these negative or null results.
 \begin{itemize}
   \item The knowledge effect (LTN-sup to LTN-full) is not significant after Holm on any dataset.
   \item LTN-sup is significantly worse than MLP-CE with weights on NSL-KDD and CIC-IDS2017.
@@ -698,6 +1059,12 @@ The batch runs contain these negative or null results.
   \item On NSL-KDD the trees have a false positive rate of about 0.10 at a true positive rate of 0.90 against 0.47 for LTN-full, with the same macro-F1 as Random Forest.
   \item On CIC-DDoS2019 LTN-full is first at the argmax but has 281 false alarms per 100\,000 benign flows at a true positive rate of 0.90, against 25 and 29 for the MLP arms.
   \item No knowledge base shows a measurable advantage in the measures of C5. They saturate on CIC-IDS2017, A2 does not hold on the test day of CIC-DDoS2019 and training with it changes nothing there, and A3 on NSL-KDD has a rule precision of 0.130, so a lower violation rate is not a merit.
+  \item No ablation of E3 locates a gain in one axiom. On CIC-IDS2017 LTN-full without A1 never predicts DDoS in five of ten seeds, while LTN-sup does not collapse.
+  \item Shifted thresholds and a swapped target leave the macro-F1 of LTN-full within the seeds, and the swap of A1 to Probe on NSL-KDD does not lower it.
+  \item The knowledge in training gives no robustness to noise: LTN-full and LTN-sup lose the same on the three datasets.
+  \item The post-check in enforce mode lowers the macro-F1 of every learned arm on the three datasets, by 0.018 to 0.025 on NSL-KDD.
+  \item The explanations cover about one alert in three on NSL-KDD, and conciseness says nothing on bases of two or three axioms.
+  \item Axioms built on an attack mechanism did not hold on single flows of CIC-IDS2017, with precisions of 0.008, 0.092 and 0.000, so its base has none.
 \end{itemize}
 
 \subsection{Comparison with the figures claimed in related work}
@@ -711,11 +1078,13 @@ with other classes and features, so the numbers are not on one scale.
 
 What can be said is qualitative. The axioms of \citet{onchis2022neurosymbolic} constrain labels, and
 those of this thesis constrain features, so the result here is not a test of their claim. Their claim of
-a faster training and less overfitting needs training times, which E13 will measure. \citet{bizzarri2024nsaids}
+a faster training and less overfitting needs the training times of the arms set side by side; E13 gives only
+the growth of the time of LTN-full with the number of axioms. \citet{bizzarri2024nsaids}
 report a gain of 0.09 percentage points of accuracy on the known classes and a larger one on held-out attack
 classes. The first is small, and the knowledge pair here shows no demonstrated effect on the seen
 classes. The second is the object of E9, which has no result yet. The latency of
-\citet{alemayehu2026deployment} is the counterpart of the E12 measures, which are also pending.
+\citet{alemayehu2026deployment} is the counterpart of E12; our times are those of one laptop CPU, with other
+models and data, and are not set beside theirs.
 
 % ================================================================
 % 10.9 Threats to validity revisited
@@ -723,7 +1092,7 @@ classes. The second is the object of E9, which has no result yet. The latency of
 \section{Threats to validity revisited}
 \label{sec:res-threats}
 
-\Cref{sec:threats} declared the threats before the runs. Here they are read against what the final runs
+\Cref{sec:threats} declared the threats before the runs. Here they are read against what the runs
 show.
 
 \paragraph{Internal.}
@@ -749,7 +1118,9 @@ Part of the knowledge was read from the data. Four of the seven axioms of the th
 knowledge bases of the CIC datasets were derived from the labels of the training and validation parts. The thresholds
 of NSL-KDD were fixed on the whole training file, and the first threshold of A1 was changed after looking at Probe
 (\cref{sec:threats}). E3, E9 on the slow attacks and E11 are therefore sensitivity checks
-on bases that were already calibrated.
+on bases that were already calibrated. The post-check without A3 on NSL-KDD and without A2 on CIC-DDoS2019 was
+chosen after reading the test part. It is reported as a diagnosis of the loss of enforce and is not a
+configuration of the benchmark.
 
 \paragraph{External.}
 CIC-IDS2017 is cut by a random stratified split, so the test is in-distribution, and U2R has a handful of flows in it
@@ -764,20 +1135,26 @@ The macro-F1 at the argmax and the threshold-free measures give different orders
 (\cref{sec:res-aggregate}), and the operator measures are read off the curve of the part scored, so they are not
 deployable figures. The violation rate is measured against the rule and not the label. Satisfaction and violation are two
 measures that can disagree, and for XGBoost they do (\cref{sec:res-aggregate}). Faithfulness is agreement with the
-prediction.
+prediction, and conciseness cannot separate arms on bases of two or three axioms. The shifts of E11 are not a graded
+scale of wrong knowledge: on NSL-KDD the upward shifts remove A2, and on CIC-DDoS2019 two downward shifts leave the
+threshold where it was. E13 adds copies of one axiom, so it measures cost and not knowledge.
 
 \paragraph{Conclusion.}
 Ten seeds give a smallest exact $p$ of about 0.002, optimistic bootstrap intervals and a chi-square Friedman statistic.
 The two CIC results of the knowledge pair are significant before the Holm correction (raw $p$ of 0.037) and not after it.
 The seeds sample neither the test part nor the datasets. Only the five pairs of the family are confirmatory, and every
-other comparison is descriptive.
+other comparison is descriptive, the stress experiments and those on saved models included. The evasion results of
+XGBoost differ across seeds, and a mean over them would hide this.
 
 \paragraph{Reproducibility.}
 The tuning files and the final runs record the commit as unknown, because the server had no repository, so the code
 of a series is identified by its date and not by a commit. The recorded environment is Linux with TensorFlow 2.22.0-rc0, a release candidate, XGBoost 3.4.1 and
 scikit-learn 1.9.1. The finals of the three datasets ran on the same machine. The deterministic operations are active in every run,
 so the same seed gives the same macro-F1 and the same epoch on that machine, and nothing is claimed across machines or
-versions (\cref{sec:reproducibility}). Runs made before tuning and the single-seed residues of local checks are not used.
+versions (\cref{sec:reproducibility}). The evaluations of saved models and the timings of E13 ran on the laptop, with
+another version of TensorFlow; the macro-F1 recomputed there agrees with the stored one to within $10^{-4}$, and the
+times of the laptop are compared only with each other. Runs made before tuning and the single-seed residues of local
+checks are not used.
 % FIXME(open): record the commit of each series before any figure is called citable (open point of Ch. 8, Sec. 8.1.5), and check that all finals used the same TF_ENABLE_ONEDNN_OPTS.
 
 % ================================================================
@@ -796,7 +1173,17 @@ measures give a different order from the macro-F1 on NSL-KDD and CIC-DDoS2019. T
 CIC-IDS2017 and expose two axioms that do not hold on the test part, which shows that a lower violation rate is not a
 merit.
 
-The experiments on stress, cost, streaming and usability have no result yet, and their sections hold the design and the
-place of the result. The answers to RQ2, RQ3 and RQ4 depend on them. \Cref{ch:conclusions} answers the
-research questions and revisits the contributions once they are in.
-% FIXME(open): \cref{ch:conclusions} renders as "??" until Chapter 11 exists and is \include-d in main.tex. Update this summary when E3, E4 and E7 to E17 have results.
+The knowledge has little grip on the trained network in the other experiments too. Removing an axiom, moving its
+thresholds or swapping its target leaves the macro-F1 of LTN-full within the seeds, except on CIC-IDS2017, where the
+run without the axiom that restates the DDoS label collapses in half of the seeds. Under noise LTN-full and LTN-sup lose
+the same, and the evasion breaks the rules and not the networks, while XGBoost gives way in a few seeds. Each added
+axiom costs about 2 to 4\,\% of the time of a training epoch, and at inference an LTN-trained network costs as an MLP.
+The post-check covers a third of the alerts on NSL-KDD and most of them on the CIC datasets. In enforce mode it
+lowers the macro-F1 of every learned arm: the loss comes from A3 on NSL-KDD and, on the CIC datasets, from rules that
+are less precise than models already at 0.93 to 0.99 on the rows where they fire. The data axioms are the ones that fail outside the training data. Writing a knowledge base is
+estimated at one or two days of work.
+
+E4, E7, E8, E9 and the streaming runs have no result yet, and their sections hold the design and the place of the
+result. The answers to RQ2 and RQ3 depend on them. \Cref{ch:conclusions} answers the research questions and revisits
+the contributions once they are in.
+% FIXME(open): \cref{ch:conclusions} renders as "??" until Chapter 11 exists and is \include-d in main.tex. Update this summary when E4, E7, E8, E9, E14, E15 and the 1D-CNN have results.
