@@ -225,10 +225,9 @@ buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budge
 of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the
 FPR times 100\,000), which does not depend on the share of attacks in the test part. The
 question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
-also given per day; NSL-KDD has no time stamps. The figure per day describes a day of a
-laboratory network.
+also given per day (\cref{tab:impl-benign-day}); NSL-KDD has no time stamps. The figure per
+day describes a day of a laboratory network.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
-% FIXME(open): the benign flows per day of the two CIC datasets are given in Ch. 9, \cref{ch:implementation}.
 
 \subsection{Rule-violation rate: definition and rationale}
 \label{sec:rule-violation-rate}
@@ -469,7 +468,7 @@ level at full size. E8 keeps 10, 25 and 50\,\% of the training rows of the rare 
 U2R on NSL-KDD, R2L, U2R and Botnet on CIC-IDS2017, and Normal on CIC-DDoS2019, whose two classes
 give no rare one. In both experiments the validation part receives the same cut as the training
 part, with a floor of five rows per class in each, and only the test part stays whole. With the
-validation whole, at 5\,\% of NSL-KDD the early stopping would read about three times as many
+validation whole, at 5\,\% of NSL-KDD the early stopping would read more than three times as many
 labelled rows as the training part holds. A class at the floor has a noisy F1, as U2R of NSL-KDD
 in E8. The size on the x axis is the number of rows actually trained on, recorded per class by
 each run; at full size it is estimated, since the final runs do not record it. E7 has one axis,
@@ -497,7 +496,6 @@ An axiom with equality conditions only is not touched. Any $D>0$ stops the rule,
 how far the input of the learned models moves, so one level is run, $D = 0.1$. This is an adversary
 who knows the rules, not a realistic evasion, and it measures the fragility of the symbolic part.
 Every arm, the rule-only one included, is scored with and without the post-check.
-% FIXME(open): check in perturb.py that evade moves the first comparison condition of the axiom, as written here.
 
 \subsection{Streaming protocol: replay speed, backpressure, drop policy, detection latency}
 \label{sec:streaming-protocol}
@@ -625,8 +623,7 @@ the three main bases, three take their form from an attack mechanism and four we
 the data, and all thresholds but one were calibrated on training labels. The base of CIC-IDS2017 is
 extracted from the data in full, so on that dataset the effect of the knowledge (E3, E5, E7, E9) is
 that of rules distilled from the labels the network also sees. A mechanism axiom on single flows
-did not hold on CIC-IDS2017, which is why its base has none.
-% FIXME(open): the negative result of the mechanism axioms on single flows of CIC-IDS2017 is reported in Ch. 9 or Ch. 10; decide where and add the reference.
+did not hold on CIC-IDS2017, which is why its base has none (\cref{sec:impl-cic}).
 The axioms of the weak variant come from the author's internship, whose report is not used as a
 source of this thesis. The noise of E10 is not a model of measurement error, and its evasion assumes
 an adversary who knows the thresholds. The alert budget per day is a day of a laboratory network.
@@ -652,4 +649,3 @@ sensitivity to knowledge, explanations and a rubric. The confirmatory tests are 
 comparisons per dataset with the Holm correction; everything else is descriptive. The threats are
 declared. \Cref{ch:implementation} describes how this is implemented and \cref{ch:results} reports
 what it measured.
-% FIXME(open): \cref{ch:implementation} renders as "??" until Chapter 9 exists and is \include-d in main.tex.
