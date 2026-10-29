@@ -73,8 +73,16 @@ columns (\cref{sec:batch-pipeline}). A window feature added to a dataset goes to
 Capacity is matched for the neural arms only; the trees have other capacity, set by tuning,
 and enter as the baselines of H9.
 
-Imbalance is handled by different levers (class weights for MLP-CE and the trees, per-class
-aggregation and batch quotas for LTN), each searched inside the same budget (\cref{sec:threats}).
+A one-dimensional convolutional network (1D-CNN) is a further deep baseline. It reads the
+feature vector as a sequence, with two convolutional layers of 32 and 64 filters of width 3,
+max pooling of size 2, a dense layer of 128 units and dropout 0.2. It is trained with the loop
+and the class weights of MLP-CE and tuned with the same budget, over the same ranges of learning
+rate and weight power. It has more parameters than the common network, so it lies outside
+matched capacity. Against MLP-CE with weights it measures the effect of the architecture at the
+same loss, and it takes no part in the comparison of loss and knowledge.
+
+Imbalance is handled by different levers (class weights for MLP-CE, the 1D-CNN and the trees,
+per-class aggregation and batch quotas for LTN), each searched inside the same budget (\cref{sec:threats}).
 
 \subsection{Matched tuning budget: same search space and same number of trials}
 \label{sec:matched-tuning}
@@ -106,20 +114,27 @@ scaled by one tuned factor. Crisp conditions appear only in E4.
 \label{sec:no-leakage}
 
 Every decision that could use the test part is fixed on training or validation data: scaler
-and encoder (training), axiom thresholds and widths (training, \cref{sec:kb-elicitation}),
-hyperparameters, epoch and operating point (validation, \cref{sec:operating-point}). The primary
-metric was fixed before the first final run, the flag that scores the test part is false in every
-tuning configuration, and the tuning routine refuses a base configuration that sets it.
+and encoder (training), axiom thresholds and widths (labelled data outside the test part,
+\cref{sec:kb-elicitation}), hyperparameters, epoch and operating point (validation,
+\cref{sec:operating-point}). The primary metric was fixed before the first final run, the flag
+that scores the test part is false in every tuning configuration, and the tuning routine refuses
+a base configuration that sets it.
 
 NSL-KDD uses its official test file and a stratified 15\,\% of the training file, drawn per
 seed, as validation. CIC-IDS2017 has one labelled file, cut 60/20/20 and stratified; the test
 cut is drawn once with a fixed seed, so every arm and seed meets the same test, and only the
 training/validation cut follows the seed. CIC-DDoS2019 has a training day and a test day, with
 15\,\% of the training day as validation. On both CICs rows with the same features and label
-are removed before the split. In E9 the held-out fine labels leave training and validation and
-join the test part. On NSL-KDD the axiom thresholds were fixed by hand on the whole training
-file, so validation is not independent of the axioms, though no test row shaped them
-(\cref{sec:threats}).
+are removed before the split. In E7 and E8 the validation part is cut like the training part and
+the test part stays whole (\cref{sec:batch-protocol}). In E9 the held-out fine labels leave
+training and validation together with their flows labelled Attempted, and join the test part,
+the Attempted flows as Normal. The test part of E9 is therefore not that of the final runs, and
+E9 is compared only within itself.
+
+The thresholds of the knowledge bases were calibrated on labelled data before any test row was
+read: on NSL-KDD on the whole training file, on CIC-IDS2017 on the union of training and
+validation, which the fixed test cut makes the same for every seed, and on CIC-DDoS2019 on the
+training day. Validation is therefore not independent of the axioms (\cref{sec:threats}).
 
 \subsection{Repetition: $n$ independent seeds, report mean and dispersion}
 \label{sec:repetition}
@@ -136,15 +151,20 @@ budget set by cost, not a power analysis.
 
 The environment is pinned in a lock file. A run seeds Python, NumPy and TensorFlow and enables the
 deterministic operations of TensorFlow; its result file records configuration, seed, package versions,
-platform, commit, whether the tree was modified, timings and metrics. The CIC finals also save
-model and preprocessing.
-% FIXME(open): check that the NSL-KDD final runs saved model and preprocessing too.
-Determinism holds on one machine: two runs of one configuration and seed give the same macro-F1
-and select the same epoch in our checks. Across
-machines and library versions we claim nothing. The final runs ran on a server (Python 3.14,
-TensorFlow 2.22.0-rc0, a release candidate) and the early work on a laptop (Python 3.11, TensorFlow 2.21), so times are
-compared only within one machine (\cref{sec:cost-dimension}). Code and configurations are in
+platform, commit, whether the tree was modified, timings, the rows per class of each part and metrics.
+Every final run also saves model and preprocessing. Determinism holds on one machine: two runs of one
+configuration and seed give the same macro-F1 and select the same epoch in our checks. Across
+machines and library versions we claim nothing.
+
+Two environments are used. The runs that train a model, final and stress, ran on a server
+(Python 3.14, TensorFlow 2.22.0-rc0, a release candidate). The evaluations of saved models (E10,
+E12, E17 and the post-check) and the timings of E13 ran on the CPU of a laptop under WSL2
+(Python 3.11, TensorFlow 2.21). An evaluation on the laptop recomputes the macro-F1 stored by
+the run, in our checks to within $10^{-4}$. The cells of one table come from one environment,
+each table of results states it, and times are compared only within one
+(\cref{sec:cost-dimension}). Code and configurations are in
 \texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
+% FIXME(open): confirm the environment of the E7 runs of LTN-full with mechanism axioms only, of the transfer series of E9 and of the E4 runs on the weight w, before their tables are written.
 % FIXME(open): server runs record the commit as unknown (point 22 of the open list); record the commit of each series before any figure is called citable. Check also that all finals used the same TF_ENABLE_ONEDNN_OPTS, which the package sets to 0 unless the environment overrides it.
 
 % ================================================================
@@ -166,9 +186,10 @@ TPR at FPR 0.001, 0.01 (levels of ours); the alert budget; and the measures of C
 is $-P(\text{Normal})$, not one minus it, which in single precision rounds to one and ties the
 most confident flows.
 
-A class absent from truth and prediction scores an F1 of zero (E7 at small fractions); its
-PR-AUC is undefined and summaries skip it and report the seeds used.
-% FIXME(open): decide before E7 whether an absent class keeps the zero F1 or is left out of the mean; the code uses the zero.
+A class absent from truth and prediction scores an F1 of zero; its PR-AUC is undefined and
+summaries skip it and report the seeds used. In E7 and E8 the floor of five rows per class keeps
+every class in every part, so the case does not arise there.
+% FIXME(open): confirm that no experiment can leave a class out of a part, then close the decision between the zero F1 and leaving the class out of the mean; the code uses the zero.
 
 \subsection{Threshold-free vs threshold-dependent metrics; choosing an operating point}
 \label{sec:operating-point}
@@ -205,8 +226,9 @@ of false alarms an analyst can handle, expressed as false alarms per 100\,000 be
 FPR times 100\,000), which does not depend on the share of attacks in the test part. The
 question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
 also given per day; NSL-KDD has no time stamps. The figure per day describes a day of a
-laboratory network. The benign flows of each day are in \cref{tab:impl-benign-day}.
+laboratory network.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
+% FIXME(open): the benign flows per day of the two CIC datasets are given in Ch. 9, \cref{ch:implementation}.
 
 \subsection{Rule-violation rate: definition and rationale}
 \label{sec:rule-violation-rate}
@@ -226,7 +248,7 @@ probability of the target. The \emph{rule precision} $r_j$ is the share of cover
 true class is $c_j$. With no covered flow the values are undefined and summaries skip the
 axiom; the mean violation rate is over covered axioms. Every arm is scored, trained on the
 axioms or not, against the original file of the knowledge base, also when a run trained on an
-edited copy (E3, E11, E13). Evaluation is crisp because a graded antecedent depends on the
+edited copy (E3, E7, E11, E13). Evaluation is crisp because a graded antecedent depends on the
 width $s$, which is tuned per LTN run and does not exist for a tree. Satisfaction and
 violation can rank models differently, so both are reported.
 
@@ -253,21 +275,31 @@ and only runs of one idle machine are compared.
 % FIXME(open): the share of distinct examples per LTN epoch is our estimate and has not been measured on the sampler.
 
 H7 asks that training cost grow linearly with the axioms. E13 adds 2, 4, 6 or 8 copies of one
-axiom, with thresholds moved by small steps on either side, up to 10 percentile points of
-the training column; we fit a line to time per epoch against the number of axioms and report
-slope and residuals. Copies measure cost, not knowledge.
-% FIXME(open): the 2 to 8 copies and the axiom copied (the first of the file) are a proposal to confirm.
+axiom to the training knowledge base of LTN-full, with thresholds moved by small steps on either
+side, up to 10 percentile points of the training column. The macro-F1 of these runs, selected by
+the usual rule, shows whether the copies change the model. The cost is timed in separate runs:
+one process, five epochs with no early stopping, three seeds, with the seed in the outer loop and
+the number of axioms in the inner one, so that a drift of the machine does not follow the number
+of axioms. The first epoch is excluded as warm-up. For each number of axioms we report the median
+time per epoch and its ratio to the base. A line fitted to the five levels describes the trend
+and proves no form. Copies measure cost, not knowledge.
 
 \subsection{Inference cost: throughput, latency distribution, model size, memory footprint}
 \label{sec:inference-cost}
 
-Inference is measured on the saved models of the final runs, on preprocessed rows. For batch
-sizes 1, 64 and 1024 we report latency at p50, p95 and p99, the mean and rows per second, on
-CPU and on the default device, with the size of the model files. An LTN-trained network is a
-plain network at inference (\cref{sec:symbolic-placement}), so equal cost with the same network
-trained with cross-entropy is a control, not a finding. E12 compares the network alone with the
-network followed by the post-check (\cref{sec:explanation-quality}) and reports the added time
-per row; the two are not summed into an end-to-end latency.
+Inference is measured on the saved models of the final runs, on preprocessed rows, on the CPU.
+For batch sizes 1, 64 and 1024 we report latency at p50, p95 and p99, the mean and rows per
+second, with the size of the model files. An LTN-trained network is a plain network at inference
+(\cref{sec:symbolic-placement}), so equal cost with the same network trained with cross-entropy
+is a control, not a finding.
+
+E12 times, on the same batches, three modes: the network alone, the network followed by the
+post-check in annotate mode, and the network followed by the post-check in enforce mode
+(\cref{sec:explanation-quality}). The rules read the raw columns of the same rows. The
+difference from the network alone is the cost of the symbolic component at inference. The
+rule-only arm has no model file and is not timed alone; the cost of its rules is close to that
+difference. The modes are not summed with the other parts of the detection delay into an
+end-to-end latency.
 
 \subsection{Energy proxy measurement [EXT]}
 \label{sec:energy}
@@ -280,8 +312,9 @@ Energy is an extension and is not measured. Training time and model size stand a
 Times use a monotonic wall clock. Latency runs discard 20 warm-up calls and keep 200
 repetitions, and report percentiles, not only the mean, since the tail matters in streaming.
 The machine is otherwise idle, the device is stated, and a time is compared only with times
-of the same machine and software. Per-seed times are summarised like any measure, by mean and
-deviation over seeds.
+of the same machine and software. Two settings whose times differ by less than the spread of
+repeated measurements of one setting are not reported as different. Per-seed times are
+summarised like any measure, by mean and deviation over seeds, and E13 by the median.
 
 % ================================================================
 \section{Dimension 3 -- Usability and operational fitness}
@@ -291,26 +324,69 @@ deviation over seeds.
 \label{sec:effort}
 
 The main cost of a knowledge arm, which the baselines do not pay, is writing and tuning the
-axioms. A log (E16) holds for each axiom the start and end time, the lines of the knowledge
-base, the revisions, the origin and the training support and confidence; the cost of changing a
-rule is measured with a trial edit. The times of the NSL-KDD log were reconstructed after the
-fact and are not measured live; this is declared.
-% FIXME(open): the log has no entries yet for the CIC bases; do not report figures from it before the correction (Ch. 7). The log also shows that the first threshold of A1 on NSL-KDD was changed after looking at Probe.
+axioms. E16 reports it as an estimate, in hours for one axiom, for each knowledge base and for
+the change of one rule, beside the number of axioms and the lines of each base, which are
+measured.
 
 \subsection{Sensitivity to knowledge quality}
 \label{sec:knowledge-sensitivity}
 
 The knowledge base is an experimental factor; each edit is applied to the training copy only
-and recorded in the run as \texttt{kb\_edit}, and C5 is measured on the original. E3 removes
-one axiom or group. E11 moves all thresholds by $-10$, $-5$, $+5$, $+10$ and $+20$
-percentile points of the training column and swaps the target of one axiom (for example A1 to
-Probe). E13 adds copies. The weak variant of NSL-KDD tests broad axioms for R2L and U2R. E9 holds
-fine labels out of training and validation and adds them to the test part, with per-label
-recall and the share detected (predicted not Normal). Hyperparameters stay those of the base
-configuration. For each level we report LTN-full minus LTN-sup with an interval over seeds, its
-area over the levels and the level where it turns negative (H3, H6); these are descriptive and
-outside the Holm family (\cref{sec:statistical-plan}).
-% FIXME(open): proposal, to confirm: the E11 levels and the target swap, and the axiom set of the transfer in E9 (axioms computable on both CIC datasets, or a declared change of knowledge base). The slow DoS and SSH scenarios of E9 need their fine labels confirmed.
+and recorded in the run as \texttt{kb\_edit}, and C5 is measured on the original. Hyperparameters
+stay those of the base configuration. What an edit can change depends on where the axioms come
+from (\cref{sec:kb-format}). An axiom of origin \texttt{mechanism} takes its form from an attack
+mechanism of \cref{ch:attacks-ddos}, and its thresholds are calibrated on the training data;
+the exception is the UDP axiom of CIC-DDoS2019, whose threshold of 0.5 backward packets means
+none. An axiom of origin \texttt{data} is a rule extracted from the training data. The
+knowledge base of CIC-IDS2017 is extracted from the data in full. The bases of the CIC datasets
+were extracted on all their labelled data outside the test part, so E3, E11 and the slow scenario
+of E9 measure the sensitivity of a base that is already calibrated, not its generalisation.
+
+E3 removes one axiom or group. E11 moves all thresholds by $-10$, $-5$, $+5$, $+10$ and $+20$
+percentile points of the training column and swaps the target of one axiom, A1 to Probe on
+NSL-KDD. On a column with many equal values, a binary one or one with most rows on one value, a
+shift of a few points can leave the threshold where it was, and two levels can then give the same
+run. An equality condition changes only through the swap. The weak variant of NSL-KDD tests broad
+axioms for R2L and U2R. E13 adds copies (\cref{sec:training-cost}).
+% FIXME(open): the target swap of E11 is defined for NSL-KDD only; decide whether the CIC datasets have one.
+
+E4 varies one setting of the logic at a time against the tuned configuration, on NSL-KDD and
+CIC-IDS2017. For LTN-sup and LTN-full the exponent $p$ takes the values 1, 2, 4 and 6 other than the
+tuned one. For LTN-full alone the conditions are made crisp, the widths are scaled to 0.5, 2 and 4
+times their tuned factor, and the weight $w$ of the domain axioms takes the values 0.1, 0.25, 0.5
+and 0.75 other than the tuned one. Crisp conditions cover the side where the widths shrink to zero,
+and the level 0.75 of $w$ lies outside the search space of tuning.
+
+For each level of E3 and E11 we report LTN-full minus LTN-sup with an interval over seeds, its
+area over the levels and the level where it turns negative (H3, H6); E4 reports the difference of
+each setting from the tuned arm. These are descriptive and outside the Holm family
+(\cref{sec:statistical-plan}).
+
+E9 tests attacks absent from training in three scenarios. On CIC-IDS2017 two groups of fine labels
+are held out: the slow DoS attacks, DoS Slowloris and DoS Slowhttptest, and the SSH password
+guessing, SSH-Patator. The slow scenario runs with the main base, which was extracted with these
+labels inside and so gives an upper bound, and with the variant that adds the slow DoS axiom. The
+SSH scenario runs with the main base, which has no axiom for R2L and serves as a control, and with
+a variant whose R2L axiom was extracted without SSH-Patator. On CIC-DDoS2019 the scenario is
+Portmap, read on the final runs. It is the one attack of the test day with no counterpart on the
+training day; the other labels found only on the test day name reflection attacks that the
+training day holds under another name. For each held-out label we report recall and share
+detected, that is predicted as not Normal, and on its Attempted flows the share detected, which
+counts as false alarms.
+
+The third scenario is the transfer from CIC-IDS2017 to CIC-DDoS2019. The task is binary, Normal
+against Attack. Training and validation are the rows of CIC-IDS2017 labelled Normal, DoS and DDoS,
+with DoS and DDoS merged into Attack and the other classes removed; validation is a stratified
+15\,\% of them, so no label of the target is used for selection. The test part is the test day of
+CIC-DDoS2019, with DDoS as Attack. The features are the 77 flow columns of the two datasets after
+their names are normalised, 16 of them renamed to the names of CIC-DDoS2019. The hyperparameters
+are those of the final runs of CIC-IDS2017, with no new tuning. Two knowledge bases are used. The
+first holds the two axioms of CIC-IDS2017, retargeted to Attack. The second adds the UDP axiom of
+CIC-DDoS2019, whose threshold was chosen on the training day of that dataset and not on its test
+day. The learning arms run with the first base, LTN-full and the rule-only arm with both, and the
+post-check in enforce mode with the second base is applied to the saved models. The two datasets
+come from different versions of CICFlowMeter, so part of the difficulty is a drift of the features
+and not only of the attacks.
 
 \subsection{Explanation quality: coverage, faithfulness, conciseness}
 \label{sec:explanation-quality}
@@ -319,19 +395,23 @@ The post-check evaluates the knowledge base on the raw flow after the model has 
 for any arm (\cref{sec:symbolic-placement}), in two modes. \emph{Annotate} leaves the
 predictions and attaches to each alert the rules that fire. \emph{Enforce} replaces the
 prediction by the target where a rule fires, and the first axiom of the file wins a
-conflict. E12 reports both. Over the alerts, \emph{coverage} is the share with at least one
+conflict. Over the alerts, \emph{coverage} is the share with at least one
 rule firing; \emph{faithfulness} is, among covered alerts, the share where a firing rule has
 the predicted class as target; \emph{conciseness} is the mean number of rules firing per
-covered alert. Faithfulness tests agreement with the prediction, not a causal explanation.
-Where a rule is wrong on a flow, enforce replaces a correct prediction, so with imprecise rules
-it can lower the macro-F1 (\cref{sec:rule-violation-rate}); this is reported as a result.
+covered alert. E17 reads these three measures in annotate mode, and faithfulness tests
+agreement with the prediction, not a causal explanation. The enforce mode is scored on the test
+part like an arm, with the count of overrides that correct a prediction and of overrides that
+break a correct one, and with the precision of each axiom on the test part. Where a rule is wrong
+on a flow, enforce replaces a correct prediction, so with imprecise rules it can lower the
+macro-F1 (\cref{sec:rule-violation-rate}); this is reported as a result. E12 reports the cost of
+both modes.
 
 \subsection{Maintainability under drift; retraining cost}
 \label{sec:drift}
 
-We run no drift experiment. E11 degrades the axioms as a stand-in for domain shift, and the
-retraining cost is the fit time of E13; a claim about maintenance in production is outside the
-evidence.
+We run no drift experiment. E11 degrades the axioms as a stand-in for domain shift. The
+retraining cost is the fit time of the final runs, and E13 gives its growth with the number of
+axioms; a claim about maintenance in production is outside the evidence.
 
 \subsection{Structured qualitative scorecard (define the rubric, avoid hand-waving)}
 \label{sec:scorecard}
@@ -364,25 +444,60 @@ rule, score the validation part and, in final runs, the test part (\cref{sec:bat
 Experiment & Datasets & Note \\
 \midrule
 E1, E2, E5, E6 & N; N; I; D & One per dataset, all arms, 10 seeds, test part \\
-E3, E11, E13 & N, I, D & From the tuned LTN-full; no new tuning \\
-E4 & N, I & One setting varied at a time \\
+E3, E11 & N, I, D & From the tuned LTN-full; no new tuning \\
+E4 & N, I & One setting of the logic varied at a time \\
 E7, E8 & N, I, D & Training fractions; rare classes thinned (on D only Normal) \\
 E9 & I, D & Held-out labels; Portmap; transfer I to D \\
-E10, E12, E17 & I, N & Noise and evasion; post-check and latency; explanations \\
+E10, E12, E17 & N, I, D & Saved models of the final runs: noise and evasion; latency and post-check; explanations \\
+E13 & N, I, D & Copies of one axiom; macro-F1 and time per epoch in one process \\
 E14, E15 & I & Streaming, if available \\
-E16 & N, I, D & Effort log \\
+E16 & N, I, D & Effort estimate per axiom and per knowledge base \\
 \bottomrule
 \end{tabular}
 \end{table}
-% FIXME(open): proposal, to confirm: the assignment of datasets in the table above; E10 has low priority and its perturbations are not yet defined.
-All arms of \cref{sec:matched-capacity} take part unless stated. The one-dimensional
-network is not included; it is optional and enters only if time remains.
+All arms of \cref{sec:matched-capacity} take part unless the table or the text says otherwise. The
+1D-CNN takes part in the final runs and in the experiments on saved models (E10, E12, E17); the
+experiments that retrain from a tuned configuration do not include it.
+% FIXME(open): the runs of E10, E12 and E17 on the saved models of the 1D-CNN are still to be made; confirm before the tables of Ch. 10.
 
-The runs of E3, E4, E7, E8, E11 and E13 keep the hyperparameters of the base configuration,
-and the validation part is not reduced in E7 and E8. Their conclusions on the test part rest
-on ten seeds and on a clean commit. E7 has one axis, since with supervised arms the label
-fraction and the training size are one operation; rows removed are lost. Sizes above the
-full training part are not run, so the large-data side of H4 is not tested.
+The runs of E3, E4, E7 to E9, E11 and E13 keep the hyperparameters of the base configuration,
+and their conclusions on the test part rest on ten seeds.
+
+E7 trains on a stratified fraction of the training part: 5, 10, 20 and 50\,\% on NSL-KDD, 1, 3,
+10 and 25\,\% on CIC-IDS2017, and 0.1, 1 and 10\,\% on CIC-DDoS2019, with the final runs as the
+level at full size. E8 keeps 10, 25 and 50\,\% of the training rows of the rare classes: R2L and
+U2R on NSL-KDD, R2L, U2R and Botnet on CIC-IDS2017, and Normal on CIC-DDoS2019, whose two classes
+give no rare one. In both experiments the validation part receives the same cut as the training
+part, with a floor of five rows per class in each, and only the test part stays whole. With the
+validation whole, at 5\,\% of NSL-KDD the early stopping would read about three times as many
+labelled rows as the training part holds. A class at the floor has a noisy F1, as U2R of NSL-KDD
+in E8. The size on the x axis is the number of rows actually trained on, recorded per class by
+each run; at full size it is estimated, since the final runs do not record it. E7 has one axis,
+since with supervised arms the label fraction and the training size are one operation; rows
+removed are lost. Sizes above the full training part are not run, so the large-data side of H4 is
+not tested.
+
+The axioms of origin \texttt{data} were extracted on the whole training part, so in E7 they carry
+information from labels the run does not see. The knowledge effect of E7 is therefore read on
+runs of LTN-full with the mechanism axioms only, NSL-KDD without A3 and CIC-DDoS2019 without A2,
+whose level at full size is the matching run of E3. The thresholds of these axioms are still
+calibrated on the whole training part. CIC-IDS2017 has no mechanism axiom, and there E7 of
+LTN-full is an upper bound.
+
+E10 perturbs the raw columns of the test part and scores the saved models of the final runs on
+them; the rules read the same perturbed columns, and the scaler of the run maps them to the
+network. \texttt{noise:}$S$ multiplies every numeric raw value by $1 + S\,z$, with $z$ drawn from a
+standard normal, clips the result to the range of the column in the training part and rounds it
+when that column holds integers. Zeros and constant columns do not change. The levels are
+$S = 0.1$, $0.25$ and $0.5$. A noise scaled by the standard deviation of the column would give
+long-tailed columns values far beyond their usual range and would set the order of the arms by
+itself. \texttt{evade:}$D$ takes the rows of the target class of an axiom on which the axiom fires
+and moves its first comparison condition by $D\,|\tau|$ past $\tau$, so the rule no longer fires.
+An axiom with equality conditions only is not touched. Any $D>0$ stops the rule, and $D$ sets only
+how far the input of the learned models moves, so one level is run, $D = 0.1$. This is an adversary
+who knows the rules, not a realistic evasion, and it measures the fragility of the symbolic part.
+Every arm, the rule-only one included, is scored with and without the post-check.
+% FIXME(open): check in perturb.py that evade moves the first comparison condition of the axiom, as written here.
 
 \subsection{Streaming protocol: replay speed, backpressure, drop policy, detection latency}
 \label{sec:streaming-protocol}
@@ -415,8 +530,10 @@ pairs are planned for each dataset and form the Holm family: MLP-CE without weig
 weights (balancing); with weights to LTN-sup (effect of the loss); LTN-sup to LTN-full (effect
 of the knowledge); LTN-full to Random Forest and LTN-full to XGBoost (H9). The primary metric
 is the test macro-F1. The family and the pairs
-are fixed and are not changed after the data are seen. Any other pair or measure is
-secondary and declared outside the family.
+are fixed and are not changed after the data are seen. MLP-CE with weights to the 1D-CNN, the
+effect of the architecture, is tested in the same way and reported apart, outside the family and
+without the Holm correction. Any other pair or measure is secondary and declared outside the
+family.
 
 \subsection{Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)}
 \label{sec:friedman}
@@ -431,6 +548,7 @@ side and is indicative. The Nemenyi values are those of Dem{\v{s}}ar for
 $\alpha=0.05$. We run no test across datasets; three are too few. A general conclusion is
 drawn only if its sign is the same on the flow datasets, and a result on NSL-KDD alone holds
 for NSL-KDD.
+% FIXME(open): decide whether the 1D-CNN enters the Friedman test with the six learning arms; the critical difference changes with the number of arms.
 
 \subsection{Effect sizes and confidence intervals; multiple-comparison correction}
 \label{sec:effect-sizes}
@@ -450,12 +568,16 @@ Stress experiments are read through effect size and intervals, not through new f
 \label{sec:harness-config}
 
 One run is one YAML configuration and one seed, and writes one JSON result with configuration,
-seed, versions, platform, commit, timings, training history and metrics per part, including
-the C5 block and per-label recall. \texttt{tune.py} runs trials in parallel workers and writes
-the summary and best configuration. A launcher script runs the final seeds of an arm on a CIC
-dataset, scores the test part, saves the model and archives results and models with a
-checksum. \texttt{stress.py} derives the configurations of E3, E4, E7 to E9, E11 and E13 from a tuned
-one, and E12 adds a post-check key to any configuration. Results are not committed.
+seed, versions, platform, commit, timings, training history, the rows per class of each part and
+metrics per part, including the C5 block and per-label recall. \texttt{tune.py} runs trials in
+parallel workers and writes the summary and best configuration. A launcher script runs the final
+seeds of an arm, scores the test part, saves model and preprocessing and archives results and
+models with a checksum. \texttt{stress.py} derives the configurations of E3, E4, E7 to E9, the
+transfer of E9, E11 and E13 from a tuned one. Before any stress run the launcher checks the rows
+of the data, the held-out labels, the classes to be thinned, and that each knowledge base applies
+and its columns exist; if a check fails, no run starts. \texttt{saved\_eval.py} scores saved
+models on the test part, clean or perturbed (E10), with the post-check in both modes (E17 and the
+post-check); \texttt{latency.py} times them (E12). Results are not committed.
 
 \subsection{How a third party reproduces a table of the thesis in one command}
 \label{sec:harness-reproduce}
@@ -464,8 +586,10 @@ Given the result files, a comparison table is rebuilt by one call of
 \texttt{analysis/compare\_runs.py}, with the metric, the pairs and the list of arms, which
 runs the Wilcoxon tests, the Holm correction, the bootstrap, the Friedman and Nemenyi tests,
 the CD diagram and the \LaTeX{} table. \texttt{summarize\_runs.py} prints the mean and
-deviation of every measure. Rebuilding the result files from the data needs the tuning and
-final scripts and the datasets (\cref{ch:implementation}).
+deviation of every measure. The tables of the stress experiments come from
+\texttt{stress\_curves.py} (E7, E8) and \texttt{stress\_tables.py} (E3, E4, E9, E11, E13), and
+those of the experiments on saved models from \texttt{saved\_tables.py}. Rebuilding the result
+files from the data needs the tuning and final scripts and the datasets (\cref{ch:implementation}).
 % FIXME(open): the result files are not in the repository; decide where they are archived for a third party (Appendix E of the outline) and name the commands there.
 
 % ================================================================
@@ -474,43 +598,58 @@ final scripts and the datasets (\cref{ch:implementation}).
 
 \paragraph{Internal.}
 The common network is not optimal for every arm, the arms balance classes with different
-levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The tuning of CIC-IDS2017 used a thinned Normal class, and its
-validation part held labels later held out in E9. Validation has few
-rare examples, and the moving mean only damps this. The NSL-KDD thresholds were fixed on the whole
-training file, and the first threshold of A1 was changed after looking at Probe. The weak knowledge base was a planned variant, and its axiom U2 covers no U2R row of training. The finals ran on the server and the early work on a
-laptop, with unrecorded commits on the server.
+levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The 1D-CNN
+has more parameters than the common network. The tuning of CIC-IDS2017 used a thinned Normal
+class, and its validation part held labels later held out in E9. Validation has few rare examples,
+and the moving mean only damps this. The thresholds of the knowledge bases were calibrated on
+labelled data that include the validation part, and the first threshold of A1 on NSL-KDD was
+changed after looking at Probe. In E7 the mechanism axioms keep thresholds calibrated on the whole
+training part. In the transfer of E9 the UDP axiom brings a threshold chosen on the training day
+of the target dataset. The weak knowledge base was a planned variant, and its axiom U2 covers no
+U2R row of training. Training and evaluation of saved models ran in two environments, and the
+server runs record no commit.
 
 \paragraph{External.}
 CIC-IDS2017 is cut by a random stratified split, so training and test come from the same capture
 and the result is in-distribution. CIC-DDoS2019 has two classes, is close to saturation, uses a
 training and a test day, and has Portmap only in the test part; its documented dates differ from
 the time stamps of the files, so we claim no temporal effect. NSL-KDD has content features that the
-flow datasets lack. The knowledge bases are small and one neurosymbolic method, LTN, is tested. The data are from laboratory networks, and a transfer between the CICs changes attacks and flow extractor together.
+flow datasets lack. The knowledge bases are small and one neurosymbolic method, LTN, is tested. The
+data are from laboratory networks. The transfer between the CICs changes attacks and flow extractor
+together and is restricted to the flow columns the two datasets share.
 
 \paragraph{Construct.}
 Macro-F1 at the argmax is not the whole of detection; this is why the threshold-free measures are
-reported. The violation rate is measured against the rule, not the label. Five of the nine axioms
-outside the weak variant have the origin \texttt{data}, so part of the ``knowledge'' was read from
-the training data. The axioms of the weak variant come from the author's internship, whose report
-is not used as a source of this thesis. The alert budget per day is a day of a
-laboratory network. Faithfulness is agreement, not causation.
+reported. The violation rate is measured against the rule, not the label. Of the seven axioms of
+the three main bases, three take their form from an attack mechanism and four were extracted from
+the data, and all thresholds but one were calibrated on training labels. The base of CIC-IDS2017 is
+extracted from the data in full, so on that dataset the effect of the knowledge (E3, E5, E7, E9) is
+that of rules distilled from the labels the network also sees. A mechanism axiom on single flows
+did not hold on CIC-IDS2017, which is why its base has none.
+% FIXME(open): the negative result of the mechanism axioms on single flows of CIC-IDS2017 is reported in Ch. 9 or Ch. 10; decide where and add the reference.
+The axioms of the weak variant come from the author's internship, whose report is not used as a
+source of this thesis. The noise of E10 is not a model of measurement error, and its evasion assumes
+an adversary who knows the thresholds. The alert budget per day is a day of a laboratory network.
+Faithfulness is agreement, not causation.
 
 \paragraph{Conclusion.}
 Ten seeds give a smallest $p$ of about 0.002, bootstrap intervals that are optimistic, and a
-Friedman approximation that is rough. The family of five pairs is fixed, and every other test is
-descriptive. The seeds do not sample test sets or datasets, so no inference is made across them.
-E7 to E11 use fixed knowledge bases and hyperparameters tuned on the full training part, which
-makes the knowledge arm an upper bound at low data.
+Friedman approximation that is rough. The family of five pairs is fixed; the pair of the 1D-CNN and
+every other test are descriptive. The seeds do not sample test sets or datasets, so no inference is
+made across them. E7 to E11 use hyperparameters tuned on the full training part and knowledge bases
+calibrated on it, which makes the knowledge arm an upper bound at low data.
 
 % ================================================================
 \section{Summary}
 \label{sec:ch8-summary}
 
 The benchmark compares arms of matched capacity, with the same budget of tuning, selection on
-validation only and ten seeds, on three axes. Quality has the macro-F1 as its pre-fixed primary
-measure, threshold-free measures beside it, an alert budget and the rule-violation rate of C5.
-Cost covers training and inference on one machine, and usability an effort log, sensitivity to
-knowledge, explanations and a rubric. The confirmatory tests are five paired comparisons per
-dataset with the Holm correction; everything else is descriptive. The threats are declared.
-\Cref{ch:implementation} describes how this is implemented and \cref{ch:results} reports what it
-measured.
+validation only and ten seeds, on three axes; a 1D-CNN outside matched capacity measures the
+effect of the architecture. Quality has the macro-F1 as its pre-fixed primary measure,
+threshold-free measures beside it, an alert budget and the rule-violation rate of C5. Cost covers
+training and inference, each timed within one environment, and usability an effort estimate,
+sensitivity to knowledge, explanations and a rubric. The confirmatory tests are five paired
+comparisons per dataset with the Holm correction; everything else is descriptive. The threats are
+declared. \Cref{ch:implementation} describes how this is implemented and \cref{ch:results} reports
+what it measured.
+% FIXME(open): \cref{ch:implementation} renders as "??" until Chapter 9 exists and is \include-d in main.tex.
