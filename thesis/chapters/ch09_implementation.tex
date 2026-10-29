@@ -25,9 +25,9 @@ Parquet files.
 Two environments were used (\cref{tab:impl-environments}). The server ran every run that
 trains a model: the searches of hyperparameters, the final runs and the stress runs. The laptop
 ran the development, the evaluations of saved models (E10, E12, E17 and the post-check) and the
-timings of E13. The latency of E12 is timed on its CPU; the other tools use the default device.
+timings of E13. The latency of E12 is timed on its CPU.
 % FIXME(open): the NSL-KDD Random Forest and XGBoost use the configuration of the first search (tuning_round1), which ran on the laptop; the other arms were searched on the server. Confirm, and if so state the exception here and in Ch. 8, Sec. 8.1.5.
-% FIXME(open): the runs of the E13 timings record no device; state in Ch. 10, with their table, whether TensorFlow saw the GPU of the laptop.
+
 
 \begin{table}[t]
 \centering
