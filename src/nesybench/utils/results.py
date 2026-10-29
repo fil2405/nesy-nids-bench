@@ -2,6 +2,7 @@
 import json
 import platform
 import subprocess
+import sys
 from datetime import datetime, timezone
 from importlib import metadata
 from pathlib import Path
@@ -48,6 +49,16 @@ def _versions() -> dict:
     return out
 
 
+def visible_gpus() -> list[str] | None:
+    """GPUs TensorFlow can use in this process; None if TensorFlow is not loaded."""
+    if "tensorflow" not in sys.modules:
+        return None
+    try:
+        return [d.name for d in sys.modules["tensorflow"].config.get_visible_devices("GPU")]
+    except Exception:
+        return None
+
+
 def _jsonable(obj):
     if isinstance(obj, np.ndarray):
         return obj.tolist()
@@ -85,6 +96,7 @@ def save_run(
         "git_dirty": _git_dirty(),
         "versions": _versions(),
         "machine": platform.platform(),
+        "gpus": visible_gpus(),
         "seed": seed,
         "kb_version": kb_version,
         "config": config,

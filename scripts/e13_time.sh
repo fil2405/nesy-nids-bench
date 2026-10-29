@@ -63,7 +63,7 @@ for f in glob.glob(f"{out}/{ds}_ltn_full_tuned_e13t_k*_seed*.json"):
     k = int(re.search(r"_k(\d+)_seed", f)[1])
     by_k.setdefault(k, []).extend(r["training"]["epoch_seconds"][1:])
 base = np.median(by_k[min(by_k)])
-print(f"{ds} E13: secondi per epoca (mediana, prima epoca esclusa), un processo, {r['machine']}")
+print(f"{ds} E13: secondi per epoca (mediana, prima epoca esclusa), un processo, {r['machine']}, GPU {r.get('gpus')}")
 for k in sorted(by_k):
     m = np.median(by_k[k])
     print(f"  K={k:2d}  epoche {len(by_k[k]):3d}  mediana {m:7.3f} s  rapporto sulla base {m / base:5.3f}")

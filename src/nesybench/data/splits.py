@@ -27,7 +27,7 @@ def _top_up(kept, train, spec, minimum, seed):
 
 
 def _keep_train_fraction(train, spec, fraction, seed, min_keep_per_class=0):
-    """Stratified subsample of the train part only; validation and test stay whole.
+    """Stratified subsample of one part (train, or validation with shrink_val); test stays whole.
 
     min_keep_per_class: floor per class, so rare classes survive small fractions.
     """

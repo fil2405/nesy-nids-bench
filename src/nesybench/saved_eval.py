@@ -10,6 +10,7 @@ The macro-F1 stored by the run is printed next to the recomputed one.
 """
 import argparse
 import json
+import platform
 from pathlib import Path
 
 import joblib
@@ -22,6 +23,7 @@ from nesybench import perturb
 from nesybench.logic.postcheck import BENIGN, MODES, enforce, fired_rules, run_postcheck
 from nesybench.data.base import LABEL_COL
 from nesybench.metrics import compute_metrics, recall_by_label
+from nesybench.utils.results import visible_gpus
 
 BATCH = 8192
 
@@ -187,6 +189,7 @@ def main(argv=None):
     if not per_seed:
         raise SystemExit("nessun modello trovato")
     report = {"run_id": run_id, "part": args.part, "kb": kb.version, "modes": args.modes,
+              "machine": platform.platform(), "gpus": visible_gpus(),
               "per_seed": {str(k): v for k, v in per_seed.items()}, "summary": summarize(per_seed, args.modes)}
     path = report_path(args.out, run_id, args.part, kb.version)
     path.parent.mkdir(parents=True, exist_ok=True)
