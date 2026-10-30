@@ -1,5 +1,0 @@
-id	start	end	kb_lines	revisions	origin	train_support	train_confidence	note
-A1	2026-10-18 11:47	2026-10-18 12:50	9	2	mechanism	0.695	0.999	v1 count>100; v2 +dst_host_diff_srv_rate<=0.95; v3 count>30
-A2	2026-10-18 12:37	2026-10-18 12:50	7	0	mechanism	0.194	0.960	dst_host_diff_srv_rate>0.95
-A3	2026-10-18 12:37	2026-10-18 12:50	7	0	data	0.187	0.900	flag RSTR; mechanism not verified
-none	2026-10-18 12:50	2026-10-18 17:10	0	0	-	-	-	R2L and U2R: no usable axiom (rules, per-label rules, depth-3 tree)
