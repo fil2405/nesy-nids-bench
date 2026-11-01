@@ -121,7 +121,8 @@ def _rows(config_path, seed, part):
     train = load_dataset(config["dataset"], "train")
     test = load_dataset(config["dataset"], "test") if spec.fixed_test else None
     splits = preprocess(*split_data(config["split"], train, test, spec, seed,
-                                    **config.get("split_params", {})), spec)
+                                    **config.get("split_params", {})), spec,
+                        config.get("preprocessing", {}).get("numeric_transform"))
     x = np.asarray(splits.part(part)[0], dtype=np.float32)
     return x, splits.raw(part), config, list(splits.class_names)
 

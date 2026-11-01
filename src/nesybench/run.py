@@ -122,7 +122,8 @@ def run_one(config: dict, seed: int, results_dir, overwrite: bool = False, model
                 **config.get("split_params", {}),
             )
         with Stopwatch(timings, "preprocess_s"):
-            splits = preprocess(train_df, val_df, test_df, spec)
+            splits = preprocess(train_df, val_df, test_df, spec,
+                                config.get("preprocessing", {}).get("numeric_transform"))
 
         model = model_class()
         with Stopwatch(timings, "fit_s"):
