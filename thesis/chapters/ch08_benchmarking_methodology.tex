@@ -164,7 +164,6 @@ the run, in our checks to within $10^{-4}$. The cells of one table come from one
 each table of results states it, and times are compared only within one
 (\cref{sec:cost-dimension}). Code and configurations are in
 \texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
-% FIXME(open): confirm the environment of the E4 runs on the weight w before their table is written.
 % FIXME(open): server runs record the commit as unknown (point 22 of the open list); record the commit of each series before any figure is called citable. Check also that all finals used the same TF_ENABLE_ONEDNN_OPTS, which the package sets to 0 unless the environment overrides it.
 
 % ================================================================
@@ -457,7 +456,6 @@ E16 & N, I, D & Effort estimate per axiom and per knowledge base \\
 All arms of \cref{sec:matched-capacity} take part unless the table or the text says otherwise. The
 1D-CNN takes part in the final runs and in the experiments on saved models (E10, E12, E17); the
 experiments that retrain from a tuned configuration do not include it.
-% FIXME(open): the runs of E10, E12 and E17 on the saved models of the 1D-CNN are still to be made; confirm before the tables of Ch. 10.
 
 The runs of E3, E4, E7 to E9, E11 and E13 keep the hyperparameters of the base configuration,
 and their conclusions on the test part rest on ten seeds.
@@ -529,8 +527,8 @@ weights (balancing); with weights to LTN-sup (effect of the loss); LTN-sup to LT
 of the knowledge); LTN-full to Random Forest and LTN-full to XGBoost (H9). The primary metric
 is the test macro-F1. The family and the pairs
 are fixed and are not changed after the data are seen. MLP-CE with weights to the 1D-CNN, the
-effect of the architecture, is tested in the same way and reported apart, outside the family and
-without the Holm correction. Any other pair or measure is secondary and declared outside the
+effect of the architecture, is tested in the same way and reported apart, outside the family; its
+three $p$-values, one per dataset, are corrected with Holm among themselves. Any other pair or measure is secondary and declared outside the
 family.
 
 \subsection{Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)}

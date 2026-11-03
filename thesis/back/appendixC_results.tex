@@ -1,0 +1,305 @@
+\chapter{Complete result tables (all seeds, all metrics)}
+\label{app:results}
+\chaptermark{Complete result tables} %running head
+
+This appendix gives in full the tables that \cref{ch:results} summarises. Unless a caption says otherwise, a value is
+the mean over seeds 0 to 9 of the test part, or the median of the paired differences over the same seeds, and a
+difference is B minus A. Arms, datasets and experiments are those of \cref{ch:benchmarking-methodology}.
+% FIXME(open): the per-seed values and the secondary metrics of every run (MCC, accuracy, per-class precision and recall, confusion matrices) are not tabulated here; add them from summarize_runs.py, or retitle the appendix with the supervisor.
+
+\section{Final runs}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{NSL-KDD, test F1 per class, mean over seeds 0 to 9.}
+\label{tab:app-nslkdd-classes}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Arm & Normal & DoS & Probe & R2L & U2R \\
+\midrule
+Rule-only          & 0.660 & 0.366 & 0.380 & 0     & 0     \\
+MLP-CE, no weights & 0.798 & 0.888 & 0.726 & 0.151 & 0.270 \\
+MLP-CE, weights    & 0.798 & 0.886 & 0.733 & 0.196 & 0.403 \\
+LTN-sup            & 0.802 & 0.886 & 0.719 & 0.215 & 0.212 \\
+LTN-full           & 0.805 & 0.885 & 0.719 & 0.198 & 0.233 \\
+Random Forest      & 0.803 & 0.886 & 0.766 & 0.109 & 0.281 \\
+XGBoost            & 0.803 & 0.893 & 0.805 & 0.064 & 0.102 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Mean Friedman ranks of the six learning arms of the confirmatory comparison over the ten seeds (1 is best).
+The Nemenyi critical difference is 2.38.}
+\label{tab:app-ranks}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+MLP-CE, no weights & -- & 3.6 & 4.2 \\
+MLP-CE, weights    & -- & 3.5 & 2.6 \\
+LTN-sup            & -- & 5.6 & 2.4 \\
+LTN-full           & -- & 4.6 & 1.3 \\
+Random Forest      & -- & 1.0 & 4.5 \\
+XGBoost            & -- & 2.7 & 6.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): the mean ranks on NSL-KDD and the Friedman p-value on CIC-DDoS2019 are not in the material used here; fill them from compare_runs.py.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Epoch selected in the final runs of the four neural arms of the comparison, minimum to maximum over the ten
+seeds. The cap is 100 epochs, and no run of these arms reached it.}
+\label{tab:app-epochs}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+MLP-CE, no weights & -- & 11--35 & 27--69 \\
+MLP-CE, weights    & -- & 10--37 & 19--62 \\
+LTN-sup            & -- & 11--43 & 9--25 \\
+LTN-full           & -- & 16--53 & 13--42 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% FIXME(open): the epochs selected in the NSL-KDD finals and the number of NSL-KDD final runs at the cap are not in the material used here; fill them from epoch_cap_report.py.
+
+\section{Sensitivity to the knowledge and to the semantics}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E3, test macro-F1 of LTN-full with one axiom or group removed from the training copy of the main knowledge
+base. The first two rows are the final runs. On NSL-KDD the group \texttt{dos} holds A1 alone and gave the same
+runs as the removal of A1.}
+\label{tab:app-e3}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Run & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+LTN-sup, no axiom    & 0.5670 & 0.9324 & 0.9914 \\
+LTN-full, all axioms & 0.5678 & 0.9431 & 0.9933 \\
+\midrule
+without A1           & 0.5630 & 0.807 $\pm$ 0.144 & 0.9926 \\
+without A2           & 0.5667 & 0.9395 & 0.9927 \\
+without A3           & 0.5703 & -- & -- \\
+without group \texttt{dataset} & 0.5686 & -- & -- \\
+\midrule
+Weak base, all axioms & 0.5796 $\pm$ 0.0133 & -- & -- \\
+Weak base, without A1 & $-$0.014 $[-0.024;\,+0.005]$, 3/10 & -- & -- \\
+Weak base, without A2 & $-$0.010 $[-0.018;\,+0.002]$ & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E4, change of the test macro-F1 when one setting of the logic is changed, setting minus the final runs of
+the same arm. In brackets the 95\,\% interval, or the wins of the changed setting out of ten and the $p$-value. A value
+with no bracket has a $p$-value above 0.1. The tuned values are $p=6$, widths factor 1.29 and $w=0.1$ on NSL-KDD, and
+$p=4$, 0.5337 and $w=0.5$ on CIC-IDS2017; the tuned setting is not run again.}
+\label{tab:app-e4}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}p{1.6cm}p{2.9cm}p{2.9cm}p{2.5cm}p{2.5cm}@{}}
+\toprule
+ & \multicolumn{2}{l}{NSL-KDD} & \multicolumn{2}{l}{CIC-IDS2017} \\
+Setting & LTN-sup & LTN-full & LTN-sup & LTN-full \\
+\midrule
+$p=1$ & $+$0.042 $[+0.019;\,+0.082]$ & $+$0.033 $[+0.018;\,+0.076]$ & $-$0.102 $[-0.116;\,-0.084]$ & $-$0.113 $[-0.144;\,-0.091]$ \\
+$p=2$ & $-$0.026 (1/10, 0.08) & $-$0.016 (2/10, 0.02) & $-$0.011 (3/10, 0.05) & $-$0.009 (2/10, 0.04) \\
+$p=4$ & $-$0.001 & $-$0.002 & -- & -- \\
+$p=6$ & -- & -- & $+$0.004 & $-$0.001 \\
+Crisp & -- & $-$0.000 & -- & $-$0.006 \\
+Widths $\times 0.5$ & -- & $-$0.001 & -- & $+$0.001 \\
+Widths $\times 2$ & -- & $-$0.000 & -- & $-$0.005 (2/10, 0.04) \\
+Widths $\times 4$ & -- & $-$0.002 & -- & $-$0.007 (2/10, 0.03) \\
+$w=0.1$ & -- & -- & -- & $-$0.004 (3/10, 0.19) \\
+$w=0.25$ & -- & $-$0.023 $[-0.036;\,-0.014]$, 1/10, 0.049 & -- & $-$0.002 \\
+$w=0.5$ & -- & $-$0.019 $[-0.027;\,+0.004]$, 2/10, 0.065 & -- & -- \\
+$w=0.75$ & -- & $-$0.015 $[-0.034;\,-0.003]$, 2/10, 0.049 & -- & $-$0.003 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E8, knowledge effect (LTN-full minus LTN-sup) when 10, 25 and 50\,\% of the rows of the rare classes are kept,
+R2L and U2R on NSL-KDD, R2L, U2R and Botnet on CIC-IDS2017, and Normal on CIC-DDoS2019.}
+\label{tab:app-e8}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Dataset & 10\,\% & 25\,\% & 50\,\% \\
+\midrule
+NSL-KDD      & $-$0.003 & $+$0.015 & $+$0.002 \\
+CIC-IDS2017  & $+$0.003 & $+$0.005 $[+0.002;\,+0.018]$, 9/10, $p$ 0.02 & $-$0.007 \\
+CIC-DDoS2019 & $-$0.000 & $-$0.001 & $-$0.001 (2/10, $p$ 0.08) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Unseen attacks and transfer}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E9, held-out labels of CIC-IDS2017: share of the held-out flows detected, range over the arms, and share of
+their flows labelled Attempted that raise an alert. The scenarios \texttt{slow\_s1} and \texttt{ssh\_a3} add the slow
+DoS axiom and an R2L axiom extracted without SSH-Patator.}
+\label{tab:app-e9}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{2.6cm}p{3.4cm}p{3.4cm}p{3.0cm}@{}}
+\toprule
+Scenario & Held-out labels & Detected & Alerts on Attempted \\
+\midrule
+\texttt{slow}, \texttt{slow\_s1} & DoS Slowloris, DoS Slowhttptest & 0.32--0.36; XGBoost 0.12 & 0.0002--0.11 \\
+\texttt{ssh}, \texttt{ssh\_a3}   & SSH-Patator & 0.000 for every arm & 0.10 (Random Forest) to 0.64 (XGBoost); LTN-full 0.53 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E9, transfer: test macro-F1 of the model alone and with the post-check in enforce mode with
+\texttt{xfer\_mech}, and the mean per seed of the overrides that correct and that break a prediction. Saved models,
+scored on the laptop.}
+\label{tab:app-transfer-postcheck}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Arm (base in training) & Model & Model and enforce & Correct & Break \\
+\midrule
+XGBoost              & 0.3634 & 0.9179 $\pm$ 0.0000 & 28\,211 & 482 \\
+Random Forest        & 0.3633 & 0.9178 $\pm$ 0.0000 & 28\,211 & 482 \\
+MLP-CE, no weights   & 0.4492 & 0.9177 $\pm$ 0.0004 & 25\,274 & 478 \\
+MLP-CE, weights      & 0.4812 & 0.9177 $\pm$ 0.0003 & 24\,070 & 478 \\
+LTN-full (\texttt{xfer\_mech}) & 0.4617 & 0.8767 $\pm$ 0.0678 & 23\,963 & 478 \\
+LTN-full (\texttt{xfer}) & 0.3498 & 0.8448 $\pm$ 0.0913 & 27\,462 & 478 \\
+LTN-sup              & 0.3201 & 0.7248 $\pm$ 0.1670 & 25\,899 & 478 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Perturbations, cost, effort and explanations}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E10, change of the test macro-F1 of the model alone under the noise $S=0.5$, perturbed minus clean, median of
+the paired differences over seeds 0 to 9. Saved models of the final runs, scored on the laptop.}
+\label{tab:app-e10}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+MLP-CE, no weights & $-$0.046 & $-$0.303 & $-$0.028 \\
+MLP-CE, weights    & $-$0.063 & $-$0.368 & $-$0.027 \\
+LTN-sup            & $-$0.043 & $-$0.352 & $-$0.017 \\
+LTN-full           & $-$0.041 & $-$0.356 & $-$0.015 \\
+1D-CNN             & $-$0.018 & $-$0.309 & $-$0.032 \\
+Random Forest      & $-$0.068 & $-$0.462 & $-$0.016 \\
+XGBoost            & $-$0.023 & $-$0.514 & $-$0.037 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E13, time per epoch of LTN-full against the number of copies added to the training knowledge base, whose base
+holds $K$ axioms: median over three seeds and four epochs each, the first epoch left out, in seconds, and its ratio to
+the base. One process on the laptop.}
+\label{tab:app-e13}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{NSL-KDD, $K=3$} & \multicolumn{2}{c}{CIC-IDS2017, $K=2$} & \multicolumn{2}{c}{CIC-DDoS2019, $K=2$} \\
+Copies & s/epoch & ratio & s/epoch & ratio & s/epoch & ratio \\
+\midrule
+0 & 2.897 & 1.000 & 43.926 & 1.000 & 7.548  & 1.000 \\
+2 & 3.105 & 1.072 & 45.769 & 1.042 & 8.223  & 1.089 \\
+4 & 3.219 & 1.111 & 46.207 & 1.052 & 9.608  & 1.273 \\
+6 & 3.118 & 1.076 & 49.227 & 1.121 & 10.295 & 1.364 \\
+8 & 3.617 & 1.249 & 50.681 & 1.154 & 9.749  & 1.292 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E16, estimates of the effort of knowledge engineering, beside the number of axioms and the lines of each
+knowledge base, which are counted. The hours of a variant are those added to its base.}
+\label{tab:app-e16}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Item & Axioms & Lines & Hours (estimate) \\
+\midrule
+One axiom                                    & 1    & --     & 3--3.5 \\
+\texttt{nslkdd\_v1}                          & 3    & 25     & 10 \\
+\texttt{nslkdd\_v1\_weak}                    & 9    & 67     & 3--3.5 \\
+\texttt{cicddos2019\_v1}                     & 2    & 17     & 5--5.5 \\
+\texttt{cicids2017\_v1}                      & 2    & 20     & 5--5.5 \\
+\texttt{cicids2017\_v1\_slow}                & 3    & 28     & 2--2.5 \\
+\texttt{cicids2017\_v1\_r2l}                 & 3    & 29     & 2--2.5 \\
+\texttt{cicids2017\_v1\_e9ssh}               & 3    & 29     & 1--1.5 \\
+\texttt{cic\_transfer\_xfer}, \texttt{\_mech} & 2, 3 & 18, 25 & 3--3.5 \\
+Change of one rule                           & --   & --     & 0.5--1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{E17, explanation measures over the alerts in annotate mode: range over the six learned arms of the
+comparison, and the 1D-CNN apart.}
+\label{tab:app-e17}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{NSL-KDD} & \multicolumn{2}{c}{CIC-IDS2017} & \multicolumn{2}{c}{CIC-DDoS2019} \\
+Measure & Six arms & 1D-CNN & Six arms & 1D-CNN & Six arms & 1D-CNN \\
+\midrule
+Coverage     & 0.31--0.32 & 0.281 & 0.918--0.921 & 0.921 & 0.824--0.844 & 0.841 \\
+Faithfulness & 0.80--0.85 & 0.881 & 1.000        & 1.000 & 1.000        & 1.000 \\
+Conciseness  & 1.001      & --    & 1.000        & --    & 1.001        & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{NSL-KDD, post-check in enforce mode with the main base: test macro-F1 of the model alone and after enforce,
+mean over seeds 0 to 9. The 1D-CNN loses 0.013 with enforce, as the median of its paired differences.}
+\label{tab:app-postcheck}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Arm & Model & Enforce \\
+\midrule
+MLP-CE, no weights & 0.5664 & 0.5460 \\
+MLP-CE, weights    & 0.6033 & 0.5818 \\
+LTN-sup            & 0.5670 & 0.5479 \\
+LTN-full           & 0.5678 & 0.5503 \\
+Random Forest      & 0.5690 & 0.5468 \\
+XGBoost            & 0.5333 & 0.5094 \\
+\bottomrule
+\end{tabular}
+\end{table}
