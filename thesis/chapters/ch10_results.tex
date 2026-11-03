@@ -469,8 +469,8 @@ exposes it.
 \label{sec:res-cost}
 
 RQ3 asks what the neurosymbolic approach costs in training and in inference (\cref{sec:cost-dimension}). Times are
-compared only within one environment, and the energy proxy is not measured.
-% FIXME(open): the fit times of the final runs and the peak RAM and VRAM that Ch. 8, Sec. 8.3.1 announces for CIC-IDS2017 are not reported; either take them from the result files and dedicated runs, or drop the promise from Ch. 8.
+compared only within one environment, and the energy proxy is not measured. The final runs ran as parallel processes
+on a shared server, so their fit times are not compared across arms (\cref{sec:training-cost}).
 
 \paragraph{Training cost.}
 E13 times LTN-full in one process on the laptop with 2, 4, 6 or 8 copies of one axiom added to its base. The copies
@@ -614,8 +614,8 @@ what matters is the exponent of the loss, for LTN-sup as for LTN-full, and more 
 Partly open. Each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of a training epoch, with a
 growth close to linear, and at inference an LTN-trained network costs as an MLP, 1.3 to 2.2\,ms per call with one row on
 the CPU of the laptop; the post-check adds 0.3 to 2.2\,ms. Both halves of H7 agree with these runs. The one neural arm
-that costs more at inference is the 1D-CNN, which is not neurosymbolic. The total training cost of the arms and the
-real-time half of RQ3 are open.
+that costs more at inference is the 1D-CNN, which is not neurosymbolic. The total training cost of the arms is not
+compared, since the final runs shared the server, and the real-time half of RQ3 is open.
 
 \paragraph{RQ4, usability.}
 One axiom is estimated at hours of work, a knowledge base at one or two days and the change of a rule at less than an hour;

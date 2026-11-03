@@ -265,8 +265,10 @@ time and for every arm; the violation rate and rule precision are ours.
 \label{sec:training-cost}
 
 Every run records the time of each epoch (round for XGBoost), the epochs run, the epoch
-selected and the total fit time, with validation scoring timed apart. Peak RAM and VRAM are
-measured in dedicated runs on CIC-IDS2017. An LTN epoch and an MLP epoch have the same number
+selected and the total fit time, with validation scoring timed apart. The final runs ran as
+parallel processes on a shared server, so neither their fit times nor their peak RAM and VRAM
+are those of an idle machine, and they are not compared across arms; the cost of the knowledge
+is timed in E13 instead. An LTN epoch and an MLP epoch have the same number
 of steps but not the same distinct examples, since LTN draws batches with quotas, so we also
 report steps and examples seen. The epoch cap can cut slow arms short (\cref{sec:matched-tuning}),
 and only runs of one idle machine are compared.
@@ -355,9 +357,9 @@ times their tuned factor, and the weight $w$ of the domain axioms takes the valu
 and 0.75 other than the tuned one. Crisp conditions cover the side where the widths shrink to zero,
 and the level 0.75 of $w$ lies outside the search space of tuning.
 
-For each level of E3 and E11 we report LTN-full minus LTN-sup with an interval over seeds, its
-area over the levels and the level where it turns negative (H3, H6); E4 reports the difference of
-each setting from the tuned arm. These are descriptive and outside the Holm family
+For each level of E3, E11 and E13 we report the mean test macro-F1 of LTN-full beside the final
+runs of LTN-full and LTN-sup (H3, H6); E4 reports the paired difference of each setting from the
+final runs of the same arm, with an interval over seeds. These are descriptive and outside the Holm family
 (\cref{sec:statistical-plan}).
 
 E9 tests attacks absent from training in three scenarios. On CIC-IDS2017 two groups of fine labels
@@ -543,8 +545,8 @@ and Davenport, since the chi-square form is conservative, so our $p$-value errs 
 side and is indicative. The Nemenyi values are those of Dem{\v{s}}ar for
 $\alpha=0.05$. We run no test across datasets; three are too few. A general conclusion is
 drawn only if its sign is the same on the flow datasets, and a result on NSL-KDD alone holds
-for NSL-KDD.
-% FIXME(open): decide whether the 1D-CNN enters the Friedman test with the six learning arms; the critical difference changes with the number of arms.
+for NSL-KDD. The test covers the six learning arms of the comparison; the 1D-CNN, outside
+matched capacity, is not in it and is compared through its own pair (\cref{sec:wilcoxon}).
 
 \subsection{Effect sizes and confidence intervals; multiple-comparison correction}
 \label{sec:effect-sizes}

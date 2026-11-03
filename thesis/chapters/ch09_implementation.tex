@@ -540,13 +540,14 @@ comparable with one of a final run.
 
 The searches leave three limits, discussed with the results in \cref{sec:res-threats} and
 Appendix~\ref{app:hyperparameters}. The epoch cap hardly binds: at most two of the 60 runs of an
-arm end at 100 epochs, no chosen trial does, and no final run of a neural arm on the CIC datasets
-does. Several best trials lie on the edge of the space, so the best setting may lie outside it;
+arm end at 100 epochs, no chosen trial does, and no final run of the four neural arms of the
+comparison on the CIC datasets does; the 1D-CNN reaches the cap in at least one final run on
+CIC-DDoS2019. Several best trials lie on the edge of the space, so the best setting may lie outside it;
 the search was not repeated. The budget is equal in trials and not in dimensions: one setting for
 MLP-CE without weights, two for MLP-CE with weights and the 1D-CNN, four for LTN-sup, five for
 Random Forest, six for XGBoost and LTN-full.
 % FIXME(open): number of NSL-KDD final runs that end at the epoch cap, from epoch_cap_report.py on the final files; Ch. 10 asks for it too.
-% FIXME(open): the runs at the epoch cap and the edges of the space for the search of the 1D-CNN, once its tuning files are back.
+% FIXME(open): the tuning runs of the 1D-CNN at the epoch cap and whether its best trials lie on the edge of the space are not in the material used here.
 
 % ================================================================
 % 9.7 Reproducibility package
