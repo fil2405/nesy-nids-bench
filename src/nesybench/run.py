@@ -80,7 +80,7 @@ def _evaluate(model, splits, part: str, timings: dict, kb=None, postcheck=()):
     if postcheck:
         metrics["postcheck"] = {}
         for mode in postcheck:
-            after, report = run_postcheck(kb, splits.raw(part), proba, splits.class_names, mode)
+            after, report = run_postcheck(kb, splits.raw(part), proba, splits.class_names, mode) #type: ignore
             scores = compute_metrics(y, after, splits.class_names)
             report["macro_f1"], report["accuracy"] = scores["macro_f1"], scores["accuracy"]
             report["macro_f1_before"] = metrics["macro_f1"]

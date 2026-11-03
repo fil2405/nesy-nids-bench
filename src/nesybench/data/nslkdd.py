@@ -43,7 +43,6 @@ LABEL_TO_CLASS = {
 }
 
 def load_nslkdd(split="train"):
-    """Official KDDTrain+ or KDDTest+ file."""
     if split not in FILES:
         raise ValueError(f"split must be one of {list(FILES)}, got {split!r}")
     
