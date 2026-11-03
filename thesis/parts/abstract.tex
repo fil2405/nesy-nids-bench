@@ -1,2 +1,27 @@
 \chapter*{Abstract}
-% FIXME(open): the abstract is written last, when Chapters 10 and 11 give the results.
+
+\begin{spacing}{1.0}
+Network intrusion detection relies on signature-based systems, which miss attacks without a known
+signature, and on data-driven detectors, which are brittle when traffic changes. Neurosymbolic
+approaches promise to join the two by bringing domain knowledge into learning. This thesis builds a
+benchmark that compares Logic Tensor Networks with symbolic, classical machine-learning and
+deep-learning baselines on NSL-KDD, CIC-IDS2017 and CIC-DDoS2019, with the same network as the
+purely neural counterparts and the same tuning budget. It measures detection quality, cost and
+usability, also under stress: scarce labels, rare classes, unseen attacks, cross-dataset transfer,
+degraded knowledge, noise and evasion. Two rule-level metrics complete it.
+
+On these datasets and knowledge bases most results are negative. Domain knowledge used as a
+constraint in training gives no demonstrated gain: its effect on the macro-F1 is $+0.008$, $+0.015$
+and $+0.002$, significant on no dataset after Holm correction. It does not help with few labels
+either: where the effect stands out of the seeds it is negative, at most 1.5 points. Rules
+extracted from the data do not hold outside training: on the two datasets with a separate test part
+their precision falls to 0.130 and 0.547, while the mechanism rules of the same bases keep 0.950 to
+0.984. Mechanism rules matter at inference in one case, the transfer from CIC-IDS2017 to
+CIC-DDoS2019: the learned models reach a macro-F1 of at most 0.4812, while the UDP-flood rule of the
+target dataset, read alone, reaches 0.918; in training the same rule only lifts the logic-trained network to the
+level of the best neural baseline. Within each dataset, letting the full knowledge base override the
+predictions lowers every learned model. At inference a network trained with logic costs the same as
+a plain one, and each axiom adds 2 to 4\,\% to the time of a training epoch. On CIC-IDS2017 both tree ensembles
+beat every network. The practical contribution of the thesis is a decision checklist for when a
+neurosymbolic approach is worth using and when it is not.
+\end{spacing}

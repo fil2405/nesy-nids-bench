@@ -1,4 +1,31 @@
 \begin{otherlanguage}{italian}
 \chapter*{Sommario}
-% FIXME(open): versione italiana dell'abstract.
+
+\begin{spacing}{1.0}
+Il rilevamento delle intrusioni di rete si affida ai sistemi a firme, che non vedono gli attacchi
+senza una firma nota, e ai rilevatori basati sui dati, fragili quando il traffico cambia. Gli
+approcci neurosimbolici promettono di unire le due strade portando la conoscenza di dominio
+nell'apprendimento. Questa tesi costruisce un benchmark che confronta le Logic Tensor Networks con
+baseline simboliche, di machine learning classico e di deep learning su NSL-KDD, CIC-IDS2017 e
+CIC-DDoS2019, con la stessa rete delle controparti solo neurali e lo stesso budget di tuning. Misura
+qualità del rilevamento, costo e usabilità, anche sotto stress: poche etichette, classi rare,
+attacchi mai visti, trasferimento tra dataset, conoscenza degradata, rumore ed evasione. Due
+metriche a livello di regola la completano.
+
+Su questi dataset e basi di conoscenza la maggior parte dei risultati è negativa. La conoscenza
+usata come vincolo in addestramento non dà un guadagno dimostrato: il suo effetto sul macro-F1 è di
+$+0{,}008$, $+0{,}015$ e $+0{,}002$, non significativo su nessun dataset dopo la correzione di Holm.
+Neanche con poche etichette aiuta: dove l'effetto si distingue dai seed è negativo, al massimo 1,5
+punti. Le regole estratte dai dati non reggono fuori dall'addestramento: sui due dataset con un test
+separato la precisione scende a 0,130 e 0,547, mentre le regole di meccanismo delle stesse basi
+restano tra 0,950 e 0,984. Queste contano in inferenza in un solo caso, il trasferimento da
+CIC-IDS2017 a CIC-DDoS2019: i modelli appresi non superano un macro-F1 di 0,4812, mentre la regola
+sul flood UDP del dataset di destinazione, da sola, arriva a 0,918; in addestramento la stessa
+regola porta la rete solo al livello della migliore baseline neurale. In ogni dataset, far correggere
+le predizioni dall'intera base di conoscenza peggiora ogni modello appreso. In inferenza una rete
+addestrata con la logica costa come una rete normale, e ogni assioma aggiunge dal 2 al 4\,\% al
+tempo di un'epoca di addestramento. Su CIC-IDS2017 gli ensemble di alberi battono ogni rete. Il
+contributo pratico della tesi è una checklist che dice quando conviene usare un approccio
+neurosimbolico e quando no.
+\end{spacing}
 \end{otherlanguage}
