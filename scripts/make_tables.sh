@@ -40,6 +40,7 @@ for DS in nslkdd cicids2017 cicddos2019; do
             --tex "$OUT/${DS}_$E" --plot "$OUT/${DS}_$E.pdf"
     done
     for E in e3 e4 e11 e13; do
+        [ "$DS$E" = cicddos2019e4 ] && continue  # no E4 on CIC-DDoS2019
         run "${DS}_$E" "$PY" $A/stress_tables.py $E --results-dir "$RES" --dataset "$DS" --tex "$OUT/${DS}_$E.tex"
     done
     for E in postcheck e10 e17 threshold; do
