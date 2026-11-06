@@ -1,0 +1,53 @@
+\chapter{Feature dictionary per dataset and cross-dataset mapping}
+\label{app:features}
+\chaptermark{Feature dictionary} %running head
+
+This appendix lists the columns that every model receives, dataset by dataset, and the common
+schema of the transfer of E9. A model input is every column of the data except the fine label,
+the class and the columns named below for each dataset. The axioms read some of these columns
+raw, before any coding. The numeric inputs are standardised and the categorical ones one-hot coded,
+both fitted on the training part of the seed (\cref{sec:impl-data}). A category met only outside
+the training part is coded as all zeros. The tables are written by
+\texttt{analysis/feature\_dictionary.py} from the data and the knowledge bases of
+\cref{app:axioms}.
+
+\section{NSL-KDD}
+
+KDDTrain+ and KDDTest+ \citep{tavallaee2009kddcup99} have 41 features, a label and a last
+column with a difficulty level, which is not an input. The features are the basic
+features of a connection, the content features of \cref{sec:content-host-based-features} and the
+time-window and host-window aggregates of \cref{sec:time-window-connection-aggregates}.
+\texttt{protocol\_type}, \texttt{service} and \texttt{flag} are categorical, and
+\texttt{num\_outbound\_cmds} is zero in every record of KDDTrain+, so it carries nothing. After the
+one-hot coding the network has 122 inputs, 121 for seed 2 (\cref{sec:impl-nslkdd}).
+\Cref{tab:app-features-nslkdd} lists the columns.
+
+\section{CIC-IDS2017}
+
+The improved version of \citet{liu2022error} is read as described in \cref{sec:impl-cic}. The
+columns \texttt{id}, \texttt{Flow ID}, \texttt{Src IP}, \texttt{Src Port}, \texttt{Dst IP},
+\texttt{Dst Port}, \texttt{Timestamp} and \texttt{Attempted Category} are not inputs: they name a
+flow, its endpoints or its time, or they repeat the label. Without the destination port, a scan
+whose flows differ only in the port scanned becomes a set of identical rows, which the cleaning
+removes. \texttt{Protocol} is categorical, with the names of the protocol numbers.
+
+\section{CIC-DDoS2019}
+
+The columns \texttt{Flow ID}, \texttt{Source IP}, \texttt{Source Port}, \texttt{Destination IP},
+\texttt{Destination Port}, \texttt{Timestamp} and the unnamed row index are not inputs, for the
+same reasons, nor is \texttt{SimillarHTTP}, a text column. \texttt{Inbound} records the direction of the capture, not a
+property of the traffic, and is kept in the data but never given to a model. The header length
+written twice is read once (\cref{sec:impl-cic}). \texttt{Protocol} is categorical.
+
+\section{Cross-dataset mapping}
+
+The transfer of E9 trains on CIC-IDS2017 and tests on CIC-DDoS2019, whose flows come from two
+versions of CICFlowMeter. The common schema of \cref{sec:impl-schema} matches the columns by a
+normalised name and sixteen pairs by hand, and takes the names of CIC-DDoS2019.
+\Cref{tab:app-transfer-schema} lists the columns of CIC-IDS2017 that change name, and the
+columns that one dataset has and the other lacks stay out of the transfer. Equal names do not
+make equal measures: the extractors differ, so a column with one name can be computed differently
+on the two sides.
+
+\input{back/appendixD_tables}
+% FIXME(open): the tables of CIC-IDS2017, CIC-DDoS2019 and of the transfer schema need the CIC data; run analysis/feature_dictionary.py on the laptop, which rewrites back/appendixD_tables.tex, then name the columns left out of the transfer in the last section.

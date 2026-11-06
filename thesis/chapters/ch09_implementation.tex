@@ -80,7 +80,8 @@ comes from classifiers that had seen the labels and is never an input.
 
 The mapping of attack names to five classes, the one-hot coding of \texttt{protocol\_type},
 \texttt{service} and \texttt{flag} (3, 70 and 11 values) and the standardisation of the 38
-numeric columns come from the earlier project of the author. The network has 122 inputs. Three
+numeric columns come from the earlier project of the author. The network has 122 inputs, 121
+for seed 2, whose training part lacks the one record of the service \texttt{http\_2784}. Three
 things differ. The validation part is cut from the training file, so the test file chooses
 nothing. No oversampling is applied. The two \texttt{worm} records of KDDTest+ are kept, in DoS.
 
@@ -446,17 +447,21 @@ the seed of the run, and the evasion sets the first comparison condition of an a
 $\tau$ and counts the rows moved. \texttt{saved\_runs.sh} runs noise at 0.1, 0.25 and 0.5 and
 evasion at 0.1, and launches \texttt{latency.py} on the CPU for seed 0, on preprocessed rows of
 the test part, in the three modes of \cref{sec:inference-cost}; the rule-only arm has no model file
-and is not timed.
+and is not timed. For each seed it also runs \texttt{operating.py}, which scores the validation and
+test parts, sets on validation the threshold on $-P(\text{Normal})$ for each FPR of the budget of
+\cref{sec:operating-point}, and applies it unchanged to the test part. It records the TPR, the FPR and
+the detection of each fine label at that threshold, and the cost curve of the test part, the lower
+envelope of its ROC points over the probability cost \citep{drummond2006cost}.
 
 \paragraph{Analysis.}
 The comparison module holds the tests of \cref{sec:statistical-plan}, and scripts build every
 table from the result files. \texttt{stress\_curves.py} gives E7 and E8 against the rows trained
 on, estimated for the final runs from the run that keeps the largest share of each class, with the
 knowledge effect paired by seed. \texttt{stress\_tables.py} gives E3, E4, E9, E11, E13 and the
-labels found only in the test part; for E9 it counts the detected Attempted flows as false alarms.
-\texttt{saved\_tables.py} gives the post-check, E10, E17 and E12. None of these tables applies the
-Holm correction.
-% FIXME(open): no script builds the table of the transfer of E9 yet; summarize_runs.py reads its result files like any run. Add the table or name the command in Ch. 10.
+labels found only in the test part; for E9 it counts the detected Attempted flows as false alarms,
+and it gives the transfer with its paired differences. \texttt{saved\_tables.py} gives the
+post-check, E10, E17, E12, the operating point fixed on validation and the cost curves. None of these
+tables applies the Holm correction.
 
 % ================================================================
 % 9.5 Real-time pipeline implementation
@@ -560,7 +565,8 @@ The package is the repository \texttt{fil2405/nesy-nids-bench}. The library is i
 the knowledge bases in \texttt{kb}, the analysis scripts in \texttt{analysis} and the launch
 scripts in \texttt{scripts}. The downloaded files, the cleaned tables and the result files go
 to \texttt{data} and \texttt{results}, which are not under version control. The directory
-\texttt{tests} has 37 files with 395 test functions.
+\texttt{tests} has 38 files with 402 test functions. \Cref{app:repro} gives the layout and the
+commands.
 
 A run needs a configuration and a seed: 0 to 9 for the final runs, 100 to 102 for tuning, and 0
 for the test cut of CIC-IDS2017. A seed sets Python, NumPy and TensorFlow and switches on the

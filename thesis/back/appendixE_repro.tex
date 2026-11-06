@@ -1,0 +1,123 @@
+\chapter{Repository layout and instructions to reproduce}
+\label{app:repro}
+\chaptermark{Repository and reproduction} %running head
+
+This appendix describes the repository \texttt{fil2405/nesy-nids-bench} and the commands that
+rebuild the result files from the data and the tables from the result files. The principles are
+those of \cref{sec:harness-reproduce} and \cref{sec:impl-repro}: one run is one configuration and
+one seed and writes one result file, and every table is computed from the result files.
+
+\section{Layout}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Directories of the repository. The last two are not under version control.}
+\label{tab:app-layout}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{4.3cm}p{8.9cm}@{}}
+\toprule
+Directory & Content \\
+\midrule
+\texttt{src/nesybench/data} & loaders of NSL-KDD, CIC-IDS2017, CIC-DDoS2019 and the transfer schema; split strategies; preprocessing \\
+\texttt{src/nesybench/logic} & knowledge base format and degrees of truth, semantics of LTN, edits of E3 and E11, C5 report, post-check \\
+\texttt{src/nesybench/models} & rule-only, Random Forest and XGBoost, MLP-CE, 1D-CNN, LTN-sup, LTN-full; batch quotas and epoch selection \\
+\texttt{src/nesybench} & runner (\texttt{run.py}), tuning (\texttt{tune.py}), stress configurations (\texttt{stress.py}), statistics (\texttt{compare.py}), metrics, export of models, evaluations of saved models (\texttt{saved\_eval.py}, \texttt{operating.py}, \texttt{latency.py}, \texttt{perturb.py}) \\
+\texttt{configs} & one configuration per arm and dataset; \texttt{tuning} the search spaces; \texttt{stress} the configurations of E3 to E13 \\
+\texttt{kb} & knowledge bases with their variants, and the effort estimates of E16 \\
+\texttt{scripts} & launch scripts of tuning, final, stress and saved-model runs, of the timings of E13 and of the tables \\
+\texttt{analysis} & scripts that build tables and figures from the result files \\
+\texttt{tests} & unit and integration tests \\
+\texttt{thesis} & \LaTeX{} source of this thesis \\
+\texttt{data} & downloaded datasets (\texttt{raw}) and cleaned tables (\texttt{interim}) \\
+\texttt{results}, \texttt{logs} & result files, saved models, reports and logs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Environment and data}
+
+The code needs Python 3.11 or later. The packages are listed in \texttt{requirements.txt}, and
+\texttt{requirements.lock} pins the versions of the laptop of \cref{tab:impl-environments}.
+
+\begin{lstlisting}[language=bash,numbers=none]
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && pip install -e . --no-deps
+python scripts/check_env.py
+python -m pytest tests
+\end{lstlisting}
+
+The datasets go in the folders \texttt{nsl-kdd}, \texttt{cic-ids2017-improved} and
+\texttt{cic-ddos2019} of \texttt{data/raw}, or of the folder named by \texttt{NESYBENCH\_DATA}. The
+CIC loaders write their cleaned table to \texttt{data/interim} on the first read and reuse it.
+Tests that need a dataset are skipped when it is missing.
+
+\section{From the data to the result files}
+
+Each step skips the runs that already have a result file, so a stopped step is resumed by
+launching it again. \texttt{[workers]} is the number of runs at the same time.
+
+\begin{lstlisting}[language=bash,numbers=none]
+# tuning, then the 10 final seeds with test part and saved model
+bash scripts/tune_final.sh <dataset> <arm> [workers]
+bash scripts/final_cic.sh <dataset> rule_only
+# stress runs E3, E4, E7 to E9, E11, E13 (configurations in configs/stress)
+CHECK_ONLY=1 bash scripts/stress_run.sh '<pattern>'
+bash scripts/stress_run.sh '<pattern>' [workers]
+MODELS_DIR=results/models bash scripts/stress_run.sh 'cic_transfer_*'
+# saved models: post-check, E10, E17, operating point, cost curves, latency
+bash scripts/saved_runs.sh <dataset> results/models
+# E13 timings, one process
+bash scripts/e13_time.sh <dataset>
+\end{lstlisting}
+
+\texttt{<dataset>} is \texttt{nslkdd}, \texttt{cicids2017} or \texttt{cicddos2019}, and
+\texttt{<arm>} one of \texttt{mlp\_noweights}, \texttt{mlp\_weights}, \texttt{cnn},
+\texttt{ltn\_sup}, \texttt{ltn\_full}, \texttt{rf}, \texttt{xgb}. A pattern selects stress
+configurations by name, for instance \texttt{'cicids2017\_ltn\_full\_tuned\_e3\_*'}. The
+configurations of the stress runs are written by \texttt{stress.py} from those of the final runs
+and are already in the repository.
+
+\section{From the result files to the tables}
+
+One command rebuilds the tables of \cref{ch:results} and of \cref{app:results}:
+
+\begin{lstlisting}[language=bash,numbers=none]
+bash scripts/make_tables.sh [results]
+\end{lstlisting}
+
+It writes into \texttt{results/tables} one text file per table with the full output, the
+\LaTeX{} tables and the figures, and reports the tables whose result files are missing.
+\Cref{tab:app-repro-tables} maps the tables of the thesis to its files. The timings of E13 are
+printed by \texttt{e13\_time.sh} at its end, the effort estimates of E16 are in
+\texttt{kb/effort\_estimate.tsv}, and \texttt{analysis/feature\_dictionary.py} writes the tables
+of \cref{app:features}.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Tables of the thesis and the files of \texttt{results/tables} that hold them;
+\texttt{<ds>} is the dataset.}
+\label{tab:app-repro-tables}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{5.4cm}p{7.8cm}@{}}
+\toprule
+Table & File \\
+\midrule
+\Cref{tab:res-macro-f1}, \cref{tab:app-nslkdd-classes} & \texttt{<ds>\_summary.txt}; 1D-CNN pair in \texttt{<ds>\_cnn.txt} \\
+\Cref{tab:res-pairs}, \cref{tab:app-ranks} & \texttt{<ds>\_pairs.txt}, \texttt{<ds>\_pairs.tex}, \texttt{<ds>\_cd.pdf} \\
+\Cref{tab:app-epochs} & \texttt{fixme\_values.txt}, \texttt{tuning\_epoch\_cap.txt} \\
+\Cref{tab:res-rules}, \cref{tab:res-postcheck}, \cref{tab:app-postcheck} & \texttt{<ds>\_postcheck.txt} \\
+\Cref{tab:res-sensitivity}, \cref{tab:app-e3}, \cref{tab:app-e4} & \texttt{<ds>\_e3.txt}, \texttt{<ds>\_e4.txt}, \texttt{<ds>\_e11.txt}, \texttt{nslkdd\_e3\_weak.txt} \\
+\Cref{tab:res-e7}, \cref{tab:app-e8} & \texttt{<ds>\_e7.txt}, \texttt{<ds>\_e8.txt}, \texttt{nslkdd\_e7\_no\_A3.txt}, \texttt{cicddos2019\_e7\_no\_A2.txt} \\
+\Cref{tab:app-e9} & \texttt{cicids2017\_e9.txt} \\
+\Cref{tab:res-transfer}, \cref{tab:app-transfer-postcheck} & \texttt{transfer.txt}, \texttt{transfer\_postcheck.txt} \\
+\Cref{tab:app-e10}, \cref{tab:app-e17} & \texttt{<ds>\_e10.txt}, \texttt{<ds>\_e17.txt} \\
+Inference latency of E12 & \texttt{<ds>\_e12.txt} \\
+Operating point and cost curves & \texttt{<ds>\_threshold.txt}, \texttt{<ds>\_cost.txt}, \texttt{<ds>\_cost.pdf} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% FIXME(open): the result files and the saved models are not in the repository; decide where they are archived for a third party (a release of the repository or a data archive with a DOI) and name it here and in Ch. 8, Sec. 8.7.2.
+% FIXME(open): the streaming pipeline of the co-supervisor has no directory here yet; add it, its launch script and its commands when it is delivered.

@@ -203,11 +203,11 @@ would run'' needs the macro-F1 at the argmax; when they disagree both are report
 The operator measures written by each run are read off the curve of the part scored, so the
 threshold is the best one for that part: they summarise the ranking and are not figures a
 deployed detector would reach. A deployable figure fixes the operating point on validation and
-applies it unchanged to the test part (UC2, UC4). We propose the threshold on $-P(\text{Normal})$
-at which the validation FPR equals the alert budget of \cref{sec:alert-budget}, and report the
-TPR and FPR it gives on the test part and the gap from the budget. The recall on an unseen
-attack (FR4) is read at the same threshold.
-% FIXME(open): proposal, to confirm. The transfer of the validation threshold to the test part is not in metrics.py; it needs a script over the saved models.
+applies it unchanged to the test part (UC2, UC4). The threshold on $-P(\text{Normal})$ is the one
+at which the validation FPR reaches the alert budget of \cref{sec:alert-budget}, at FPR 0.001 and 0.01,
+and we report the TPR and FPR it gives on the test part and the gap from the budget. The recall on an
+unseen attack (FR4) is read at the same threshold.
+% FIXME(open): the figures come from operating.py on the saved final models (saved_runs.sh); add them to Ch. 10.
 
 \subsection{Cost-sensitive evaluation and the alert-budget view}
 \label{sec:alert-budget}
@@ -218,7 +218,7 @@ classifier over the full range of class distributions and misclassification cost
 \citep{drummond2006cost}. As proposed in \cref{sec:metrics-beyond-accuracy}, we draw them for the
 operator view of attacks against Normal, to show where the ranking of the arms changes with
 prevalence and cost.
-% FIXME(open): cost curves are not in the code; they need the scores of the test part, so a script over the saved models of the final runs, with no new run. If they are dropped, soften the proposal of Ch. 6, Sec. 6.5.2.
+% FIXME(open): the cost curves come from operating.py on the saved final models (saved_tables.py cost); add the figure to Ch. 10.
 What can be argued is the base rate: attacks are rare, so a small FPR still
 buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budget is the number
 of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the
@@ -269,10 +269,11 @@ selected and the total fit time, with validation scoring timed apart. The final 
 parallel processes on a shared server, so neither their fit times nor their peak RAM and VRAM
 are those of an idle machine, and they are not compared across arms; the cost of the knowledge
 is timed in E13 instead. An LTN epoch and an MLP epoch have the same number
-of steps but not the same distinct examples, since LTN draws batches with quotas, so we also
-report steps and examples seen. The epoch cap can cut slow arms short (\cref{sec:matched-tuning}),
-and only runs of one idle machine are compared.
-% FIXME(open): the share of distinct examples per LTN epoch is our estimate and has not been measured on the sampler.
+of steps but not the same distinct examples, since LTN draws batches with quotas. An MLP epoch
+sees every training row once. With the quotas of the final runs an LTN epoch sees 58 to 63\,\%
+of the distinct training rows, computed from the quotas and checked by drawing the epochs of
+NSL-KDD; the rows left out belong mostly to the largest classes. The epoch cap can cut slow
+arms short (\cref{sec:matched-tuning}), and only runs of one idle machine are compared.
 
 H7 asks that training cost grow linearly with the axioms. E13 adds 2, 4, 6 or 8 copies of one
 axiom to the training knowledge base of LTN-full, with thresholds moved by small steps on either
@@ -586,9 +587,10 @@ runs the Wilcoxon tests, the Holm correction, the bootstrap, the Friedman and Ne
 the CD diagram and the \LaTeX{} table. \texttt{summarize\_runs.py} prints the mean and
 deviation of every measure. The tables of the stress experiments come from
 \texttt{stress\_curves.py} (E7, E8) and \texttt{stress\_tables.py} (E3, E4, E9, E11, E13), and
-those of the experiments on saved models from \texttt{saved\_tables.py}. Rebuilding the result
-files from the data needs the tuning and final scripts and the datasets (\cref{ch:implementation}).
-% FIXME(open): the result files are not in the repository; decide where they are archived for a third party (Appendix E of the outline) and name the commands there.
+those of the experiments on saved models from \texttt{saved\_tables.py}; \texttt{make\_tables.sh}
+runs them all. Rebuilding the result files from the data needs the tuning and final scripts and
+the datasets (\cref{ch:implementation}). \Cref{app:repro} lists the commands.
+% FIXME(open): the result files are not in the repository; the archive for a third party is open in Appendix E.
 
 % ================================================================
 \section{Threats to validity (internal, external, construct, conclusion)}
