@@ -1,9 +1,12 @@
-"""Tables of the runs on the saved models: post-check (E12), perturbations (E10), explanations (E17), latency (E12).
+"""Tables of the runs on the saved models: post-check (E12), perturbations (E10), explanations (E17), latency (E12),
+operating point fixed on validation and cost curves.
 
     python analysis/saved_tables.py postcheck --dataset nslkdd [--dir results/saved_eval] [--tex out.tex]
     python analysis/saved_tables.py e10 --dataset nslkdd [--tex out.tex]
     python analysis/saved_tables.py e17 --dataset nslkdd [--mode annotate]
     python analysis/saved_tables.py e12 --dataset nslkdd [--dir results/latency]
+    python analysis/saved_tables.py threshold --dataset nslkdd [--dir results/operating]
+    python analysis/saved_tables.py cost --dataset nslkdd [--fig thesis/Images/cost_nslkdd.pdf]
 
 Reads the saved_eval reports whose run_id starts with <dataset>_ (one per arm, every seed in it).
 Differences are paired by seed, no Holm (sensitivity checks).
@@ -119,6 +122,57 @@ def latency_rows(folder, dataset, q="p50_ms"):
     return sorted(out, key=lambda r: _rank(r[0]))
 
 
+def threshold_rows(reports):
+    """(arm, budget, test TPR, test alerts per 100k benign, validation alerts per 100k, unseen detected)."""
+    out = []
+    for arm, rep in reports.items():
+        for b in rep["budgets"]:
+            key = f"{b:g}"
+            get = lambda k: values(rep, lambda r: r["threshold"][key].get(k, np.nan))  # noqa: E731
+            out.append((arm, b, ms(get("test_tpr")), ms(np.asarray(get("test_fpr")) * 1e5),
+                        ms(np.asarray(get("val_fpr")) * 1e5), ms(get("unseen_detected"))))
+    return out
+
+
+def cost_curves(reports):
+    """{arm: mean envelope over seeds}, the grid, {arm: area}."""
+    grid = np.asarray(next(iter(reports.values()))["grid"])
+    curves = {arm: np.mean(values(rep, lambda r: r["cost"]["envelope"]), axis=0) for arm, rep in reports.items()}
+    areas = {arm: ms(values(rep, lambda r: r["cost"]["area"])) for arm, rep in reports.items()}
+    return grid, curves, areas
+
+
+def best_ranges(grid, curves):
+    """[(pc from, pc to, arm)] of the arm with the lowest mean cost, ties to the first in order."""
+    arms = list(curves)
+    best = [arms[int(np.argmin([curves[a][i] for a in arms]))] for i in range(len(grid))]
+    out = []
+    for i, arm in enumerate(best):
+        if out and out[-1][2] == arm:
+            out[-1][1] = grid[i]
+        else:
+            out.append([grid[i], grid[i], arm])
+    return [tuple(r) for r in out]
+
+
+def plot_costs(path, grid, curves, dataset):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(6, 4))
+    for arm, c in curves.items():
+        ax.plot(grid, c, label=arm.replace("_", "-"), linewidth=1.2)
+    ax.set_xlabel("Probability cost PC(+)")
+    ax.set_ylabel("Normalised expected cost")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(bottom=0)
+    ax.set_title(dataset)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path)
+
+
 def f(m_s, d=4):
     m, s = m_s
     return "--" if not np.isfinite(m) else f"{m:.{d}f} +- {s:.{d}f}"
@@ -145,12 +199,46 @@ def write_tex(path, header, rows):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument("table", choices=["postcheck", "e10", "e17", "e12"])
+    ap.add_argument("table", choices=["postcheck", "e10", "e17", "e12", "threshold", "cost"])
     ap.add_argument("--dataset", required=True)
-    ap.add_argument("--dir", help="default results/saved_eval, e12: results/latency")
+    ap.add_argument("--dir", help="default results/saved_eval, e12: results/latency, "
+                                  "threshold and cost: results/operating")
     ap.add_argument("--mode", default="annotate", help="e17: post-check mode")
     ap.add_argument("--tex")
+    ap.add_argument("--fig", help="cost: figure file (.pdf)")
     args = ap.parse_args()
+
+    if args.table in ("threshold", "cost"):
+        reports = load_reports(args.dir or "results/operating", args.dataset)
+        if not reports:
+            raise SystemExit(f"no operating reports for {args.dataset}")
+        if args.table == "threshold":
+            rows = threshold_rows(reports)
+            print(f"{args.dataset}: threshold set on validation at each FPR budget, applied to test; "
+                  "alerts per 100k benign")
+            for arm, b, tpr, fa, fa_val, unseen in rows:
+                tail = "" if not np.isfinite(unseen[0]) else f"  unseen {f(unseen)}"
+                print(f"  {arm:14} FPR {b:g}  test TPR {f(tpr)}  test alerts {f(fa, 1)}  val alerts {f(fa_val, 1)}{tail}")
+            if args.tex:
+                write_tex(args.tex, ["Arm", "Budget", "Test TPR", "Test alerts / 100k", "Unseen detected"],
+                          [[a.replace("_", "-"), f"{b * 1e5:.0f}", tex_f(t), tex_f(fa, 0), tex_f(u)]
+                           for a, b, t, fa, fv, u in rows])
+        else:
+            grid, curves, areas = cost_curves(reports)
+            marks = (0.1, 0.25, 0.5, 0.75, 0.9)
+            idx = [int(np.argmin(np.abs(grid - m))) for m in marks]
+            print(f"{args.dataset}: normalised expected cost on test (mean envelope over seeds), area under it")
+            print(f"  {'':14} " + "  ".join(f"PC {m:4.2f}" for m in marks) + "  area")
+            for arm, c in curves.items():
+                print(f"  {arm:14} " + "  ".join(f"{c[i]:7.4f}" for i in idx) + f"  {f(areas[arm])}")
+            print("lowest cost:", ", ".join(f"PC {lo:.2f}-{hi:.2f} {arm}" for lo, hi, arm in best_ranges(grid, curves)))
+            if args.tex:
+                write_tex(args.tex, ["Arm", *[f"PC {m:g}" for m in marks], "Area"],
+                          [[a.replace("_", "-"), *[f"{c[i]:.4f}" for i in idx], tex_f(areas[a], 4)]
+                           for a, c in curves.items()])
+            if args.fig:
+                plot_costs(args.fig, grid, curves, args.dataset)
+        return
 
     if args.table == "e12":
         rows = latency_rows(args.dir or "results/latency", args.dataset)

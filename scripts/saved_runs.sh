@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# E10, E12, E17 on the saved final models: post-check, perturbations, latency. Inference only.
+# E10, E12, E17 on the saved final models: post-check, perturbations, latency, operating point and cost curves.
+# Inference only.
 #   bash saved_runs.sh <dataset> [models_dir]
 # dataset: nslkdd | cicids2017 | cicddos2019; models_dir: folders <run_id>_seed<k> (default results/models)
 # The configs are taken from the final run files results/<run_id>_seed0.json.
-# Reports: results/saved_eval/<run_id>_test_e10.json, results/latency/<run_id>.json (seed 0, CPU).
+# Reports: results/saved_eval/<run_id>_test_e10.json, results/operating/<run_id>.json,
+# results/latency/<run_id>.json (seed 0, CPU).
 # Finished reports are skipped on restart.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
@@ -19,7 +21,7 @@ PERTURB="${PERTURB:-noise:0.1 noise:0.25 noise:0.5 evade:0.1}"
 
 export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONUNBUFFERED=1
-mkdir -p results/saved_eval results/latency results/configs_finals logs
+mkdir -p results/saved_eval results/operating results/latency results/configs_finals logs
 
 FAILED=0
 for ARM in mlp_noweights mlp_weights cnn ltn_sup ltn_full rf xgb rules; do
@@ -41,6 +43,15 @@ for ARM in mlp_noweights mlp_weights cnn ltn_sup ltn_full rf xgb rules; do
             echo "ERRORE $RUN_ID"; tail -n 5 "logs/saved_${RUN_ID}.err"; FAILED=1; rm -f "$OUT"
         else
             grep -E "^seed|mancanti" "logs/saved_${RUN_ID}.log" | head -n 3
+        fi
+    fi
+
+    OP="results/operating/${RUN_ID}.json"
+    if [ ! -f "$OP" ]; then
+        echo "== $RUN_ID: soglia sul validation e curve di costo ($(date +%T))"
+        if ! "$PY" -m nesybench.operating --config "$CFG" --models "$MODELS" --out "$OP" \
+                > "logs/operating_${RUN_ID}.log" 2> "logs/operating_${RUN_ID}.err"; then
+            echo "ERRORE soglia $RUN_ID"; tail -n 5 "logs/operating_${RUN_ID}.err"; FAILED=1; rm -f "$OP"
         fi
     fi
 

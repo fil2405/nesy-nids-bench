@@ -43,6 +43,17 @@ def rule_predictor(directory, class_names):
     return predict
 
 
+def model_proba_fn(directory, class_names):
+    """(raw rows, features) -> class probabilities of the model saved in `directory`."""
+    directory = Path(directory)
+    if (directory / "rules.json").exists():  # rule_only reads the raw columns
+        on_raw = rule_predictor(directory, list(class_names))
+        return lambda raw_rows, feats: on_raw(raw_rows)
+    transformer = joblib.load(directory / "preprocessing.joblib")
+    predict, _ = load_predictor(directory, n_classes=len(class_names))
+    return lambda raw_rows, feats: predict_all(predict, np.asarray(transformer.transform(feats), dtype=np.float32))
+
+
 def score(proba, y, raw, kb, class_names, modes) -> dict:
     """Metrics of the model alone and after each post-check mode."""
     pred = proba.argmax(axis=1)
@@ -148,20 +159,11 @@ def main(argv=None):
         frames = split_data(config["split"], train, test, spec, seed, **config.get("split_params", {}))
         raw = frames[2 if args.part == "test" else 1].reset_index(drop=True)
         features, y = _split_xy(raw, spec)
-        transformer = joblib.load(directory / "preprocessing.joblib")
-        if (directory / "rules.json").exists():  # rule_only reads the raw columns
-            on_raw = rule_predictor(directory, list(spec.classes))
-
-            def model_proba(raw_rows, feats):
-                return on_raw(raw_rows)
-        else:
-            predict, _ = load_predictor(directory, n_classes=len(spec.classes))
-
-            def model_proba(raw_rows, feats):
-                return predict_all(predict, np.asarray(transformer.transform(feats), dtype=np.float32))
+        model_proba = model_proba_fn(directory, spec.classes)
         proba = model_proba(raw, features)
         result = score(proba, y, raw, kb, list(spec.classes), args.modes)
         if perturbations:
+            transformer = joblib.load(directory / "preprocessing.joblib")
             _, _, num_cols = transformer.transformers_[0]
             bounds = perturb.column_bounds(frames[0], num_cols)
             result["perturbed"] = {}

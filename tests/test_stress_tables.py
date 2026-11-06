@@ -100,3 +100,30 @@ def test_e3_rows_against_the_base_and_the_weak_tag():
     w = st.by_variant(runs, "nslkdd", "e3", ("ltn_full",), "_weak")
     (row,) = st.e4_rows(runs, "nslkdd", w, "test", "macro_f1", ("ltn_full",), "_weak")
     assert row[1] == "no_R1" and row[5].median == pytest.approx(-0.03)
+
+
+def xfer_rec(run_id, seed, macro, det, fa):
+    return {"seed": seed, "config": {"run_id": run_id},
+            "metrics": {"test": {"macro_f1": macro, "recall": [1 - fa, det]}}}
+
+
+@pytest.fixture
+def xfer_runs():
+    spec = {"cic_transfer_ltn_sup_tuned_e9_xfer": (0.32, 0.08, 0.3),
+            "cic_transfer_ltn_full_tuned_e9_xfer": (0.35, 0.02, 0.1),
+            "cic_transfer_ltn_full_tuned_e9_xfer_mech": (0.46, 0.12, 0.07),
+            "cic_transfer_rules_e9_xfer_mech": (0.92, 0.83, 0.01),
+            "cicids2017_ltn_full_tuned": (0.9, 0.9, 0.0)}
+    return {rid: {s: xfer_rec(rid, s, m + 0.01 * s, d, f) for s in range(3)} for rid, (m, d, f) in spec.items()}
+
+
+def test_transfer_rows_and_effects(xfer_runs):
+    assert st.transfer_runs(xfer_runs)[("rules", "xfer_mech")] == "cic_transfer_rules_e9_xfer_mech"
+    rows = st.transfer_rows(xfer_runs)
+    assert [(r[0], r[1]) for r in rows][:2] == [("rules", "xfer_mech"), ("ltn_full", "xfer_mech")]
+    arm, base, n, mf1, det, fa = rows[0]
+    assert n == 3 and det[0] == pytest.approx(0.83) and fa[0] == pytest.approx(0.01)
+    eff = {(a, b): r for a, b, r in st.transfer_effects(xfer_runs)}
+    assert eff[(("ltn_full", "xfer"), ("ltn_full", "xfer_mech"))].median == pytest.approx(0.11)
+    assert (("mlp_weights", "xfer"), ("ltn_full", "xfer_mech")) not in eff
+    assert "\\texttt{xfer\\_mech}" in st.tex_transfer(rows)
