@@ -155,19 +155,23 @@ def best_ranges(grid, curves):
     return [tuple(r) for r in out]
 
 
+LABELS = {"mlp_noweights": "MLP-CE, no weights", "mlp_weights": "MLP-CE, weights", "cnn": "1D-CNN",
+          "ltn_sup": "LTN-sup", "ltn_full": "LTN-full", "rf": "Random Forest", "xgb": "XGBoost", "rules": "Rule-only"}
+
+
 def plot_costs(path, grid, curves, dataset):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6, 3.8))
     for arm, c in curves.items():
-        ax.plot(grid, c, label=arm.replace("_", "-"), linewidth=1.2)
-    ax.set_xlabel("Probability cost PC(+)")
+        ax.plot(grid, c, label=LABELS.get(arm, arm), linewidth=1.2,
+                linestyle="--" if arm in ("rf", "xgb", "rules") else "-")
+    ax.set_xlabel("Probability cost of an attack, PC(+)")
     ax.set_ylabel("Normalised expected cost")
     ax.set_xlim(0, 1)
     ax.set_ylim(bottom=0)
-    ax.set_title(dataset)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=8, frameon=False)
     fig.tight_layout()
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path)
