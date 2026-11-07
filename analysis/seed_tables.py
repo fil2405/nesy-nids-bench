@@ -73,15 +73,12 @@ def class_table(ds, arms):
     classes = next(iter(arms[0][3].values()))["class_names"]
     rows = []
     for _, name, _, t in arms:
-        cells = []
-        for i in range(len(classes)):
-            p = np.mean([t[s]["precision"][i] for s in t])
-            r = np.mean([t[s]["recall"][i] for s in t])
-            cells.append(f"{p:.3f} / {r:.3f}")
-        rows.append([name] + cells)
-    return table(["Arm"] + list(classes), rows,
-                 f"{DATASETS[ds]}, precision / recall per class on the test part, mean over the seeds.",
-                 f"tab:app-classes-{ds}", "l" + "c" * len(classes))
+        for key, tag in (("precision", "P"), ("recall", "R")):
+            vals = [np.mean([t[s][key][i] for s in t]) for i in range(len(classes))]
+            rows.append([name if tag == "P" else "", tag] + [f"{v:.3f}" for v in vals])
+    return table(["Arm", ""] + list(classes), rows,
+                 f"{DATASETS[ds]}, precision (P) and recall (R) per class on the test part, mean over the seeds.",
+                 f"tab:app-classes-{ds}", "ll" + "r" * len(classes))
 
 
 def main():

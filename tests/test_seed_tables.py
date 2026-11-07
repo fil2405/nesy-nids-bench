@@ -19,4 +19,5 @@ def test_tables_per_seed_and_class():
     seeds = st.seed_table("cicddos2019", arms)
     assert "1 & -- & 0.9890" in seeds
     assert "Rule-only & 1.0200 & 0.8200" in st.secondary_table("cicddos2019", arms)
-    assert "0.900 / 0.800 & 0.500 / 0.400" in st.class_table("cicddos2019", arms)
+    classes = st.class_table("cicddos2019", arms)
+    assert "Rule-only & P & 0.900 & 0.500" in classes and " & R & 0.800 & 0.400" in classes
