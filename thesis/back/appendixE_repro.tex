@@ -90,8 +90,9 @@ It writes into \texttt{results/tables} one text file per table with the full out
 \LaTeX{} tables and the figures, and reports the tables whose result files are missing.
 \Cref{tab:app-repro-tables} maps the tables of the thesis to its files. The timings of E13 are
 printed by \texttt{e13\_time.sh} at its end, the effort estimates of E16 are in
-\texttt{kb/effort\_estimate.tsv}, and \texttt{analysis/feature\_dictionary.py} writes the tables
-of \cref{app:features}.
+\texttt{kb/effort\_estimate.tsv}, \texttt{analysis/feature\_dictionary.py} writes the tables
+of \cref{app:features} and \texttt{analysis/seed\_tables.py} those of every seed in
+\cref{app:results}.
 
 \begin{table}[htbp]
 \centering
@@ -114,10 +115,15 @@ Table & File \\
 \Cref{tab:res-transfer}, \cref{tab:app-transfer-postcheck} & \texttt{transfer.txt}, \texttt{transfer\_postcheck.txt} \\
 \Cref{tab:app-e10}, \cref{tab:app-e17} & \texttt{<ds>\_e10.txt}, \texttt{<ds>\_e17.txt} \\
 Inference latency of E12 & \texttt{<ds>\_e12.txt} \\
-Operating point and cost curves & \texttt{<ds>\_threshold.txt}, \texttt{<ds>\_cost.txt}, \texttt{<ds>\_cost.pdf} \\
+\Cref{tab:res-operating}, \cref{fig:res-cost-nslkdd} & \texttt{<ds>\_threshold.txt}, \texttt{<ds>\_cost.txt}, \texttt{<ds>\_cost.pdf} \\
+\Cref{tab:tuning-selected} & \texttt{fixme\_values.txt} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% FIXME(open): the result files and the saved models are not in the repository; decide where they are archived for a third party (a release of the repository or a data archive with a DOI) and name it here and in Ch. 8, Sec. 8.7.2.
+The result files, of about 2\,700 final and stress runs and of the searches, and the saved
+models of the final runs are not in the
+repository. They are available from the author on request; without them every table needs the runs
+of the previous section.
+
 % FIXME(open): the streaming pipeline of the co-supervisor has no directory here yet; add it, its launch script and its commands when it is delivered.

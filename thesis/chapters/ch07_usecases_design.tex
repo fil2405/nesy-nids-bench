@@ -167,9 +167,9 @@ antecedent holds on the flow, with their degree and the values of the conditions
 An LTN-trained network is a plain network at inference
 (\cref{sec:symbolic-placement}), so these axioms are a rule match computed beside
 the network, not the reasons for its decision. Experiment E17 measures coverage,
-the share of alerts with at least one axiom; fidelity, the agreement between the
+the share of alerts with at least one axiom; faithfulness, the agreement between the
 class the axiom implies and the class the network predicts; and conciseness, the
-number of conditions to read. Fidelity exposes the gap, since an explanation that
+number of axioms that fire on an alert. Faithfulness exposes the gap, since an explanation that
 agrees with the prediction only by chance is worth little. Alerts can be handed on
 in an exchange format \citep{debar2007rfc4765,opentext2023cef,jordan2021stix}; the
 thesis does not depend on one, and the alert sink takes a plain record.
@@ -223,7 +223,7 @@ FR3 & Report R2L and U2R separately from the other classes (UC3)
 FR4 & Detect an attack type absent from the training data (UC4)
   & E9 & Q & Recall on the unseen attack at the operating point fixed on validation data \\
 FR5 & Attach to an alert the axioms whose antecedent holds on the flow (UC5)
-  & E17 & U & Explanation coverage, fidelity and conciseness \\
+  & E17 & U & Explanation coverage, faithfulness and conciseness \\
 FR6 & Read the axioms from a versioned file, so that an axiom set can be swapped or reduced without a change of code (\cref{sec:kb-format})
   & E3 & U & Change in macro-F1 and per-class recall when an axiom is removed \\
 FR7 & Report for any model, knowledge arm or not, the satisfaction of each axiom and the rate at which its prediction violates the rule

@@ -9,7 +9,6 @@ methodological contribution C1 and the basis of the answer to RQ5. It reports no
 result; the numbers are in \cref{ch:results}.
 
 The protocol exists to test nine hypotheses (\cref{tab:hypotheses}). The set was fixed before the final runs.
-% FIXME(open): the wording of H1 to H9 is reconstructed from the meeting of 14 October 2026; check it against the written version of the co-supervisor, and decide whether Ch. 1, Sec. 1.3 cites \cref{tab:hypotheses} in one sentence.
 
 \begin{table}[t]
 \centering
@@ -190,8 +189,9 @@ most confident flows.
 
 A class absent from truth and prediction scores an F1 of zero; its PR-AUC is undefined and
 summaries skip it and report the seeds used. In E7 and E8 the floor of five rows per class keeps
-every class in every part, so the case does not arise there.
-% FIXME(open): confirm that no experiment can leave a class out of a part, then close the decision between the zero F1 and leaving the class out of the mean; the code uses the zero.
+every class in every part, so the case does not arise there. E9 holds out fine labels, not
+classes, and every test part holds every class (\cref{tab:impl-splits}), so the zero is a rule
+for safety and changes no figure of \cref{ch:results}.
 
 \subsection{Threshold-free vs threshold-dependent metrics; choosing an operating point}
 \label{sec:operating-point}
@@ -225,8 +225,9 @@ buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budge
 of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the
 FPR times 100\,000), which does not depend on the share of attacks in the test part. The
 question is which TPR an arm reaches at the FPR the budget allows. On the CICs the budget is
-also given per day (\cref{tab:impl-benign-day}); NSL-KDD has no time stamps. The figure per
-day describes a day of a laboratory network.
+also given per day (\cref{tab:impl-benign-day}); NSL-KDD has no time stamps. The day counts the
+benign flows after cleaning, those a model scores; for CIC-DDoS2019, whose days are sampled, it
+counts the benign rows of the files. The figure per day describes a day of a laboratory network.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
 
 \subsection{Rule-violation rate: definition and rationale}
@@ -349,8 +350,10 @@ percentile points of the training column and swaps the target of one axiom, A1 t
 NSL-KDD. On a column with many equal values, a binary one or one with most rows on one value, a
 shift of a few points can leave the threshold where it was, and two levels can then give the same
 run. An equality condition changes only through the swap. The weak variant of NSL-KDD tests broad
-axioms for R2L and U2R. E13 adds copies (\cref{sec:training-cost}).
-% FIXME(open): the target swap of E11 is defined for NSL-KDD only; decide whether the CIC datasets have one.
+axioms for R2L and U2R. E13 adds copies (\cref{sec:training-cost}). The CIC datasets have no swap.
+CIC-DDoS2019 has one attack class, so a swap would turn an attack axiom into an axiom for Normal,
+another kind of edit. The two axioms of CIC-IDS2017 point at DoS and DDoS, where every arm already
+reaches an average precision of 1.000, so a swap between them would measure little.
 
 E4 varies one setting of the logic at a time against the tuned configuration, on NSL-KDD and
 CIC-IDS2017. For LTN-sup and LTN-full the exponent $p$ takes the values 1, 2, 4 and 6 other than the
@@ -422,8 +425,9 @@ Each arm scores 0, 1 or 2 on four criteria, with anchors written before the meas
 each score citing its measure (NFR13). Setup: 0 written and tuned axioms, 1 tuning only, 2
 defaults. Sensitivity to knowledge: 0 the gain reverses under mild degradation, 1 it shrinks, 2
 it stays. Explanation: 0 none, 1 low coverage or faithfulness, 2 high. Change of a rule: 0
-retraining and re-tuning, 1 retraining only, 2 none.
-% FIXME(open): the anchors are our proposal; confirm them with the co-supervisor before the measurements.
+retraining and re-tuning, 1 retraining only, 2 none. Sensitivity to knowledge applies only to the
+arms that use it. The post-check is part of every arm, so explanation and change of a rule are
+scored on the arm with its post-check.
 
 % ================================================================
 \section{Batch vs real-time evaluation protocols}
@@ -590,8 +594,8 @@ deviation of every measure. The tables of the stress experiments come from
 \texttt{stress\_curves.py} (E7, E8) and \texttt{stress\_tables.py} (E3, E4, E9, E11, E13), and
 those of the experiments on saved models from \texttt{saved\_tables.py}; \texttt{make\_tables.sh}
 runs them all. Rebuilding the result files from the data needs the tuning and final scripts and
-the datasets (\cref{ch:implementation}). \Cref{app:repro} lists the commands.
-% FIXME(open): the result files are not in the repository; the archive for a third party is open in Appendix E.
+the datasets (\cref{ch:implementation}). \Cref{app:repro} lists the commands. The result files
+and the saved models are not in the repository; they are available from the author on request.
 
 % ================================================================
 \section{Threats to validity (internal, external, construct, conclusion)}
@@ -607,7 +611,9 @@ labelled data that include the validation part, and the first threshold of A1 on
 changed after looking at Probe. In E7 the mechanism axioms keep thresholds calibrated on the whole
 training part. In the transfer of E9 the UDP axiom brings a threshold chosen on the training day
 of the target dataset. The weak knowledge base was a planned variant, and its axiom U2 covers no
-U2R row of training. Training and evaluation of saved models ran in two environments, and the
+U2R row of training. The protocol is an input of every arm, and on CIC-IDS2017 it separates
+most attack flows from Normal, so a result there can rest on it rather than on the knowledge
+(\cref{sec:impl-schema}). Training and evaluation of saved models ran in two environments, and the
 server runs record no commit.
 
 \paragraph{External.}

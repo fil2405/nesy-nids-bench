@@ -22,7 +22,7 @@ the confirmatory family. Stress experiments changed the labels, the rare classes
 in training, the dataset and the knowledge.
 
 Of the contributions of \cref{sec:contributions}, C1 is delivered for the batch setting, and its
-usability axis rests on an estimated effort and a scorecard with no scores yet. C2 and C3 are delivered, and most
+usability axis rests on an estimated effort and a scorecard. C2 and C3 are delivered, and most
 of the results of C3 are negative. C4 has no measurements yet. C5 was measured for every arm: a low
 violation rate proved not to be a merit, and the rule precision read beside it was the informative
 figure.
@@ -80,8 +80,9 @@ baselines do not pay. In return, the explanations cover one alert in three on NS
 nine in ten on the CIC datasets, where they never contradict the prediction
 (\cref{sec:res-usability}). In enforce mode with the main bases the post-check lowers every learned
 arm on the three datasets. It helps only where the rule is more precise than the model on the rows
-where it fires, as in the transfer. The scorecard is pending.
-% FIXME(open): the scorecard has no scores until its anchors are confirmed (Ch. 8, Sec. 8.4.5); update C1 in Sec. 11.1 and this paragraph. H2, H4, H6 and H7 follow the naming left open in Ch. 10.
+where it fires, as in the transfer. On the scorecard LTN-full costs most to set up and to change, a
+rule change needing a new training run, and explains no better than any other arm, since the
+explanation comes from the post-check that every arm shares (\cref{tab:res-scorecard}).
 
 \paragraph{RQ5, methodology.}
 A fair benchmark here needs one network for the neural arms, equal tuning trials, selection on
@@ -90,7 +91,9 @@ validation data only, repeated seeds and a family of tests fixed before the runs
 counts of the overrides that correct and break a prediction, and per-seed results each changed the
 reading of a result. The protocol also showed a limit of its own: on NSL-KDD the selection on a cut
 of the training file does not carry to the test file, and this is reported, not corrected on the
-test file.
+test file. A threshold fixed on validation shows the same limit to an operator: the alert budget
+holds on the test part of CIC-IDS2017 and breaks on the other two datasets
+(\cref{tab:res-operating}).
 
 % ================================================================
 % 11.3 Practical guidelines

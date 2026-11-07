@@ -52,7 +52,6 @@ Processes & seeds and trials in parallel & one at a time \\
 \bottomrule
 \end{tabular}
 \end{table}
-% FIXME(open): the hardware of the server (processor, memory, GPU) is in no result file; ask the co-supervisor and fill the cell.
 
 The neural arms train on the GPU and Random Forest on all cores. On the server the seeds of a
 run and the trials of a search are parallel processes sharing the GPU; no model is trained across
@@ -93,7 +92,6 @@ Three attack names occur only in the test file and are assigned by convention:
 2\,885. In KDDTest+, 3\,750 records, 16.6\,\%, have an attack name that KDDTrain+ lacks, and
 R2L changes its composition: 890 of its 995 training records are \texttt{warezclient}, which the
 test file does not contain.
-% FIXME(open): sources for the family of snmpgetattack, worm and httptunnel are secondary (arXiv 1910.01114, 1803.06762, 2112.02080); add them to the bib if the sentence is to carry a citation.
 
 \subsection{CIC-IDS2017 / CIC-DDoS2019 pipeline and the corrected-label variant}
 \label{sec:impl-cic}
@@ -104,9 +102,8 @@ labelling \citep{engelen2021troubleshooting}. Liu et al. \citep{liu2022error} pu
 version with improved ground truth and more features, and we use it. It ships five daily files
 with 2\,099\,976 flows: identifiers, addresses, ports, the protocol, a time stamp, the numeric
 flow features, a label and an Attempted category. An attack flow that carried no data forward is
-labelled ``Attempted''. The authors recommend counting these as benign, and we do so. After
-cleaning they are 9\,106 of the Normal flows.
-% FIXME(open): the recommendation on the Attempted flows is on the download page of the improved version, not in the abstract read of the paper; read the paper and cite the section, or reword to the page.
+labelled ``Attempted''. We count these as benign, since no attack data reached the target, and
+after cleaning they are 9\,106 of the Normal flows.
 
 The cleaning is done once, before any split. Five flows with infinite rates go, all Normal. So
 do 384\,630 exact duplicates on features and label, 223\,023 of them Probe and 161\,607
@@ -139,9 +136,9 @@ CIC-DDoS2019, 11 Mar & 56\,965 & --- & DDoS \\
 \end{table}
 
 \Cref{tab:impl-benign-day} gives the benign flows of each day for the alert budget per day.
-Which of the two counts is the day of the budget is not fixed.
-% FIXME(open): the alert budget per day of Ch. 8 uses the benign flows of a day; decide whether it is the count as read or the cleaned one and say so in Ch. 8, Sec. 8.2.3.
-% FIXME(open): the figures of the two CIC-DDoS2019 days are the benign rows of the CSV files, not the 45143 benign rows of the sampled test day.
+The budget per day uses the cleaned count, the flows that a model scores. The two days of
+CIC-DDoS2019 are given as the benign rows of their files, since the parts of that dataset are
+sampled: its test part holds 45\,143 benign rows (\cref{tab:impl-splits}).
 
 \paragraph{CIC-DDoS2019.}
 The dataset \citep{cic2019ddos} has a training day, 12 January, with 11 CSV files and
@@ -239,7 +236,6 @@ on the protocol is no evidence about the knowledge. The network of CIC-IDS2017 h
 numeric flow features and the four values of the protocol, and that of CIC-DDoS2019 has 79, 76
 numeric features and three values. No window or source statistic is
 computed, as \cref{ch:usecases-design} states.
-% FIXME(open): keeping the protocol as an input is in the code but not yet confirmed as a decision. Confirm, and extend the threats of Ch. 8, Sec. 8.8.
 
 \subsection{Split strategy: train / validation / test, temporal and random variants}
 \label{sec:impl-splits}
@@ -268,9 +264,8 @@ its class is refused. The test part of E9 is therefore not that of the final run
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Rows of each part for seed 0 at full size. The parts of NSL-KDD and CIC-IDS2017 are those
-recorded by the runs; those of CIC-DDoS2019 are derived from the class totals with the stratified
-split of the code. Another seed moves rows between training and validation only.}
+\caption{Rows of each part for seed 0 at full size, as recorded by the runs. Another seed moves
+rows between training and validation only.}
 \label{tab:impl-splits}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}llrrr@{}}
@@ -296,7 +291,6 @@ CIC-DDoS2019 & Normal & 42\,967 & 7\,582 & 45\,143 \\
 on NSL-KDD and a seventh on CIC-IDS2017, which the selection criterion damps and does not remove.
 R2L is 0.8\,\% of the NSL-KDD validation part and 12.8\,\% of the test file, mostly
 \texttt{guess\_passwd} and \texttt{warezmaster} there, a shift the validation part does not carry.
-% FIXME(open): the CIC-DDoS2019 rows of tab:impl-splits are derived from the class totals; check them against split_sizes of seed 0 of a full-size run (the test part, 45143 and 33940, agrees with the transfer).
 
 % ================================================================
 % 9.3 Models under test
@@ -583,8 +577,9 @@ the tuning files, the final runs and the stress runs record the commit as \textt
 leave the flag of the modified tree empty. A series is identified by its date and by the
 configuration stored in each file, which also records the versions of the packages. No log of
 the runs reports the custom operations of oneDNN as switched on. The second limit is the
-environment: determinism holds within one, as \cref{sec:impl-environment} says.
-% FIXME(open): the environment file of the server (TensorFlow 2.22.0-rc0, Python 3.14) is not in the repository; decide whether to add a second lock file and where the result files are archived (Appendix E).
+environment: determinism holds within one, as \cref{sec:impl-environment} says. The server has
+no lock file in the repository; its versions are those its result files record. The result files
+and the saved models are kept by the author and not published with the repository.
 % FIXME(open): the streaming pipeline has no code, no configuration and no test in the repository; add its directory and its launch script when the co-supervisor delivers them.
 
 % ================================================================

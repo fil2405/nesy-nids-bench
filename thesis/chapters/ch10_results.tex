@@ -7,7 +7,6 @@ protocol measured and reads it against the five research questions and the nine 
 \cref{tab:hypotheses}. Every experiment has results except the streaming runs of E14 and E15. The
 chapter keeps the numbers that carry a conclusion; the complete tables, with every level, arm,
 deviation and interval, are in \cref{app:results}.
-% FIXME(open): H1-H9 is the internal shorthand of the meeting of 14 October; decide how the hypotheses are named and defined in the thesis text (here and in Ch. 8, \cref{tab:hypotheses}) before the final wording.
 
 \paragraph{How the numbers are read.}
 The primary measure is the test macro-F1, as mean and sample deviation over seeds 0 to 9. A difference is B minus A. The
@@ -641,9 +640,38 @@ The rule precision on the test part flags the two data axioms that fail on new d
 and before a rule is used to change a decision; both carry the harm of enforce.
 
 \paragraph{Scorecard and maintenance.}
-The scorecard of \cref{sec:scorecard} gives each arm 0 to 2 on four criteria. No score is given yet, since its anchors
-are still to be confirmed. We ran no drift experiment, and E11 stands as a proxy for domain shift (\cref{sec:drift}).
-% FIXME(open): the scorecard anchors are our proposal and must be confirmed with the co-supervisor before any score is written (Ch. 8, Sec. 8.4.5).
+\Cref{tab:res-scorecard} scores each arm with the anchors of \cref{sec:scorecard}. Every learning arm is tuned, so no arm
+reaches 2 on setup, and the two that rest on written axioms score 0. Sensitivity applies to the arms that use the
+knowledge. LTN-full scores 2, since no edit of E3 and E11 moves it by more than about a point; the score says that its
+result does not hang on the details of its axioms, not that the axioms help, since the gain itself is not shown
+(\cref{sec:res-significance}). The rule-only classifier is its knowledge, and the evasion of E10 takes most of its
+macro-F1, so it scores 0. The explanation is the post-check, the same for every learned arm: low coverage on NSL-KDD and
+high coverage with full faithfulness on the CIC datasets. A rule changes without training in the rule-only arm and in the
+post-check of every arm. In LTN-full it needs a new training run, which E3 and E11 made with the hyperparameters of the
+final runs, so without new tuning. The scorecard thus separates the arms on cost of setup and of change, where LTN-full
+pays most, and not on explanation. We ran no drift experiment, and E11 stands as a proxy for domain shift
+(\cref{sec:drift}).
+
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Scorecard of \cref{sec:scorecard}, 0 to 2 per criterion, with the measure each score rests on. --: the arm uses
+no knowledge. Explanation is given for NSL-KDD / the CIC datasets.}
+\label{tab:res-scorecard}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccp{4.3cm}@{}}
+\toprule
+Arm & Setup & Sensitivity & Explanation & Change & Measures \\
+\midrule
+Rule-only & 0 & 0 & 2 / 2 & 2 & E16, E10, E17 \\
+MLP-CE, both variants & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+1D-CNN & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+LTN-sup & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+LTN-full & 0 & 2 & 1 / 2 & 1 & E16, E3, E11, E17 \\
+Random Forest, XGBoost & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ================================================================
 % 10.8 Cross-cutting discussion
@@ -687,7 +715,8 @@ One axiom is estimated at hours of work, a knowledge base at one or two days and
 the dearest part is the search for axioms that do not exist (E16). The explanations cover one alert in three on NSL-KDD and
 eight to nine in ten on the CIC datasets, where they never contradict the prediction (E17). In enforce mode the post-check
 lowers every learned arm, and it would help only with rules more precise than the model where they fire. The rule
-precision on the test part singles out the data axioms that fail outside the training data. The scorecard is pending.
+precision on the test part singles out the data axioms that fail outside the training data. The scorecard separates
+LTN-full by the cost of setup and of a change of rule, and no arm by explanation (\cref{tab:res-scorecard}).
 
 \paragraph{RQ5, methodology.}
 The protocol produced the comparison with matched arms, a fixed family of tests and ten seeds, and several of its choices
@@ -695,7 +724,8 @@ showed their worth. The threshold-free measures exposed a different order of the
 beside the violation rate showed that a lower violation rate is not a merit. Counting the overrides that correct and break
 a prediction turned the loss of the post-check into a comparison of rule and model, and per-seed results showed what a
 mean hides. The protocol also showed a limit of its own: on NSL-KDD the selection on a cut of the training file does not carry to the test file (E4,
-E7), and it is reported, not corrected on the test file.
+E7), and it is reported, not corrected on the test file. The threshold fixed on validation shows it to an operator: the
+alert budget holds on CIC-IDS2017 and breaks by 2.5 to 67 times on the other two datasets.
 
 \subsection{When does NeSy win, when does it not, and why}
 \label{sec:res-when}

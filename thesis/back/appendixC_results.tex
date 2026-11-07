@@ -5,7 +5,8 @@
 This appendix gives in full the tables that \cref{ch:results} summarises. Unless a caption says otherwise, a value is
 the mean over seeds 0 to 9 of the test part, or the median of the paired differences over the same seeds, and a
 difference is B minus A. Arms, datasets and experiments are those of \cref{ch:benchmarking-methodology}.
-% FIXME(open): the per-seed values and the secondary metrics of every run (MCC, accuracy, per-class precision and recall, confusion matrices) are not tabulated here; add them from summarize_runs.py, or retitle the appendix with the supervisor.
+The last section gives the macro-F1 of every seed of the final runs, their accuracy and MCC, and
+their precision and recall per class. The confusion matrices of every run are in its result file.
 
 \section{Final runs}
 
@@ -303,3 +304,11 @@ XGBoost            & 0.5333 & 0.5094 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Final runs: every seed and the secondary metrics}
+
+The tables of this section are written by \texttt{analysis/seed\_tables.py} from the result files
+of the final runs.
+
+\input{back/appendixC_seeds}
+% FIXME(open): run analysis/seed_tables.py on the laptop, which writes back/appendixC_seeds.tex.
