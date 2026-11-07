@@ -72,7 +72,7 @@ MLP-CE with weights is first (0.6033). The 1D-CNN follows (0.5791), then Random 
 LTN-sup and MLP-CE without weights within 0.0026 of one another, and XGBoost last (0.5333). The
 rule-only classifier reaches 0.2813: its axioms cover DoS and Probe only, so R2L and U2R are never
 predicted and its macro-F1 cannot exceed three fifths. The per-class F1 is in \cref{app:results}. On
-R2L the recall is about 0.1 for every arm, whatever the loss or the family. On U2R the precision is
+R2L the recall lies between 0.03 and 0.19 for every arm, whatever the loss or the family. On U2R the precision is
 0.669 for MLP-CE with weights and 0.173 for LTN-full.
 
 \paragraph{CIC-IDS2017.}
@@ -656,19 +656,20 @@ pays most, and not on explanation. We ran no drift experiment, and E11 stands as
 \centering
 \footnotesize
 \caption{Scorecard of \cref{sec:scorecard}, 0 to 2 per criterion, with the measure each score rests on. --: the arm uses
-no knowledge. Explanation is given for NSL-KDD / the CIC datasets.}
+no knowledge. Sens.: sensitivity to the knowledge; Expl.: explanation, for NSL-KDD / the CIC datasets; Change: change
+of a rule.}
 \label{tab:res-scorecard}
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lccccp{4.3cm}@{}}
+\begin{tabular}{@{}lcccc l@{}}
 \toprule
-Arm & Setup & Sensitivity & Explanation & Change & Measures \\
+Arm & Setup & Sens. & Expl. & Change & Measures \\
 \midrule
 Rule-only & 0 & 0 & 2 / 2 & 2 & E16, E10, E17 \\
-MLP-CE, both variants & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+MLP-CE, both & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 1D-CNN & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 LTN-sup & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 LTN-full & 0 & 2 & 1 / 2 & 1 & E16, E3, E11, E17 \\
-Random Forest, XGBoost & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
+RF, XGBoost & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 \bottomrule
 \end{tabular}
 \end{table}
