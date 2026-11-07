@@ -25,8 +25,10 @@ Parquet files.
 Two environments were used (\cref{tab:impl-environments}). The server ran every run that
 trains a model: the searches of hyperparameters, the final runs and the stress runs. The laptop
 ran the development, the evaluations of saved models (E10, E12, E17 and the post-check) and the
-timings of E13. The latency of E12 is timed on its CPU.
-% FIXME(open): the NSL-KDD Random Forest and XGBoost use the configuration of the first search (tuning_round1), which ran on the laptop; the other arms were searched on the server. Confirm, and if so state the exception here and in Ch. 8, Sec. 8.1.5.
+timings of E13. The latency of E12 is timed on its CPU. One search ran on the laptop: that of
+Random Forest and XGBoost on NSL-KDD, with the protocol of \cref{sec:impl-tuning}, before the
+server was in use. The server reran the searches of the four neural arms with the common network
+and reused the configurations of the two trees for their final runs.
 
 
 \begin{table}[t]
@@ -234,10 +236,10 @@ shortcut: every Botnet, DDoS, DoS, R2L and U2R flow is TCP, as are 7\,629 of the
 flows, while 58.9\,\% of the Normal flows are not. In CIC-DDoS2019, 261\,613 of the 290\,011 DDoS
 rows of the training day are UDP, against 28\,211 of 33\,940 in the test day. A result that rests
 on the protocol is no evidence about the knowledge. The network of CIC-IDS2017 has 85 inputs, 81
-numeric flow features and the four values of the protocol. No window or source statistic is
+numeric flow features and the four values of the protocol, and that of CIC-DDoS2019 has 79, 76
+numeric features and three values. No window or source statistic is
 computed, as \cref{ch:usecases-design} states.
 % FIXME(open): keeping the protocol as an input is in the code but not yet confirmed as a decision. Confirm, and extend the threats of Ch. 8, Sec. 8.8.
-% FIXME(open): the number of network inputs of CIC-DDoS2019 is in no table; read it from n_features of results/latency/cicddos2019_mlp_noweights_tuned.json.
 
 \subsection{Split strategy: train / validation / test, temporal and random variants}
 \label{sec:impl-splits}
@@ -266,9 +268,9 @@ its class is refused. The test part of E9 is therefore not that of the final run
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Rows of each part for seed 0 at full size. The parts of the CIC datasets are derived
-from the class totals with the stratified split of the code, and the NSL-KDD validation part is
-the one recorded by the runs. Another seed moves rows between training and validation only.}
+\caption{Rows of each part for seed 0 at full size. The parts of NSL-KDD and CIC-IDS2017 are those
+recorded by the runs; those of CIC-DDoS2019 are derived from the class totals with the stratified
+split of the code. Another seed moves rows between training and validation only.}
 \label{tab:impl-splits}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}llrrr@{}}
@@ -294,7 +296,7 @@ CIC-DDoS2019 & Normal & 42\,967 & 7\,582 & 45\,143 \\
 on NSL-KDD and a seventh on CIC-IDS2017, which the selection criterion damps and does not remove.
 R2L is 0.8\,\% of the NSL-KDD validation part and 12.8\,\% of the test file, mostly
 \texttt{guess\_passwd} and \texttt{warezmaster} there, a shift the validation part does not carry.
-% FIXME(open): the per-class sizes of the CIC parts in tab:impl-splits are derived from the class totals; the totals agree with the 1372272 training and validation flows of CIC-IDS2017. Check the rows of R2L, Botnet, U2R and Normal against split_sizes of seed 0 of an E4 run (NSL-KDD, CIC-IDS2017) and of a full-size run of CIC-DDoS2019.
+% FIXME(open): the CIC-DDoS2019 rows of tab:impl-splits are derived from the class totals; check them against split_sizes of seed 0 of a full-size run (the test part, 45143 and 33940, agrees with the transfer).
 
 % ================================================================
 % 9.3 Models under test
@@ -544,15 +546,15 @@ trials only, and the validation part stays whole, so a validation score of the s
 comparable with one of a final run.
 
 The searches leave three limits, discussed with the results in \cref{sec:res-threats} and
-Appendix~\ref{app:hyperparameters}. The epoch cap hardly binds: at most two of the 60 runs of an
-arm end at 100 epochs, no chosen trial does, and no final run of the four neural arms of the
-comparison on the CIC datasets does; the 1D-CNN reaches the cap in at least one final run on
-CIC-DDoS2019. Several best trials lie on the edge of the space, so the best setting may lie outside it;
-the search was not repeated. The budget is equal in trials and not in dimensions: one setting for
+Appendix~\ref{app:hyperparameters}. The epoch cap hardly binds for the four neural arms of the
+comparison: at most two of the 60 runs of an arm end at 100 epochs, no chosen trial does, and one
+final run of the forty on NSL-KDD does, a run of LTN-sup; none does on the CIC datasets. The
+1D-CNN binds more on CIC-DDoS2019: 7 of its 60 tuning runs, one of the three runs of the chosen
+trial and 5 of its 10 final runs end at the cap. Several best trials lie on the edge of the space,
+so the best setting may lie outside it; the 1D-CNN chose a learning rate of $3.4\cdot10^{-4}$ on
+both CIC datasets, close to the lower end. The search was not repeated. The budget is equal in trials and not in dimensions: one setting for
 MLP-CE without weights, two for MLP-CE with weights and the 1D-CNN, four for LTN-sup, five for
 Random Forest, six for XGBoost and LTN-full.
-% FIXME(open): number of NSL-KDD final runs that end at the epoch cap, from epoch_cap_report.py on the final files; Ch. 10 asks for it too.
-% FIXME(open): the tuning runs of the 1D-CNN at the epoch cap and whether its best trials lie on the edge of the space are not in the material used here.
 
 % ================================================================
 % 9.7 Reproducibility package
@@ -579,9 +581,9 @@ known from the result files (\cref{tab:impl-environments}).
 Two limits apply to the runs of the thesis. On the server the code was not a repository, so
 the tuning files, the final runs and the stress runs record the commit as \texttt{unknown} and
 leave the flag of the modified tree empty. A series is identified by its date and by the
-configuration stored in each file. The second limit is the environment: determinism holds
-within one, as \cref{sec:impl-environment} says.
-% FIXME(open): record the commit of each series before any figure is called citable (open point of Ch. 8, Sec. 8.1.5), and check that all finals used the same TF_ENABLE_ONEDNN_OPTS.
+configuration stored in each file, which also records the versions of the packages. No log of
+the runs reports the custom operations of oneDNN as switched on. The second limit is the
+environment: determinism holds within one, as \cref{sec:impl-environment} says.
 % FIXME(open): the environment file of the server (TensorFlow 2.22.0-rc0, Python 3.14) is not in the repository; decide whether to add a second lock file and where the result files are archived (Appendix E).
 % FIXME(open): the streaming pipeline has no code, no configuration and no test in the repository; add its directory and its launch script when the co-supervisor delivers them.
 

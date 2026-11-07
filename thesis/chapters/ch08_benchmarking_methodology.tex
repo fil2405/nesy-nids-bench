@@ -157,14 +157,17 @@ configuration and seed give the same macro-F1 and select the same epoch in our c
 machines and library versions we claim nothing.
 
 Two environments are used. The runs that train a model, final and stress, ran on a server
-(Python 3.14, TensorFlow 2.22.0-rc0, a release candidate). The evaluations of saved models (E10,
+(Python 3.14, TensorFlow 2.22.0-rc0, a release candidate), and so did the searches, except that of
+the two trees on NSL-KDD (\cref{sec:impl-environment}). The evaluations of saved models (E10,
 E12, E17 and the post-check) and the timings of E13 ran on a laptop under WSL2 (Python 3.11,
 TensorFlow 2.21), the latency on its CPU. An evaluation on the laptop recomputes the macro-F1 stored by
 the run, in our checks to within $10^{-4}$. The cells of one table come from one environment,
 each table of results states it, and times are compared only within one
 (\cref{sec:cost-dimension}). Code and configurations are in
-\texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}).
-% FIXME(open): server runs record the commit as unknown (point 22 of the open list); record the commit of each series before any figure is called citable. Check also that all finals used the same TF_ENABLE_ONEDNN_OPTS, which the package sets to 0 unless the environment overrides it.
+\texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}). The copy of the code on the server was not
+a repository, so its runs record the commit as unknown; a series is identified by its date, the
+versions of the packages and the configuration stored in each file. The package sets
+\texttt{TF\_ENABLE\_ONEDNN\_OPTS} to 0, and no log of the runs reports it switched on.
 
 % ================================================================
 \section{Dimension 1 -- Detection quality}
@@ -207,7 +210,6 @@ applies it unchanged to the test part (UC2, UC4). The threshold on $-P(\text{Nor
 at which the validation FPR reaches the alert budget of \cref{sec:alert-budget}, at FPR 0.001 and 0.01,
 and we report the TPR and FPR it gives on the test part and the gap from the budget. The recall on an
 unseen attack (FR4) is read at the same threshold.
-% FIXME(open): the figures come from operating.py on the saved final models (saved_runs.sh); add them to Ch. 10.
 
 \subsection{Cost-sensitive evaluation and the alert-budget view}
 \label{sec:alert-budget}
@@ -218,7 +220,6 @@ classifier over the full range of class distributions and misclassification cost
 \citep{drummond2006cost}. As proposed in \cref{sec:metrics-beyond-accuracy}, we draw them for the
 operator view of attacks against Normal, to show where the ranking of the arms changes with
 prevalence and cost.
-% FIXME(open): the cost curves come from operating.py on the saved final models (saved_tables.py cost); add the figure to Ch. 10.
 What can be argued is the base rate: attacks are rare, so a small FPR still
 buries the analyst in false alarms \citep{axelsson2000baserate}. The alert budget is the number
 of false alarms an analyst can handle, expressed as false alarms per 100\,000 benign flows (the

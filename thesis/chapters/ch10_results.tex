@@ -96,6 +96,62 @@ LTN-full, so parity in macro-F1 between Random Forest and LTN-full hides a very 
 LTN-full is first at the argmax, it raises 281 false alarms per 100\,000 benign flows at that rate, against 25 and 29 for
 the MLP arms. The macro-F1 stays the primary measure, fixed before the runs.
 
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Threshold fixed on validation at a budget of 100 false alarms per 100\,000 benign flows (FPR 0.001) and
+applied unchanged to the test part: TPR and alerts per 100\,000 benign test flows, mean over seeds 0 to 9. The rule-only
+classifier has no score to move; on NSL-KDD and CIC-DDoS2019 its validation FPR exceeds the budget, so it raises no
+alert.}
+\label{tab:res-operating}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{NSL-KDD} & \multicolumn{2}{c}{CIC-IDS2017} & \multicolumn{2}{c}{CIC-DDoS2019} \\
+Arm & TPR & Alerts & TPR & Alerts & TPR & Alerts \\
+\midrule
+Rule-only          & 0.000 & 0     & 0.921  & 41  & 0.000 & 0 \\
+MLP-CE, no weights & 0.639 & 3\,365 & 0.9997 & 110 & 0.997 & 886 \\
+MLP-CE, weights    & 0.616 & 2\,961 & 0.9997 & 107 & 0.996 & 901 \\
+LTN-sup            & 0.493 & 2\,090 & 0.9993 & 107 & 0.967 & 247 \\
+LTN-full           & 0.557 & 2\,114 & 0.9994 & 108 & 0.846 & 283 \\
+Random Forest      & 0.598 & 2\,778 & 0.9999 & 99  & 0.992 & 2\,042 \\
+XGBoost            & 0.649 & 2\,798 & 0.9992 & 99  & 0.986 & 4\,811 \\
+\midrule
+1D-CNN             & 0.585 & 6\,701 & 0.9998 & 110 & 0.989 & 710 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Threshold fixed on validation.}
+A deployable figure needs a threshold chosen before the test part is seen (\cref{sec:operating-point}).
+\Cref{tab:res-operating} sets it on validation at the budget of 100 alerts per 100\,000 benign flows. On CIC-IDS2017 the
+budget holds on the test part, 99 to 110 alerts, with a TPR of at least 0.999 for every learning arm: its test part is
+drawn from the same days. On the two datasets whose test part comes from elsewhere the budget breaks. On NSL-KDD every
+learning arm raises 2\,090 to 6\,701 alerts, 21 to 67 times the budget, and detects 0.49 to 0.65 of the attacks; at a
+budget of 1\,000 the trees detect 0.81 and the networks at most 0.70, with 3\,603 to 7\,800 alerts. On CIC-DDoS2019 the
+two LTN arms stay closest to the budget, 247 and 283 alerts against 886 and 901 for the MLP arms and 2\,042 and 4\,811 for
+the trees, and at a budget of 1\,000 the trees flag 25\,108 and 18\,820 of every 100\,000 benign flows. The LTN arms pay
+in detection: LTN-full detects 0.846 with a deviation of 0.181 over the seeds. These are descriptive means, without a
+test. The test part of CIC-DDoS2019 is another day of capture, so the shift there is in time.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\textwidth]{Images/cost_nslkdd.pdf}
+\caption{Cost curves of NSL-KDD, attacks against Normal on the test part: normalised expected cost against the
+probability cost of an attack, lower envelope of the ROC points, mean over seeds 0 to 9.}
+\label{fig:res-cost-nslkdd}
+\end{figure}
+
+\paragraph{Cost curves.}
+The cost curves read every threshold off the test part, so they show where a ranking changes, not a deployable cost
+(\cref{sec:alert-budget}). On NSL-KDD (\cref{fig:res-cost-nslkdd}) XGBoost has the lowest cost for a probability cost of
+an attack between 0.08 and 0.44 and Random Forest from 0.45 up; the area under the curve is 0.058 for Random Forest,
+0.067 for XGBoost, 0.099 to 0.116 for the networks and 0.220 for the rules. The two LTN arms lie with the MLP arms at
+every cost. On CIC-IDS2017 Random Forest is lowest over the whole range, and all learning arms stay below 0.001. On
+CIC-DDoS2019, where LTN-full is first at the argmax, the two MLP arms are lowest up to a probability cost of 0.89, with an
+area of 0.0033 against 0.0044 and 0.0046 for the LTN arms, and Random Forest only above it.
+
 \paragraph{Domain rules (C5).}
 The violation is defined against the rule and not the label, so a low rate is not a merit
 (\cref{sec:rule-violation-rate}). On NSL-KDD A3, the flag RSTR implies Probe, has a rule precision of 0.130 on the test
@@ -136,10 +192,9 @@ Holm the pair is significant on none (\cref{tab:res-pairs}); the raw $p$-values 
 $[+0.0013;\,+0.0216]$, with LTN-full better in 8 of 10 seeds; on CIC-DDoS2019 it is $+0.0017$,
 $[+0.0001;\,+0.0034]$, 8 of 10; on NSL-KDD $+0.0079$, $[-0.0174;\,+0.0199]$, 6 of 10. These runs show no
 demonstrated effect of the knowledge on the macro-F1 and do not support the gain that H1 predicts.
-% FIXME(open): the NSL-KDD intervals and wins of the pairs other than the knowledge pair come from the paired script of 23 October, whose medians and Holm values match compare_runs.py; confirm them against compare_runs.py.
 
 \paragraph{The effect of the loss.}
-LTN-sup is worse than MLP-CE with weights on NSL-KDD ($-0.0473$, interval $[-0.0515;\,-0.0192]$, 1 of 10
+LTN-sup is worse than MLP-CE with weights on NSL-KDD ($-0.0473$, interval $[-0.0515;\,-0.0205]$, 1 of 10
 seeds) and on CIC-IDS2017 ($-0.0206$, $[-0.0337;\,-0.0112]$, 0 of 10), and equal on CIC-DDoS2019. The LTN
 training without any domain axiom is not neutral on two datasets, and the epoch cap does not explain it
 (\cref{sec:res-threats}). Class weights help MLP-CE on NSL-KDD ($+0.0366$) and on CIC-DDoS2019 ($+0.0014$).
@@ -152,9 +207,12 @@ the tree is better in no seed. We give no single summary of H9.
 
 \paragraph{All arms together.}
 The Friedman test over the six learning arms of the comparison gives $p = 0.0001$ on NSL-KDD and
-$p < 0.0001$ on CIC-IDS2017, with a Nemenyi critical difference of 2.38 (\cref{sec:friedman}). On
+$p < 0.0001$ on the two CIC datasets, with a Nemenyi critical difference of 2.38 (\cref{sec:friedman}). On
 CIC-IDS2017 Random Forest ranks above the two LTN arms and the two MLP arms, and XGBoost above LTN-sup, by
-more than the critical difference; the MLP arms and the LTN arms are not separated. The mean ranks are in
+more than the critical difference; the MLP arms and the LTN arms are not separated. On NSL-KDD
+MLP-CE with weights ranks above the two trees, above Random Forest by 2.4, just over the critical
+difference. On CIC-DDoS2019 LTN-full ranks above MLP-CE without weights and the two trees, and LTN-sup
+and MLP-CE with weights above XGBoost. The mean ranks are in
 \cref{app:results}. With ten seeds the smallest exact $p$ is about 0.002, so a significant difference is a statement
 about the training randomness of one dataset, and on CIC-DDoS2019 two of the three significant differences are below
 half a point: significance and size for an operator are different things.
@@ -166,7 +224,7 @@ its three $p$-values, one per dataset, are corrected with Holm among themselves 
 1D-CNN is worse by $0.017$, interval $[-0.044;\,-0.005]$, 1 of 10 seeds, $p$ 0.006 and Holm 0.018; on CIC-IDS2017 the
 difference is $+0.003$, $p$ 0.56, and on CIC-DDoS2019 $-0.000$, $p$ 0.92. The 1D-CNN has 506\,821, 351\,431 and
 326\,210 parameters on the three datasets, against 65\,029 for the common network on NSL-KDD, and on CIC-DDoS2019 it
-reaches the cap of 100 epochs in at least one seed. Neither lever moves the macro-F1 much: the knowledge by $+0.008$,
+reaches the cap of 100 epochs in 5 of 10 seeds. Neither lever moves the macro-F1 much: the knowledge by $+0.008$,
 $+0.015$ and $+0.002$, the architecture by $-0.017$, $+0.003$ and $-0.000$. On CIC-IDS2017 the trees stay ahead of
 every network.
 
@@ -358,8 +416,8 @@ trees. H2, read on the macro-F1, is not supported: the knowledge arm does not ga
 
 E9 holds fine labels of CIC-IDS2017 out of training and adds them to the test part, reads Portmap of CIC-DDoS2019 on
 the final runs and transfers a model from CIC-IDS2017 to CIC-DDoS2019 (\cref{sec:knowledge-sensitivity}). The share
-detected is the share of held-out flows predicted as not Normal, read at the argmax; the reading at a threshold fixed
-on validation was not computed. The test part of the held-out scenarios is not that of the final runs.
+detected is the share of held-out flows predicted as not Normal, read at the argmax; the threshold fixed on
+validation is read on the final runs only. The test part of the held-out scenarios is not that of the final runs.
 
 \paragraph{Held-out labels of CIC-IDS2017.}
 About a third of the held-out slow DoS flows are detected, 0.32 to 0.36, by every arm except XGBoost, 0.12. SSH-Patator
@@ -373,6 +431,13 @@ LDAP, MSSQL, NetBIOS and UDP are not new attacks: the training day holds them un
 \texttt{DrDoS\_}, and every learned arm detects 99 to 100\,\% of them. Portmap, with 588 flows, has no counterpart in
 training. Every learned arm detects 95 to 99\,\% of it, and LTN-full (0.961) does not exceed LTN-sup (0.963): here an
 unseen attack is easy and does not separate the arms.
+
+\paragraph{At the threshold fixed on validation.}
+On the final runs, with the budget of 1\,000 alerts per 100\,000 benign flows (\cref{sec:res-aggregate}), the flows of
+the NSL-KDD test file whose labels its training file lacks are detected at 0.70 and 0.68 by the trees and at 0.33 to
+0.47 by the networks, 0.42 by LTN-full. On CIC-DDoS2019 every learned arm detects at least 0.999 of the labels found only
+in the test day. At the budget of 100 LTN-full drops to 0.880, with a deviation of 0.191 over the seeds, and the other
+learned arms stay at or above 0.984.
 
 \paragraph{Transfer from CIC-IDS2017 to CIC-DDoS2019.}
 The task is Normal against Attack, with the hyperparameters of the final runs of CIC-IDS2017. The base \texttt{xfer}
@@ -639,7 +704,9 @@ LTN-full has the highest macro-F1 on CIC-DDoS2019 only, a nearly saturated datas
 positive rate of 0.90 are about ten times those of the MLP arms. On CIC-IDS2017 the trees are above it, and on NSL-KDD it
 is tied with Random Forest and below MLP-CE with weights. Under scarce labels, thinned rare classes, held-out attacks,
 degraded knowledge and noise it behaves as LTN-sup. The one place where the knowledge in training changes the result
-beyond the seeds is the transfer, and there it only reaches the best arm without knowledge.
+beyond the seeds is the transfer, and there it only reaches the best arm without knowledge. With a threshold fixed on
+validation the picture on CIC-DDoS2019 shifts: the two LTN arms stay closest to the alert budget on the test day
+and detect fewer attacks. Their scores place the same trade-off elsewhere; neither reading makes them better.
 
 Four readings of ours could explain why the knowledge effect is small. On CIC-IDS2017 the axioms cover classes on which
 every arm is already at an average precision of 1.000. Six of the ten axioms outside the weak variant were extracted from
@@ -689,7 +756,8 @@ small as our knowledge pair, and a larger one on held-out attack classes, which 
 \paragraph{Internal.}
 Several best trials lie at the edge of the search space (\cref{app:hyperparameters}). The epoch cap of 100 hardly
 binds: at most two of the 60 tuning runs of an arm end at it, no chosen trial does, and none of the 80 final runs of the
-four neural arms of the comparison on the CIC datasets does; the 1D-CNN reaches it in at least one seed on CIC-DDoS2019.
+four neural arms of the comparison on the CIC datasets does, and one of the 40 on NSL-KDD does, a run of LTN-sup; the
+1D-CNN reaches it in 5 of 10 seeds on CIC-DDoS2019.
 The cap does not explain the cost of the LTN loss. Part of the knowledge was read from the data, so E3, E9 on the slow
 attacks and E11 test bases that were already calibrated. The post-check without A3 or A2 was chosen after reading the test
 part and is a diagnosis only; that of the transfer is a configuration, with the threshold of M1 taken from the training
@@ -718,7 +786,6 @@ $p$-values as description.
 The server runs record the commit as unknown, so a series is identified by its date, and the server ran TensorFlow
 2.22.0-rc0, a release candidate. Determinism holds within one machine (\cref{sec:reproducibility}), and the evaluations on
 the laptop recompute the stored macro-F1 to within $10^{-4}$.
-% FIXME(open): record the commit of each series before any figure is called citable (open point of Ch. 8, Sec. 8.1.5), and check that all finals used the same TF_ENABLE_ONEDNN_OPTS.
 
 % ================================================================
 % 10.10 Summary

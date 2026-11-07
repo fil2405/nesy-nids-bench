@@ -17,6 +17,7 @@ Arm & Parameters searched \\
 \midrule
 MLP-CE & Learning rate, log $[3\cdot10^{-4}, 3\cdot10^{-3}]$. Weighted variant: also the
   exponent of the class weights, $[0.25, 1]$ \\
+1D-CNN & As MLP-CE with weights \\
 LTN-sup & Learning rate as above; exponent of the batch quota per class, $[0, 0.5]$;
   minimum examples per class in a batch, $\{2,4,8,16\}$; exponent $p$ of the
   aggregator, $\{1,2,4,6\}$ \\
@@ -32,4 +33,33 @@ Rule-only & None; nothing is learned \\
 \bottomrule
 \end{tabular}
 \end{table}
-% FIXME(open): add the values selected by the tuning of each arm and dataset after the final runs.
+
+\Cref{tab:tuning-selected} gives the values chosen by the search and used by the final runs. The
+same draw of the Latin hypercube can win on more than one dataset, since the search seed and the
+space are the same, and the learning rate $3.4\cdot10^{-4}$ of MLP-CE with weights and of the
+1D-CNN on the CIC datasets is one such draw. The two trees on NSL-KDD were searched on the laptop
+(\cref{sec:impl-environment}).
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Values selected by the search, used by the ten final runs. lr: learning rate; $\gamma$:
+exponent of the class weights; $\alpha$: exponent of the batch quota per class; $m$: minimum
+examples per class in a batch; $p$: exponent of the aggregator; $w$: weight of the domain axioms;
+$s$: scale of the widths.}
+\label{tab:tuning-selected}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{2.2cm}p{3.6cm}p{3.6cm}p{3.6cm}@{}}
+\toprule
+Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+MLP-CE, no weights & lr $2.79\cdot10^{-3}$ & lr $7.50\cdot10^{-4}$ & lr $5.45\cdot10^{-4}$ \\
+MLP-CE, weights & lr $6.12\cdot10^{-4}$, $\gamma$ 0.253 & lr $3.44\cdot10^{-4}$, $\gamma$ 0.325 & lr $3.44\cdot10^{-4}$, $\gamma$ 0.325 \\
+1D-CNN & lr $2.14\cdot10^{-3}$, $\gamma$ 0.424 & lr $3.44\cdot10^{-4}$, $\gamma$ 0.325 & lr $3.44\cdot10^{-4}$, $\gamma$ 0.325 \\
+LTN-sup & lr $5.01\cdot10^{-4}$, $\alpha$ 0.202, $m$ 2, $p$ 6 & lr $4.03\cdot10^{-4}$, $\alpha$ 0.001, $m$ 8, $p$ 4 & lr $5.41\cdot10^{-4}$, $\alpha$ 0.474, $m$ 4, $p$ 6 \\
+LTN-full & lr $5.05\cdot10^{-4}$, $\alpha$ 0.028, $m$ 16, $p$ 6, $w$ 0.1, $s$ 1.29 & lr $3.33\cdot10^{-4}$, $\alpha$ 0.154, $m$ 8, $p$ 4, $w$ 0.5, $s$ 0.534 & lr $5.05\cdot10^{-4}$, $\alpha$ 0.028, $m$ 16, $p$ 6, $w$ 0.1, $s$ 1.29 \\
+Random Forest & 300 trees, depth 30, leaf 5, features 0.3, $\gamma$ 0.864 & 100 trees, no depth limit, leaf 1, features 0.3, $\gamma$ 0.608 & 100 trees, no depth limit, leaf 1, features 0.3, $\gamma$ 0.608 \\
+XGBoost & lr 0.042, depth 8, child weight 1.17, rows 0.759, columns 0.907, $\gamma$ 0.499 & lr 0.081, depth 8, child weight 2.79, rows 0.608, columns 0.518, $\gamma$ 0.866 & lr 0.280, depth 9, child weight 2.82, rows 0.960, columns 0.983, $\gamma$ 0.368 \\
+\bottomrule
+\end{tabular}
+\end{table}

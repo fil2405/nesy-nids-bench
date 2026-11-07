@@ -34,3 +34,147 @@ Feature & Note & Feature & Note \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{table}[p]
+\centering
+\scriptsize
+\caption{CIC-IDS2017: input columns in the order of the data. cat., $k$: categorical with $k$ values in the whole dataset; const.: one value in all of it; axiom identifiers: axioms of the main knowledge base that read the column (\cref{app:axioms}).}
+\label{tab:app-features-cicids2017}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Feature & Note & Feature & Note \\
+\midrule
+\texttt{Protocol} & cat., 4 & \texttt{Packet Length Max} &  \\
+\texttt{Flow Duration} &  & \texttt{Packet Length Mean} &  \\
+\texttt{Total Fwd Packet} &  & \texttt{Packet Length Std} &  \\
+\texttt{Total Bwd packets} &  & \texttt{Packet Length Variance} &  \\
+\texttt{Total Length of Fwd Packet} & A1 & \texttt{FIN Flag Count} &  \\
+\texttt{Total Length of Bwd Packet} &  & \texttt{SYN Flag Count} &  \\
+\texttt{Fwd Packet Length Max} & A1, A2 & \texttt{RST Flag Count} &  \\
+\texttt{Fwd Packet Length Min} &  & \texttt{PSH Flag Count} &  \\
+\texttt{Fwd Packet Length Mean} &  & \texttt{ACK Flag Count} &  \\
+\texttt{Fwd Packet Length Std} &  & \texttt{URG Flag Count} &  \\
+\texttt{Bwd Packet Length Max} &  & \texttt{CWR Flag Count} &  \\
+\texttt{Bwd Packet Length Min} &  & \texttt{ECE Flag Count} &  \\
+\texttt{Bwd Packet Length Mean} &  & \texttt{Down/Up Ratio} &  \\
+\texttt{Bwd Packet Length Std} & A2 & \texttt{Average Packet Size} &  \\
+\texttt{Flow Bytes/s} &  & \texttt{Fwd Segment Size Avg} &  \\
+\texttt{Flow Packets/s} &  & \texttt{Bwd Segment Size Avg} & A1 \\
+\texttt{Flow IAT Mean} &  & \texttt{Fwd Bytes/Bulk Avg} &  \\
+\texttt{Flow IAT Std} &  & \texttt{Fwd Packet/Bulk Avg} &  \\
+\texttt{Flow IAT Max} &  & \texttt{Fwd Bulk Rate Avg} &  \\
+\texttt{Flow IAT Min} &  & \texttt{Bwd Bytes/Bulk Avg} &  \\
+\texttt{Fwd IAT Total} &  & \texttt{Bwd Packet/Bulk Avg} &  \\
+\texttt{Fwd IAT Mean} &  & \texttt{Bwd Bulk Rate Avg} &  \\
+\texttt{Fwd IAT Std} &  & \texttt{Subflow Fwd Packets} &  \\
+\texttt{Fwd IAT Max} &  & \texttt{Subflow Fwd Bytes} &  \\
+\texttt{Fwd IAT Min} &  & \texttt{Subflow Bwd Packets} &  \\
+\texttt{Bwd IAT Total} &  & \texttt{Subflow Bwd Bytes} &  \\
+\texttt{Bwd IAT Mean} &  & \texttt{FWD Init Win Bytes} &  \\
+\texttt{Bwd IAT Std} &  & \texttt{Bwd Init Win Bytes} &  \\
+\texttt{Bwd IAT Max} &  & \texttt{Fwd Act Data Pkts} &  \\
+\texttt{Bwd IAT Min} &  & \texttt{Fwd Seg Size Min} &  \\
+\texttt{Fwd PSH Flags} &  & \texttt{Active Mean} &  \\
+\texttt{Bwd PSH Flags} & A2 & \texttt{Active Std} &  \\
+\texttt{Fwd URG Flags} &  & \texttt{Active Max} &  \\
+\texttt{Bwd URG Flags} &  & \texttt{Active Min} &  \\
+\texttt{Fwd RST Flags} &  & \texttt{Idle Mean} &  \\
+\texttt{Bwd RST Flags} &  & \texttt{Idle Std} &  \\
+\texttt{Fwd Header Length} &  & \texttt{Idle Max} &  \\
+\texttt{Bwd Header Length} &  & \texttt{Idle Min} &  \\
+\texttt{Fwd Packets/s} &  & \texttt{ICMP Code} &  \\
+\texttt{Bwd Packets/s} &  & \texttt{ICMP Type} &  \\
+\texttt{Packet Length Min} &  & \texttt{Total TCP Flow Time} &  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\scriptsize
+\caption{CIC-DDoS2019: input columns in the order of the data. cat., $k$: categorical with $k$ values in the sampled training day; const.: one value in all of it; axiom identifiers: axioms of the main knowledge base that read the column (\cref{app:axioms}).}
+\label{tab:app-features-cicddos2019}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Feature & Note & Feature & Note \\
+\midrule
+\texttt{Protocol} & cat., 3; A1 & \texttt{Max Packet Length} &  \\
+\texttt{Flow Duration} &  & \texttt{Packet Length Mean} &  \\
+\texttt{Total Fwd Packets} &  & \texttt{Packet Length Std} &  \\
+\texttt{Total Backward Packets} & A1 & \texttt{Packet Length Variance} &  \\
+\texttt{Total Length of Fwd Packets} &  & \texttt{FIN Flag Count} & const. \\
+\texttt{Total Length of Bwd Packets} &  & \texttt{SYN Flag Count} &  \\
+\texttt{Fwd Packet Length Max} &  & \texttt{RST Flag Count} &  \\
+\texttt{Fwd Packet Length Min} &  & \texttt{PSH Flag Count} & const. \\
+\texttt{Fwd Packet Length Mean} &  & \texttt{ACK Flag Count} &  \\
+\texttt{Fwd Packet Length Std} &  & \texttt{URG Flag Count} &  \\
+\texttt{Bwd Packet Length Max} &  & \texttt{CWE Flag Count} &  \\
+\texttt{Bwd Packet Length Min} &  & \texttt{ECE Flag Count} & const. \\
+\texttt{Bwd Packet Length Mean} &  & \texttt{Down/Up Ratio} &  \\
+\texttt{Bwd Packet Length Std} &  & \texttt{Average Packet Size} &  \\
+\texttt{Flow Bytes/s} &  & \texttt{Avg Fwd Segment Size} &  \\
+\texttt{Flow Packets/s} & A2 & \texttt{Avg Bwd Segment Size} &  \\
+\texttt{Flow IAT Mean} &  & \texttt{Fwd Avg Bytes/Bulk} & const. \\
+\texttt{Flow IAT Std} &  & \texttt{Fwd Avg Packets/Bulk} & const. \\
+\texttt{Flow IAT Max} &  & \texttt{Fwd Avg Bulk Rate} & const. \\
+\texttt{Flow IAT Min} &  & \texttt{Bwd Avg Bytes/Bulk} & const. \\
+\texttt{Fwd IAT Total} &  & \texttt{Bwd Avg Packets/Bulk} & const. \\
+\texttt{Fwd IAT Mean} &  & \texttt{Bwd Avg Bulk Rate} & const. \\
+\texttt{Fwd IAT Std} &  & \texttt{Subflow Fwd Packets} &  \\
+\texttt{Fwd IAT Max} &  & \texttt{Subflow Fwd Bytes} &  \\
+\texttt{Fwd IAT Min} &  & \texttt{Subflow Bwd Packets} &  \\
+\texttt{Bwd IAT Total} &  & \texttt{Subflow Bwd Bytes} &  \\
+\texttt{Bwd IAT Mean} &  & \texttt{Init\_Win\_bytes\_forward} &  \\
+\texttt{Bwd IAT Std} &  & \texttt{Init\_Win\_bytes\_backward} &  \\
+\texttt{Bwd IAT Max} &  & \texttt{act\_data\_pkt\_fwd} &  \\
+\texttt{Bwd IAT Min} &  & \texttt{min\_seg\_size\_forward} &  \\
+\texttt{Fwd PSH Flags} &  & \texttt{Active Mean} &  \\
+\texttt{Bwd PSH Flags} & const. & \texttt{Active Std} &  \\
+\texttt{Fwd URG Flags} & const. & \texttt{Active Max} &  \\
+\texttt{Bwd URG Flags} & const. & \texttt{Active Min} &  \\
+\texttt{Fwd Header Length} &  & \texttt{Idle Mean} &  \\
+\texttt{Bwd Header Length} &  & \texttt{Idle Std} &  \\
+\texttt{Fwd Packets/s} &  & \texttt{Idle Max} &  \\
+\texttt{Bwd Packets/s} &  & \texttt{Idle Min} &  \\
+\texttt{Min Packet Length} &  &  &  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\scriptsize
+\caption{Common schema of the transfer: columns of CIC-IDS2017 whose name changes, with the name of CIC-DDoS2019 they take. 77 columns are common.}
+\label{tab:app-transfer-schema}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}ll@{}}
+\toprule
+CIC-IDS2017 & CIC-DDoS2019 \\
+\midrule
+\texttt{Total Fwd Packet} & \texttt{Total Fwd Packets} \\
+\texttt{Total Bwd packets} & \texttt{Total Backward Packets} \\
+\texttt{Total Length of Fwd Packet} & \texttt{Total Length of Fwd Packets} \\
+\texttt{Total Length of Bwd Packet} & \texttt{Total Length of Bwd Packets} \\
+\texttt{Packet Length Min} & \texttt{Min Packet Length} \\
+\texttt{Packet Length Max} & \texttt{Max Packet Length} \\
+\texttt{CWR Flag Count} & \texttt{CWE Flag Count} \\
+\texttt{Fwd Segment Size Avg} & \texttt{Avg Fwd Segment Size} \\
+\texttt{Bwd Segment Size Avg} & \texttt{Avg Bwd Segment Size} \\
+\texttt{Fwd Bytes/Bulk Avg} & \texttt{Fwd Avg Bytes/Bulk} \\
+\texttt{Fwd Packet/Bulk Avg} & \texttt{Fwd Avg Packets/Bulk} \\
+\texttt{Fwd Bulk Rate Avg} & \texttt{Fwd Avg Bulk Rate} \\
+\texttt{Bwd Bytes/Bulk Avg} & \texttt{Bwd Avg Bytes/Bulk} \\
+\texttt{Bwd Packet/Bulk Avg} & \texttt{Bwd Avg Packets/Bulk} \\
+\texttt{Bwd Bulk Rate Avg} & \texttt{Bwd Avg Bulk Rate} \\
+\texttt{FWD Init Win Bytes} & \texttt{Init\_Win\_bytes\_forward} \\
+\texttt{Bwd Init Win Bytes} & \texttt{Init\_Win\_bytes\_backward} \\
+\texttt{Fwd Act Data Pkts} & \texttt{act\_data\_pkt\_fwd} \\
+\texttt{Fwd Seg Size Min} & \texttt{min\_seg\_size\_forward} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% only CIC-IDS2017: Fwd RST Flags, Bwd RST Flags, ICMP Code, ICMP Type, Total TCP Flow Time
+% only CIC-DDoS2019: none

@@ -29,7 +29,8 @@ columns \texttt{id}, \texttt{Flow ID}, \texttt{Src IP}, \texttt{Src Port}, \text
 \texttt{Dst Port}, \texttt{Timestamp} and \texttt{Attempted Category} are not inputs: they name a
 flow, its endpoints or its time, or they repeat the label. Without the destination port, a scan
 whose flows differ only in the port scanned becomes a set of identical rows, which the cleaning
-removes. \texttt{Protocol} is categorical, with the names of the protocol numbers.
+removes. \texttt{Protocol} is categorical, with the names of the protocol numbers. The 82 input
+columns give the network 85 inputs (\cref{tab:app-features-cicids2017}).
 
 \section{CIC-DDoS2019}
 
@@ -37,17 +38,21 @@ The columns \texttt{Flow ID}, \texttt{Source IP}, \texttt{Source Port}, \texttt{
 \texttt{Destination Port}, \texttt{Timestamp} and the unnamed row index are not inputs, for the
 same reasons, nor is \texttt{SimillarHTTP}, a text column. \texttt{Inbound} records the direction of the capture, not a
 property of the traffic, and is kept in the data but never given to a model. The header length
-written twice is read once (\cref{sec:impl-cic}). \texttt{Protocol} is categorical.
+written twice is read once (\cref{sec:impl-cic}). \texttt{Protocol} is categorical, and the 77
+input columns give the network 79 inputs. Twelve columns hold one value in the whole training day:
+the six bulk averages, three of the flag counts and three of the flag columns per direction
+(\cref{tab:app-features-cicddos2019}). They carry nothing to the models trained on that day.
 
 \section{Cross-dataset mapping}
 
 The transfer of E9 trains on CIC-IDS2017 and tests on CIC-DDoS2019, whose flows come from two
 versions of CICFlowMeter. The common schema of \cref{sec:impl-schema} matches the columns by a
 normalised name and sixteen pairs by hand, and takes the names of CIC-DDoS2019.
-\Cref{tab:app-transfer-schema} lists the columns of CIC-IDS2017 that change name, and the
-columns that one dataset has and the other lacks stay out of the transfer. Equal names do not
+\Cref{tab:app-transfer-schema} lists the nineteen columns of CIC-IDS2017 that change name. Every
+column of CIC-DDoS2019 has a counterpart, and five columns of CIC-IDS2017 have none and stay out
+of the transfer: \texttt{Fwd RST Flags}, \texttt{Bwd RST Flags}, \texttt{ICMP Code},
+\texttt{ICMP Type} and \texttt{Total TCP Flow Time}. The common schema has 77 columns. Equal names do not
 make equal measures: the extractors differ, so a column with one name can be computed differently
 on the two sides.
 
 \input{back/appendixD_tables}
-% FIXME(open): the tables of CIC-IDS2017, CIC-DDoS2019 and of the transfer schema need the CIC data; run analysis/feature_dictionary.py on the laptop, which rewrites back/appendixD_tables.tex, then name the columns left out of the transfer in the last section.

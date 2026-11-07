@@ -41,36 +41,36 @@ The Nemenyi critical difference is 2.38.}
 \toprule
 Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
 \midrule
-MLP-CE, no weights & -- & 3.6 & 4.2 \\
-MLP-CE, weights    & -- & 3.5 & 2.6 \\
-LTN-sup            & -- & 5.6 & 2.4 \\
-LTN-full           & -- & 4.6 & 1.3 \\
-Random Forest      & -- & 1.0 & 4.5 \\
-XGBoost            & -- & 2.7 & 6.0 \\
+MLP-CE, no weights & 3.3 & 3.6 & 4.2 \\
+MLP-CE, weights    & 1.3 & 3.5 & 2.6 \\
+LTN-sup            & 3.6 & 5.6 & 2.4 \\
+LTN-full           & 3.6 & 4.6 & 1.3 \\
+Random Forest      & 3.7 & 1.0 & 4.5 \\
+XGBoost            & 5.5 & 2.7 & 6.0 \\
+\midrule
+Friedman $p$       & 0.0001 & $<$0.0001 & $<$0.0001 \\
 \bottomrule
 \end{tabular}
 \end{table}
-% FIXME(open): the mean ranks on NSL-KDD and the Friedman p-value on CIC-DDoS2019 are not in the material used here; fill them from compare_runs.py.
 
 \begin{table}[htbp]
 \centering
 \footnotesize
 \caption{Epoch selected in the final runs of the four neural arms of the comparison, minimum to maximum over the ten
-seeds. The cap is 100 epochs, and no run of these arms reached it.}
+seeds. The cap is 100 epochs; one NSL-KDD run of LTN-sup reached it.}
 \label{tab:app-epochs}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Arm & NSL-KDD & CIC-IDS2017 & CIC-DDoS2019 \\
 \midrule
-MLP-CE, no weights & -- & 11--35 & 27--69 \\
-MLP-CE, weights    & -- & 10--37 & 19--62 \\
-LTN-sup            & -- & 11--43 & 9--25 \\
-LTN-full           & -- & 16--53 & 13--42 \\
+MLP-CE, no weights & 13--49 & 11--35 & 27--69 \\
+MLP-CE, weights    & 8--35 & 10--37 & 19--62 \\
+LTN-sup            & 17--99 & 11--43 & 9--25 \\
+LTN-full           & 25--84 & 16--53 & 13--42 \\
 \bottomrule
 \end{tabular}
 \end{table}
-% FIXME(open): the epochs selected in the NSL-KDD finals and the number of NSL-KDD final runs at the cap are not in the material used here; fill them from epoch_cap_report.py.
 
 \section{Sensitivity to the knowledge and to the semantics}
 
