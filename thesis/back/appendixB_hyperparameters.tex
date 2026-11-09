@@ -4,6 +4,10 @@
 
 \Cref{tab:tuning-spaces} gives the space of each arm (\cref{sec:matched-tuning}). Each arm
 is searched with 20 trials of 3 seeds. Ranges are uniform, log-uniform (log) or a list.
+Fixed in every trial are, for the neural arms, the network of \cref{sec:impl-mlp} or that of the
+1D-CNN, batches of 256 and at most 100 epochs; for XGBoost at most 300 rounds; and for every arm
+the selection rule of \cref{sec:matched-tuning}. On CIC-IDS2017 the trials train on a quarter of
+the Normal rows.
 
 \begin{table}[htbp]
 \centering

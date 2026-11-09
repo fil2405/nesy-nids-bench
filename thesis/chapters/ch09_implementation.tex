@@ -25,10 +25,10 @@ Parquet files.
 Two environments were used (\cref{tab:impl-environments}). The server ran every run that
 trains a model: the searches of hyperparameters, the final runs and the stress runs. The laptop
 ran the development, the evaluations of saved models (E10, E12, E17 and the post-check) and the
-timings of E13. The latency of E12 is timed on its CPU. One search ran on the laptop: that of
-Random Forest and XGBoost on NSL-KDD, with the protocol of \cref{sec:impl-tuning}, before the
-server was in use. The server reran the searches of the four neural arms with the common network
-and reused the configurations of the two trees for their final runs.
+timings of E13. The latency of E12 is timed on its CPU. One search ran on the laptop,
+that of Random Forest and XGBoost on NSL-KDD, with the protocol of \cref{sec:impl-tuning}; the
+final runs of the two trees use its configurations. The searches of the four neural arms ran on
+the server with the common network.
 
 
 \begin{table}[t]
@@ -74,19 +74,20 @@ transformed ones, so the rules read the units of the data.
 \subsection{NSL-KDD pipeline (inherited, corrected)}
 \label{sec:impl-nslkdd}
 
-NSL-KDD is the version of KDD Cup 99 that Tavallaee et al. \citep{tavallaee2009kddcup99} made
-by removing redundant records. We use the official files, KDDTrain+ with 125\,973 records and
-KDDTest+ with 22\,544. A record has 41 features, an attack name and a difficulty score, which
-comes from classifiers that had seen the labels and is never an input.
+NSL-KDD is the version of KDD Cup 99 that Tavallaee et al. \citep{tavallaee2009kddcup99} built
+from selected records of the full dataset, without its redundant records. We use the official files, KDDTrain+ with 125\,973 records and
+KDDTest+ with 22\,544. A record has 41 features, an attack name and a difficulty score. The score
+counts how many of 21 trained classifiers labelled the record correctly, so it depends on the
+label, and it is never an input.
 
 The mapping of attack names to five classes, the one-hot coding of \texttt{protocol\_type},
 \texttt{service} and \texttt{flag} (3, 70 and 11 values) and the standardisation of the 38
 numeric columns come from the earlier project of the author. The network has 122 inputs, 121
-for seed 2, whose training part lacks the one record of the service \texttt{http\_2784}. Three
-things differ. The validation part is cut from the training file, so the test file chooses
-nothing. No oversampling is applied. The two \texttt{worm} records of KDDTest+ are kept, in DoS.
+for seed 2, whose training part lacks the one record of the service \texttt{http\_2784}. The
+validation part is cut from the training file, and no oversampling is applied.
 
-Three attack names occur only in the test file and are assigned by convention:
+The mapping does not cover three attack names that occur only in the test file, and we assign
+them by convention:
 \texttt{snmpgetattack} and \texttt{httptunnel} to R2L and \texttt{worm} to DoS. With
 \texttt{httptunnel} in U2R, KDDTest+ would have 200 U2R and 2\,752 R2L records, not 67 and
 2\,885. In KDDTest+, 3\,750 records, 16.6\,\%, have an attack name that KDDTrain+ lacks, and
@@ -98,11 +99,13 @@ test file does not contain.
 
 \paragraph{CIC-IDS2017.}
 The original capture \citep{sharafaldin2018cicids2017} has known errors in flow extraction and
-labelling \citep{engelen2021troubleshooting}. Liu et al. \citep{liu2022error} publish a later
-version with improved ground truth and more features, and we use it. It ships five daily files
+labelling \citep{engelen2021troubleshooting}. Liu et al. \citep{liu2022error} publish a fully
+recreated version with corrected labelling, and we use it. It ships five daily files
 with 2\,099\,976 flows: identifiers, addresses, ports, the protocol, a time stamp, the numeric
 flow features, a label and an Attempted category. An attack flow that carried no data forward is
-labelled ``Attempted''. We count these as benign, since no attack data reached the target, and
+labelled ``Attempted''.
+% FIXME(open): definition of the Attempted label not read in Liu et al.; confirm on the paper or rephrase.
+We count these as benign, since no attack data reached the target, and
 after cleaning they are 9\,106 of the Normal flows.
 
 The cleaning is done once, before any split. Five flows with infinite rates go, all Normal. So
@@ -141,8 +144,9 @@ CIC-DDoS2019 are given as the benign rows of their files, since the parts of tha
 sampled: its test part holds 45\,143 benign rows (\cref{tab:impl-splits}).
 
 \paragraph{CIC-DDoS2019.}
-The dataset \citep{cic2019ddos} has a training day, 12 January, with 11 CSV files and
-50\,063\,112 flows, and a test day, 11 March, with 7 files and 20\,364\,525. Of the
+The dataset \citep{cic2019ddos} has a training day and a test day, whose archives are named
+after 12 January and 11 March. The training day has 11 CSV files and 50\,063\,112 flows, the
+test day 7 files and 20\,364\,525. Of the
 70\,427\,637 rows only 113\,828, 0.16\,\%, are benign. The name of a file is not its label:
 \texttt{UDPLag.csv} of the test day holds 606\,749 Syn flows and 1\,873 UDPLag. The loader
 reads the label from the column. We found no corrected variant of this dataset.
@@ -157,8 +161,8 @@ duplicates, and 14.8\,\% of them are Normal. The test day goes from 238\,838 row
 after 7\,708 and 152\,047, and 57.1\,\% are Normal. Rows with equal features and two labels
 are kept: 22\,469 in the training day and 1\,191 in the test day.
 
-The days share few labels. Only Syn and UDPLag occur in both. DNS, NTP, SNMP, SSDP and TFTP
-are absent from the test day, and Portmap, with 588 flows, occurs only there, so a recall on it
+The days share few labels. Only Syn and UDPLag occur in both. DNS, NTP, SNMP, SSDP, TFTP and
+WebDDoS are absent from the test day, and Portmap, with 588 flows, occurs only there, so a recall on it
 is a rough estimate. LDAP, MSSQL, NetBIOS and UDP occur only in the test day under these names,
 and in the training day with the prefix \texttt{DrDoS\_}. The names with and without the prefix
 are not merged.
@@ -178,9 +182,9 @@ is not common. The schema has 77 columns; identifiers, addresses, ports, time st
 Attempted category and \texttt{Inbound} stay out, as in each dataset alone.
 
 Training and validation are the Normal rows of CIC-IDS2017, the Attempted flows included, and its
-DoS and DDoS rows merged into Attack: 1\,432\,933 and 266\,789 rows. The other classes are
-dropped. The test part is the test day of CIC-DDoS2019 with DDoS as Attack, 45\,143 and 33\,940
-rows. Rows are not deduplicated again after the projection. The two knowledge bases are written in
+DoS and DDoS rows merged into Attack, 1\,432\,933 Normal and 266\,789 Attack rows before the validation cut.
+The other classes are dropped. The test part is the test day of CIC-DDoS2019 with DDoS as Attack,
+45\,143 Normal and 33\,940 Attack rows. Rows are not deduplicated again after the projection. The two knowledge bases are written in
 the target's column names (\cref{app:axioms}). Since the extractors differ, a loss on the target
 mixes a change of attacks with a change in how the features are computed.
 
@@ -212,10 +216,11 @@ Botnet & Botnet 736 \\
 \end{table}
 
 The class schema of \cref{tab:impl-classes} keeps the same names and order wherever a class
-exists. For CIC-IDS2017 the classes follow the families of \cref{ch:attacks-ddos}, with DDoS,
-many sources, apart from DoS, one source. Infiltration as U2R and Heartbleed as DoS are our
+exists. For CIC-IDS2017 the classes follow the families of \cref{ch:attacks-ddos}. DDoS
+keeps the name the dataset gives it and stays apart from DoS, although in the capture its flows
+come from one source address. Infiltration as U2R and Heartbleed as DoS are our
 conventions, and no source settles them. R2L collects password guessing on FTP and SSH with three
-web attacks, so it is not remote-to-local in the KDD sense. Each attack class lives in one or two
+web attacks, so in our reading it is not remote-to-local in the KDD sense. Each attack class lives in one or two
 days (\cref{tab:impl-benign-day}), so a split by day would remove whole classes from training;
 the random split puts flows of one attack session in training and in test (\cref{sec:threats}).
 
@@ -240,13 +245,14 @@ computed, as \cref{ch:usecases-design} states.
 \subsection{Split strategy: train / validation / test, temporal and random variants}
 \label{sec:impl-splits}
 
-Two strategies exist, both stratified by class. The official-test strategy keeps the test
+Two strategies exist, both stratified by class. On NSL-KDD a random validation cut is the only one possible: the
+records carry no time stamp, and the test part is a separate file, not a random draw. The official-test strategy keeps the test
 file and cuts 15\,\% of the training file as validation with the seed of the run; it serves
 NSL-KDD, CIC-DDoS2019 and the transfer. The random strategy, for CIC-IDS2017, takes 20\,\% of the
-rows as test with a fixed test seed of 0, then 20\,\% as validation with the seed of the run, so
-every arm and seed meets the same test. Splits are rebuilt from the seed, and each run writes the
-rows per class of its three parts to its result file as \texttt{split\_sizes}; the final runs lack
-the field. A temporal split exists only as the two days of CIC-DDoS2019 and, across datasets, as
+rows as test with a fixed test seed of 0, then another 20\,\% of all rows as validation with the seed of the run, so
+every arm and seed meets the same test. Splits are rebuilt from the seed. The stress runs and the final runs of
+the 1D-CNN write the rows per class of their three parts to the result file as
+\texttt{split\_sizes}; the final runs of the other arms do not record it. A temporal split exists only as the two days of CIC-DDoS2019 and, across datasets, as
 the transfer.
 
 Options act on the parts the strategy returns. A stratified fraction of the training part is
@@ -264,8 +270,9 @@ its class is refused. The test part of E9 is therefore not that of the final run
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Rows of each part for seed 0 at full size, as recorded by the runs. Another seed moves
-rows between training and validation only.}
+\caption{Rows of each part for seed 0 at full size, as recorded by runs with the split of the
+final runs: E4 on NSL-KDD and CIC-IDS2017, the final run of the 1D-CNN on CIC-DDoS2019. Another
+seed moves rows between training and validation only.}
 \label{tab:impl-splits}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}llrrr@{}}
@@ -318,7 +325,7 @@ the knowledge base.
 
 A class without an axiom is never predicted, except Normal, which is the default. In the main
 knowledge bases this holds for R2L and U2R on NSL-KDD, for Probe, R2L, U2R and Botnet on
-CIC-IDS2017, and for every class but DDoS on CIC-DDoS2019. The variants of \cref{app:axioms}
+CIC-IDS2017. The variants of \cref{app:axioms}
 add axioms for some of these classes.
 
 \subsection{Classical ML: Random Forest, XGBoost}
@@ -406,13 +413,14 @@ and conciseness. It runs inside a run on the validation or the test part, and on
 \paragraph{Runner and result file.}
 One configuration and one seed make one result file. The runner loads the dataset, cuts the
 split, fits the transformer and the model, and scores the validation part with the measures of
-\cref{sec:metric-set}, the recall by fine label and the C5 report at the threshold 0.5, and the
+\cref{sec:metric-set} and the C5 report at the threshold 0.5, and the
 post-check if asked. It scores the test part only when asked: the flag is false in every base,
 tuning and stress configuration, and the launch scripts of the final and stress runs set it on
 the command line. The file holds the configuration, the metrics, the timings of the stages, the
 training record with the validation history, the epoch kept and the number of parameters, the
-rows per class of each part, the sizes of the saved files, the commit, a flag for uncommitted
-changes, the package versions and the platform. Finished seeds are skipped on resume.
+sizes of the saved files, the commit, a flag for uncommitted changes, the package versions and
+the platform. The stress runs also record the rows per class of each part and the recall by fine
+label, and the final runs of the 1D-CNN the rows per class. Finished seeds are skipped on resume.
 
 \paragraph{Stress runs and launchers.}
 A generator writes the configurations of a stress experiment from a tuned configuration and
@@ -491,7 +499,7 @@ record beside it for the symbolic check.
 \label{sec:impl-broker}
 
 The broker, its bounded queue and the two conditions under backpressure are those of
-\cref{sec:streaming-protocol}. The mandatory topology is one inference process, and a
+the streaming protocol. The mandatory topology is one inference process, and a
 distributed engine is an extension.
 % FIXME(open): choice of the broker, size of the queue, the two backpressure conditions, number of consumers, and whether DDL is used (if so, amend the scope paragraph of Ch. 1, Sec. 1.6).
 
@@ -502,7 +510,7 @@ A final run saves, per seed, the network as a \texttt{.keras} file, the 1D-CNN i
 forest as a \texttt{joblib} file or a booster as JSON with the rounds kept, and the fitted
 transformer with the feature and class names. The latency tool already loads these three kinds,
 and the post-check is a function of the raw record and the scores that a service can call after
-the model; E12 measures its cost on single rows and small batches. The rule-only arm needs the
+the model; E12 measures its cost on batches of 1, 64 and 1024 rows. The rule-only arm needs the
 knowledge base file and no model. The service itself does not exist.
 % FIXME(open): the service, its input format, the micro-batch size and the check of FR9 are not written.
 
@@ -510,7 +518,7 @@ knowledge base file and no model. The service itself does not exist.
 \label{sec:impl-instrumentation}
 
 Four stamps per flow, when it is closed, reaches the broker, is decided and is alerted, give the
-parts of the detection delay of \cref{sec:streaming-protocol}.
+parts of the detection delay.
 % FIXME(open): none of the stamps, the collection of metrics or the dashboard is implemented.
 
 % ================================================================
@@ -523,7 +531,8 @@ only, and a space of lists, uniform, log-uniform or integer ranges (\cref{app:hy
 The 20 trials of the Latin hypercube depend on the space and the search seed only, so trial $k$ of
 an arm is the same setting on every dataset, and when it wins on two datasets the two tuned
 configurations coincide. This happened for Random Forest on the two CIC datasets (trial 9), for MLP-CE with
-weights on the same two (trial 5) and for LTN-full on NSL-KDD and CIC-DDoS2019 (trial 6), while
+weights on the same two (trial 5), for LTN-full on NSL-KDD and CIC-DDoS2019 (trial 6), and for the
+1D-CNN on the two CIC datasets, whose space is that of MLP-CE with weights, while
 XGBoost won with trial 10 on one CIC dataset and trial 4 on the other. A likeness of the
 settings across datasets is therefore not independent evidence.
 
@@ -539,8 +548,7 @@ same batch size and epoch cap. On CIC-IDS2017 the quarter of the Normal rows is 
 trials only, and the validation part stays whole, so a validation score of the search is not
 comparable with one of a final run.
 
-The searches leave three limits, discussed with the results in \cref{sec:res-threats} and
-Appendix~\ref{app:hyperparameters}. The epoch cap hardly binds for the four neural arms of the
+The searches leave three limits, discussed with the results in \cref{sec:res-threats}. The epoch cap hardly binds for the four neural arms of the
 comparison: at most two of the 60 runs of an arm end at 100 epochs, no chosen trial does, and one
 final run of the forty on NSL-KDD does, a run of LTN-sup; none does on the CIC datasets. The
 1D-CNN binds more on CIC-DDoS2019: 7 of its 60 tuning runs, one of the three runs of the chosen
@@ -577,7 +585,7 @@ the tuning files, the final runs and the stress runs record the commit as \textt
 leave the flag of the modified tree empty. A series is identified by its date and by the
 configuration stored in each file, which also records the versions of the packages. No log of
 the runs reports the custom operations of oneDNN as switched on. The second limit is the
-environment: determinism holds within one, as \cref{sec:impl-environment} says. The server has
+environment: determinism holds within one, as \cref{sec:reproducibility} says. The server has
 no lock file in the repository; its versions are those its result files record. The result files
 and the saved models are kept by the author and not published with the repository.
 % FIXME(open): the streaming pipeline has no code, no configuration and no test in the repository; add its directory and its launch script when the co-supervisor delivers them.
@@ -590,6 +598,7 @@ and the saved models are kept by the author and not published with the repositor
 
 The batch benchmark is complete for the eight arms, from the rule-only classifier to LTN-full
 and the 1D-CNN, with the post-check, the search, the stress generator and the transfer schema, the
-tools on saved models and the scripts that build the tables. The LSTM and the semantic-loss
-variant are not implemented and are not reported. The streaming pipeline is not part of the
+tools on saved models and the scripts that build the tables. The LSTM, the semantic-loss
+variant, window features and a temporal split beyond the two days of CIC-DDoS2019 are not
+implemented and are not reported. The streaming pipeline is not part of the
 repository, and \cref{sec:realtime-pipeline} gives its design only.

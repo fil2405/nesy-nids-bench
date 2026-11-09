@@ -1,6 +1,6 @@
-"""Values the open FIXMEs of the thesis ask for, read from the local result files.
+"""Selected values of the runs, read from the local result files.
 
-    python analysis/fixme_values.py [--results-dir results] [--logs logs]
+    python analysis/selected_values.py [--results-dir results] [--logs logs]
 
 Read only. Sections: epochs of the finals, tuning choices, inputs of CIC-DDoS2019, split sizes,
 commit and versions of each series, oneDNN in the logs.
@@ -87,7 +87,7 @@ def split_sizes(runs):
 
 
 def series(runs):
-    section("series: commit, dirty flag, versions, dates (Ch. 8 and 10 commit FIXMEs)")
+    section("series: commit, dirty flag, versions, dates")
     groups = defaultdict(list)
     for run_id, by_seed in runs.items():
         ds = next((d for d in (*DATASETS, "cic_transfer") if run_id.startswith(d + "_")), run_id)

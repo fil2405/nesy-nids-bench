@@ -58,7 +58,7 @@ run cicids2017_e9 "$PY" $A/stress_tables.py e9 --results-dir "$RES" --dataset ci
 run transfer "$PY" $A/stress_tables.py transfer --results-dir "$RES" --tex "$OUT/transfer.tex"
 run transfer_postcheck "$PY" $A/saved_tables.py postcheck --dataset cic_transfer --dir "$RES/saved_eval"
 run tuning_epoch_cap "$PY" $A/epoch_cap_report.py "$RES/tuning"
-run fixme_values "$PY" $A/fixme_values.py --results-dir "$RES"
+run selected_values "$PY" $A/selected_values.py --results-dir "$RES"
 
 tar -czf tables.tar.gz -C "$RES" tables
 echo "Archivio tables.tar.gz, comandi saltati: ${#FAILED[@]} ${FAILED[*]:-}"

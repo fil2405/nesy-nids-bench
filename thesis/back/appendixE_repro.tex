@@ -23,7 +23,7 @@ Directory & Content \\
 \texttt{src/nesybench/logic} & knowledge base format and degrees of truth, semantics of LTN, edits of E3 and E11, C5 report, post-check \\
 \texttt{src/nesybench/models} & rule-only, Random Forest and XGBoost, MLP-CE, 1D-CNN, LTN-sup, LTN-full; batch quotas and epoch selection \\
 \texttt{src/nesybench} & runner (\texttt{run.py}), tuning (\texttt{tune.py}), stress configurations (\texttt{stress.py}), statistics (\texttt{compare.py}), metrics, export of models, evaluations of saved models (\texttt{saved\_eval.py}, \texttt{operating.py}, \texttt{latency.py}, \texttt{perturb.py}) \\
-\texttt{configs} & one configuration per arm and dataset; \texttt{tuning} the search spaces; \texttt{stress} the configurations of E3 to E13 \\
+\texttt{configs} & one configuration per arm and dataset; \texttt{tuning} the search spaces; \texttt{stress} the configurations of E3, E4, E7 to E9, the transfer, E11 and E13 \\
 \texttt{kb} & knowledge bases with their variants, and the effort estimates of E16 \\
 \texttt{scripts} & launch scripts of tuning, final, stress and saved-model runs, of the timings of E13 and of the tables \\
 \texttt{analysis} & scripts that build tables and figures from the result files \\
@@ -66,12 +66,13 @@ CHECK_ONLY=1 bash scripts/stress_run.sh '<pattern>'
 bash scripts/stress_run.sh '<pattern>' [workers]
 MODELS_DIR=results/models bash scripts/stress_run.sh 'cic_transfer_*'
 # saved models: post-check, E10, E17, operating point, cost curves, latency
-bash scripts/saved_runs.sh <dataset> results/models
+bash scripts/saved_runs.sh <dataset> <models>
 # E13 timings, one process
 bash scripts/e13_time.sh <dataset>
 \end{lstlisting}
 
-\texttt{<dataset>} is \texttt{nslkdd}, \texttt{cicids2017} or \texttt{cicddos2019}, and
+\texttt{<dataset>} is \texttt{nslkdd}, \texttt{cicids2017} or \texttt{cicddos2019},
+\texttt{<models>} the folder of the saved models of the final runs, and
 \texttt{<arm>} one of \texttt{mlp\_noweights}, \texttt{mlp\_weights}, \texttt{cnn},
 \texttt{ltn\_sup}, \texttt{ltn\_full}, \texttt{rf}, \texttt{xgb}. A pattern selects stress
 configurations by name, for instance \texttt{'cicids2017\_ltn\_full\_tuned\_e3\_*'}. The
@@ -107,7 +108,7 @@ Table & File \\
 \midrule
 \Cref{tab:res-macro-f1}, \cref{tab:app-nslkdd-classes} & \texttt{<ds>\_summary.txt}; 1D-CNN pair in \texttt{<ds>\_cnn.txt} \\
 \Cref{tab:res-pairs}, \cref{tab:app-ranks} & \texttt{<ds>\_pairs.txt}, \texttt{<ds>\_pairs.tex}, \texttt{<ds>\_cd.pdf} \\
-\Cref{tab:app-epochs} & \texttt{fixme\_values.txt}, \texttt{tuning\_epoch\_cap.txt} \\
+\Cref{tab:app-epochs} & \texttt{selected\_values.txt}, \texttt{tuning\_epoch\_cap.txt} \\
 \Cref{tab:res-rules}, \cref{tab:res-postcheck}, \cref{tab:app-postcheck} & \texttt{<ds>\_postcheck.txt} \\
 \Cref{tab:res-sensitivity}, \cref{tab:app-e3}, \cref{tab:app-e4} & \texttt{<ds>\_e3.txt}, \texttt{<ds>\_e4.txt}, \texttt{<ds>\_e11.txt}, \texttt{nslkdd\_e3\_weak.txt} \\
 \Cref{tab:res-e7}, \cref{tab:app-e8} & \texttt{<ds>\_e7.txt}, \texttt{<ds>\_e8.txt}, \texttt{nslkdd\_e7\_no\_A3.txt}, \texttt{cicddos2019\_e7\_no\_A2.txt} \\
@@ -116,14 +117,13 @@ Table & File \\
 \Cref{tab:app-e10}, \cref{tab:app-e17} & \texttt{<ds>\_e10.txt}, \texttt{<ds>\_e17.txt} \\
 Inference latency of E12 & \texttt{<ds>\_e12.txt} \\
 \Cref{tab:res-operating}, \cref{fig:res-cost-nslkdd} & \texttt{<ds>\_threshold.txt}, \texttt{<ds>\_cost.txt}, \texttt{<ds>\_cost.pdf} \\
-\Cref{tab:tuning-selected} & \texttt{fixme\_values.txt} \\
+\Cref{tab:tuning-selected} & \texttt{selected\_values.txt} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The result files, of about 2\,700 final and stress runs and of the searches, and the saved
-models of the final runs are not in the
-repository. They are available from the author on request; without them every table needs the runs
+The result files of the final and stress runs and of the searches, and the saved models of the
+final runs, are not in the repository. They are available from the author on request; without them every table needs the runs
 of the previous section.
 
 % FIXME(open): the streaming pipeline of the co-supervisor has no directory here yet; add it, its launch script and its commands when it is delivered.
