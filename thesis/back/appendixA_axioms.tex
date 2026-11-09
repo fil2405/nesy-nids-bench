@@ -12,8 +12,8 @@ run asks.
 \centering
 \footnotesize
 \caption{The knowledge bases of the thesis. The confidence is measured on the
-training data of the dataset: the whole training part of NSL-KDD (125\,973
-records), the training and validation parts of one seed of CIC-IDS2017
+training data of the dataset: the whole training file of NSL-KDD (125\,973
+records), which holds the training and validation parts of every seed, the training and validation parts of one seed of CIC-IDS2017
 (1\,372\,272 flows), and the training day of CIC-DDoS2019 after sampling and
 cleaning (340\,560 flows). Groups: D = \texttt{dos}, S = \texttt{dataset}.
 Origins: M = \texttt{mechanism}, Da = \texttt{data}, I = \texttt{internship}.}
@@ -61,8 +61,10 @@ Version & Id & Conditions & Target & Gr./Or. & Conf. \\
 
 The A3 of \texttt{\_e9ssh} was found without the SSH-Patator flows, on 1\,369\,905
 flows, and its confidence is the sum over the two halves on which it was found and
-checked. The transfer of E9 uses two bases written in the column names of
+checked. The axioms of \texttt{\_weak} keep the conditions of the internship and read
+them on the raw columns, where ${>}\,0.5$ means that the event occurs at least once.
+The transfer of E9 uses two bases written in the column names of
 CIC-DDoS2019: \texttt{cic\_transfer\_xfer}, with A1 and A2 of \texttt{cicids2017\_v1}
 and target Attack, and \texttt{cic\_transfer\_xfer\_mech}, which adds the A1 of
-\texttt{cicddos2019\_v1}. Their conditions are those of the table, with the columns
+\texttt{cicddos2019\_v1} as M1. Their conditions are those of the table, with the columns
 renamed as in \cref{sec:impl-schema}.

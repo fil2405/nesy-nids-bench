@@ -32,12 +32,13 @@ trains each arm and scores it on held-out data; and the knowledge engineer, who
 writes the axioms (\cref{sec:kb-design}). The arms are the detectors under
 comparison: one network trained with cross-entropy, without and with class weights
 (MLP-CE); the same network trained with LTN on the supervised axioms alone (LTN-sup)
-or on the supervised and the domain axioms (LTN-full); Random Forest and XGBoost; and
-the axioms alone, with nothing learned (rule-only). The input is a table of flow records,
+or on the supervised and the domain axioms (LTN-full); Random Forest and XGBoost; a
+one-dimensional convolutional network (1D-CNN), a further deep baseline outside matched
+capacity; and the axioms alone, with nothing learned (rule-only). The input is a table of flow records,
 reconstructed from captured traffic by a flow exporter \citep{claise2013rfc7011}.
 The detector does not see packets. On the CIC datasets the rows come from
-CICFlowMeter \citep{sharafaldin2018cicids2017}. NSL-KDD ships connection records
-with content features computed when the dataset was built
+CICFlowMeter \citep{sharafaldin2018cicids2017,cic2019ddos}. NSL-KDD ships connection records
+with content features computed when KDD'99, from which it is drawn, was built
 \citep{tavallaee2009kddcup99}. Where a statement holds for both kinds of unit, this
 chapter writes flow; on NSL-KDD the unit is a connection record. No payload is
 inspected (\cref{ch:introduction}).
@@ -53,7 +54,7 @@ run the detector. On usability: the effort of writing the knowledge and the
 sensitivity of the result to it. A gain is claimed only against baselines of
 matched capacity, under a protocol that avoids the pitfalls listed by
 \citet{arp2022dosdonts}. UC1 runs on NSL-KDD (Normal, DoS, Probe, R2L, U2R) in
-E2, and on the corrected CIC-IDS2017 \citep{engelen2021troubleshooting}, mapped to
+E2, and on the corrected CIC-IDS2017 of \citet{liu2022error}, mapped to
 the same families plus DDoS and Botnet, in E5.
 
 % ================================================================
@@ -66,7 +67,9 @@ In UC2 an operator watches a link and wants to know, as flows complete, whether 
 attack is under way. Detection is the first step of a mitigation workflow
 \citep{dobbins2021rfc8903}. This is the use case for which the streaming pipeline
 of \cref{sec:streaming-pipeline} exists, and it supplies the real-time half of
-the answer to RQ3. The task is binary, Normal or DDoS. The input is a stream of
+the answer to RQ3. The task is binary, Normal or DDoS. In batch it is the task of
+CIC-DDoS2019 (E6); in streaming the model of CIC-IDS2017 raises an alert on its DDoS
+class. The input is a stream of
 flows from a live capture or a replayed dataset. The output is a score for each
 flow and an alert when the score reaches the operating point, a threshold fixed on
 validation data.
@@ -116,7 +119,8 @@ has begun, while the alert budget counts every false alarm.
 R2L and U2R attacks leave little in flow-level features: the evidence is in the
 data portion of a connection, which flow records do not carry
 (\cref{sec:r2l-u2r-hard}). The classes are also small: NSL-KDD has 52 U2R and 995
-R2L records in training, and 67 and 2\,885 in test (\cref{tab:impl-splits}).
+R2L records in its training file, which the protocol divides into training and
+validation parts, and 67 and 2\,885 in its test file (\cref{tab:impl-splits}).
 Input and output are those of UC1. The success criteria are the recall and the
 precision--recall area of each rare class, read along the chain of arms: MLP-CE
 without class weights, MLP-CE with class weights, LTN-sup, LTN-full. Each step
@@ -131,7 +135,7 @@ enough to use (\cref{sec:kb-elicitation}). LTN-full receives no knowledge about
 these classes and can differ from LTN-sup on them only through the effect of the
 other axioms on the shared network. A variant with broad axioms for the two classes
 tests whether weak knowledge helps or harms (\cref{sec:kb-format}). On CIC-IDS2017
-a variant gives R2L, there FTP and SSH password guessing, one axiom; no knowledge
+a variant gives R2L one axiom, which covers its FTP and SSH password guessing; no knowledge
 base has a precise axiom for U2R. UC3 is evaluated in E2, E3 and E5, and E8 varies the
 imbalance.
 
@@ -142,11 +146,13 @@ imbalance.
 \label{sec:uc4}
 
 In UC4 the analyst meets an attack that was not in the training data and wants an
-alert anyway. The success criterion is the recall on the unseen attack at the
-operating point fixed on validation data, with the quality on the whole test day.
-Two scenarios serve it, both in E9: the Portmap attack of CIC-DDoS2019, present in
-the test day and absent from the training day, and the transfer between the two CIC
-datasets. In the second, attacks and flow-extractor version change together, so
+alert anyway. The success criterion is the share of the unseen attack that is
+detected, read at the argmax and, on the final runs, at the operating point fixed on
+validation data, with the quality on the whole test part. Three scenarios serve it,
+all in E9: fine labels of CIC-IDS2017 held out of training and added to the test
+part; the Portmap attack of CIC-DDoS2019, present in the test day and absent from the
+training day; and the transfer of a model from CIC-IDS2017 to CIC-DDoS2019. In the
+transfer, attacks and flow-extractor version change together, so
 the result measures both, and we say so where we read it.
 
 Knowledge matters here in a specific way. An axiom that states the mechanism of an
@@ -167,11 +173,12 @@ antecedent holds on the flow, with their degree and the values of the conditions
 An LTN-trained network is a plain network at inference
 (\cref{sec:symbolic-placement}), so these axioms are a rule match computed beside
 the network, not the reasons for its decision. Experiment E17 measures coverage,
-the share of alerts with at least one axiom; faithfulness, the agreement between the
-class the axiom implies and the class the network predicts; and conciseness, the
-number of axioms that fire on an alert. Faithfulness exposes the gap, since an explanation that
-agrees with the prediction only by chance is worth little. Alerts can be handed on
-in an exchange format \citep{debar2007rfc4765,opentext2023cef,jordan2021stix}; the
+the share of alerts with at least one axiom; faithfulness, among the covered alerts,
+the share where a firing axiom has the predicted class as target; and conciseness, the
+mean number of axioms that fire on a covered alert. Faithfulness exposes the gap, since an explanation that
+agrees with the prediction only by chance is worth little. An alert can be handed on
+in a standard exchange format \citep{debar2007rfc4765}, in the event format of a SIEM
+vendor \citep{opentext2023cef}, or as threat intelligence \citep{jordan2021stix}; the
 thesis does not depend on one, and the alert sink takes a plain record.
 % FIXME(open): the serialisation of the alert record (IDMEF, CEF, STIX or plain JSON) is fixed in Ch. 9, \cref{ch:implementation}.
 
@@ -187,7 +194,7 @@ how well it does so, or under what conditions. Each is written so that an
 experiment can check it and a measure can report on it. Each has an identifier,
 the experiment that checks it, and one measure on one of the three axes of the
 thesis: detection quality (Q), computational cost (C) and usability (U), in batch
-and in real time (\cref{ch:introduction}). The experiments are numbered E1 to
+and in real time. The experiments are numbered E1 to
 E17. This chapter names them and states what each is for; their protocol is the
 subject of \cref{ch:benchmarking-methodology} and their outcomes of
 \cref{ch:results}.
@@ -217,17 +224,17 @@ ID & Requirement & Exp. & Axis & Measure \\
 FR1 & Assign each flow to one class of the dataset and return a score per class (UC1)
   & E2, E5 & Q & Macro-F1 and MCC on the test part \\
 FR2 & Decide Normal or DDoS for each flow and raise an alert at a fixed operating point (UC2)
-  & E6 & Q & MCC; false positive rate at a fixed true positive rate; alert budget \\
+  & E6 & Q & MCC; TPR and FPR on the test part at the threshold fixed on validation; alert budget \\
 FR3 & Report R2L and U2R separately from the other classes (UC3)
   & E2, E5, E8 & Q & Per-class recall and precision--recall area \\
 FR4 & Detect an attack type absent from the training data (UC4)
-  & E9 & Q & Recall on the unseen attack at the operating point fixed on validation data \\
+  & E9 & Q & Share of the unseen attack detected, at the argmax and at the operating point fixed on validation data \\
 FR5 & Attach to an alert the axioms whose antecedent holds on the flow (UC5)
   & E17 & U & Explanation coverage, faithfulness and conciseness \\
 FR6 & Read the axioms from a versioned file, so that an axiom set can be swapped or reduced without a change of code (\cref{sec:kb-format})
   & E3 & U & Change in macro-F1 and per-class recall when an axiom is removed \\
 FR7 & Report for any model, knowledge arm or not, the satisfaction of each axiom and the rate at which its prediction violates the rule
-  & E2 & Q, U & Axiom-level satisfaction and domain-rule violation rate \\
+  & E2, E5, E6 & Q, U & Axiom-level satisfaction and domain-rule violation rate \\
 FR8 & Allow an optional symbolic check on the predictions, outside the network (\cref{sec:symbolic-placement})
   & E12 & C & Added inference latency per flow; violation rate before and after \\
 FR9 & Give the same decision to the same flow in batch and in streaming (UC2)
@@ -236,7 +243,7 @@ FR9 & Give the same decision to the same flow in batch and in streaming (UC2)
 \end{tabular}
 \end{table}
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \footnotesize
 \caption{Non-functional requirements. Axis: Q quality, C cost, U usability.}
@@ -249,17 +256,17 @@ ID & Requirement & Exp. & Axis & Measure \\
 NFR1 & Run the NSL-KDD pipeline under the corrected protocol, with validation kept apart from the official test file
   & E1 & Q & Accuracy and macro-F1 on validation and on test \\
 NFR2 & Keep the quality when labels are scarce or the training set is small
-  & E7 & Q & Macro-F1 against the fraction of labels and the size of the training set \\
+  & E7 & Q & Macro-F1 against the size of the labelled training part \\
 NFR3 & Keep the quality on rare classes when the imbalance grows
   & E8 & Q & Per-class precision--recall area against the imbalance \\
 NFR4 & Keep the quality under noise and simple evasion of the flow features
   & E10 & Q & Change in macro-F1 under the perturbation \\
 NFR5 & Keep the benefit of the knowledge when the axioms are degraded
   & E11 & U & Macro-F1 of LTN-full minus LTN-sup against the degradation level \\
-NFR6 & Make the effect of the logic configuration visible (exponent $p$, crisp or graded conditions, scale of the widths)
+NFR6 & Make the effect of the logic configuration visible (exponent $p$, weight of the domain axioms, crisp or graded conditions, scale of the widths)
   & E4 & U & Spread of macro-F1 over the configurations \\
 NFR7 & Report the cost of training for every arm
-  & E13 & C & Time per epoch, epochs, total fit time, peak memory; time per epoch against the number of axioms \\
+  & E13 & C & Time per epoch, epochs run and selected, total fit time; time per epoch against the number of axioms \\
 NFR8 & Keep the inference cost of an LTN-trained network equal to the same network trained with cross-entropy
   & E12 & C & Inference latency and throughput \\
 NFR9 & Sustain the arrival rate of flows in streaming
@@ -276,8 +283,8 @@ NFR13 & Summarise the usability of each arm on a scorecard whose anchors are wri
 \end{tabular}
 \end{table}
 
-FR9 and NFR12 are our additions to the experiments of the plan, and cost almost
-nothing to check: FR9 is a consistency check between the two pipelines, and NFR12 is
+FR9 and NFR12 are checks of ours rather than experiments of their own, and cost
+almost nothing: FR9 is a consistency check between the two pipelines, and NFR12 is
 the condition under which any other row can be trusted. NFR13 is the rubric of the
 usability axis announced in the introduction. E14 and E15 depend on the
 streaming infrastructure; if it is not available to us, FR9, NFR9 and NFR10 are
@@ -286,9 +293,8 @@ use NSL-KDD, E5 CIC-IDS2017 and E6 CIC-DDoS2019; the datasets of the other
 experiments are assigned in \cref{ch:benchmarking-methodology}. Rows on UC3 are run
 only where a rare class exists, which excludes CIC-DDoS2019 (\cref{sec:uc2}). Every
 row that compares arms covers the four neural arms, which share one network and one
-batch size, and Random Forest, XGBoost and the rule-only arm. A one-dimensional
-convolutional network enters the final runs and the experiments on saved models as a
-further deep baseline, outside matched capacity.
+batch size, and Random Forest, XGBoost and the rule-only arm. The 1D-CNN enters only
+the final runs and the experiments on saved models.
 
 % ================================================================
 % 7.7 Reference architecture
@@ -354,13 +360,13 @@ An optional symbolic check follows; the alert sink collects the decisions that
 reach the operating point, and a dashboard shows them.
 % FIXME(open): the choice of the broker and the implementation of each stage are open in Ch. 9, \cref{sec:realtime-pipeline}, and belong to the co-supervisor.
 
-Three points need a decision or a caution. The first is the extractor. The corrected
-CIC-IDS2017 comes from a corrected CICFlowMeter and CIC-DDoS2019 from the original
-one, and a model must be served with flows from the extractor that produced its
-training features. For streaming the model should be the one trained on the corrected
-CIC-IDS2017, with the corrected extractor live. Its classes are those of CIC-IDS2017,
-and for UC2 an alert is raised on the DDoS class.
-% FIXME(open): confirm which model and which extractor the streaming pipeline uses.
+Three points need a decision or a caution. The first is the extractor.
+\Citet{engelen2021troubleshooting} regenerate CIC-IDS2017 with a corrected CICFlowMeter,
+while CIC-DDoS2019 comes from the original tool, and a model must be served with flows
+from the extractor that produced its training features. For streaming the model should
+be the one trained on the corrected CIC-IDS2017, with the corrected extractor live. Its
+classes are those of CIC-IDS2017, and for UC2 an alert is raised on the DDoS class.
+% FIXME(open): confirm which model and which extractor the streaming pipeline uses, and whether the version of Liu et al. was regenerated with the extractor of Engelen et al.
 The second is that a symbolic check needs the raw flow record beside the feature
 vector, so the message on the broker carries both. The third is time: the pipeline
 stamps each flow when it is closed, reaches the broker, is decided and is alerted.
@@ -368,11 +374,10 @@ The differences give the parts of the detection delay (\cref{sec:uc2-latency}) a
 are the data of E14 and E15.
 
 The inference service can run in one process or on a distributed engine through a
-distributed deep learning (DDL) framework. The thesis has not decided to use DDL: it
-needs a cluster available to us and a framework that runs the exported model. If
-either is missing, the reference pipeline is the single-process one, which is also
-the setting of the scope in \cref{ch:introduction}; if DDL is used, that scope
-sentence, which excludes distributed inference, must change.
+distributed deep learning (DDL) framework, which needs a cluster and a framework that
+runs the exported model. The reference pipeline is the single-process one, the setting
+of the scope in \cref{ch:introduction}; distributed inference would change that scope.
+% FIXME(open): the co-supervisor's stack (Kafka, Spark Structured Streaming, inference inside Spark) is not the single-process pipeline of this section; align after his written decision (Ch. 9, Sec. 9.5).
 % FIXME(open): DDL is undecided (cluster access and a framework that runs the exported model); if used, amend the scope paragraph of Ch. 1, Sec. 1.6.
 The mandatory part is the single-process pipeline: design, assumptions and method
 of measurement. Measurements on a cluster are an extension.
@@ -398,6 +403,7 @@ LTN-sup & Supervised axioms in the loss & Network only & Possible \\
 LTN-full & Supervised and domain axioms in the loss & Network only & Possible \\
 Rule-only & None; nothing is learned & The axioms are the model & Not applicable \\
 Random Forest, XGBoost & None & Model only & Possible \\
+1D-CNN & None & Network only & Possible \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -416,8 +422,8 @@ modes. It annotates the alert with the axioms that fire, which is the source of 
 explanations of UC5. Or it enforces the rules: when an axiom fires and the prediction
 differs from its target, the prediction is replaced by the target, and a conflict
 between axioms with different targets goes to the first in the order of the file, as
-in the rule-only arm. The enforcing mode is the post-hoc symbolic filter that the
-design keeps as an extension, a control for the neurosymbolic arms. It removes every
+in the rule-only arm. The enforcing mode is the post-hoc symbolic filter, implemented
+as a control for the neurosymbolic arms. It removes every
 violation except those of an axiom that loses a conflict, and the interesting
 quantity is what it costs in quality, because the axioms are not exact
 (\cref{sec:kb-format}).
@@ -448,7 +454,9 @@ paired with an observable condition and a candidate axiom
 (\cref{tab:candidate-axioms}); U2R has none. Elicitation turns a candidate into an
 axiom that runs on a dataset, in four steps. Where no candidate can be written on a
 dataset, the same steps are applied to rules found in its training data, and the
-axiom is tagged as such (\cref{sec:kb-format}).
+axiom is tagged as such (\cref{sec:kb-format}). Every axiom of the main base of
+CIC-IDS2017 is of this kind, so on that dataset the knowledge is a set of rules read
+off the labels that the network also sees.
 
 First, the predicates are mapped to columns of the flow table. Most candidates need
 a statistic over a window or a source. NSL-KDD ships window statistics as columns
@@ -457,13 +465,15 @@ datasets hold statistics of single flows, so there a candidate that needs a wind
 a source cannot be written in this version. Adding window statistics means defining
 the window once for training and streaming (\cref{sec:uc2}). The columns read by each
 axiom are listed in \cref{app:axioms}.
-Second, the thresholds are fixed, on training data only. For a candidate of
-\cref{ch:attacks-ddos} the condition comes from the mechanism. Its threshold is
+Second, the thresholds are fixed on the labelled data outside the test part, the same
+rows for every seed, so the validation part is among them. For a candidate axiom the
+condition comes from the mechanism. Its threshold is
 either fixed before the attacks are looked at, as for the slow DoS axiom, whose cuts
-are percentiles of Normal traffic, or calibrated on the labelled training data, as
-for the SYN flood axiom of NSL-KDD. A rule found in the data takes both its
+are percentiles of Normal traffic, or calibrated on these labelled rows, as
+for the SYN flood axiom of NSL-KDD, which also adds a condition read on the data to
+separate it from Probe. A rule found in the data takes both its
 conditions and its thresholds from a single-feature search or a shallow tree, checked,
-where the data allows, on a part of the training data that the search did not use.
+where the data allows, on a half of these rows that the search did not use.
 The test part is never read, since choosing axioms on it would be the data snooping
 that \citet{arp2022dosdonts} warn against. Third, the statistics of the axiom on
 training data are recorded: the support, the share of target-class flows that the
@@ -484,7 +494,8 @@ knowledge. For R2L and U2R on NSL-KDD, single-feature rules, rules by class and 
 tree of depth three gave no rule that reached the bar, so the main base has no axiom
 for them (\cref{sec:uc3}). One limit is also declared. On CIC-DDoS2019 the first
 axiom says that a UDP flow with no backward packet is DDoS, and the condition on
-backward packets acts as a shortcut, since it covers almost all attack flows. It is
+backward packets acts as a shortcut, since with the protocol it covers 90\,\% of the
+attack flows of the training day. It is
 still a column of the flow table that every arm sees, and not an artefact of the
 capture, so we keep it; E3, which removes the axiom, shows how much it matters.
 
@@ -514,7 +525,7 @@ includes DDoS, flooding or slow; \texttt{dataset} for rules tied to the features
 one dataset; \texttt{domain} for general network knowledge, not used in this version.
 The group lets E3 remove a whole kind of knowledge at once. Its \texttt{origin} says
 where the rule comes from: \texttt{mechanism} when its condition states a mechanism
-of \cref{ch:attacks-ddos}, whatever the source of the threshold; \texttt{data} when
+of that chapter, whatever the source of the threshold; \texttt{data} when
 conditions and thresholds were found by a search on training data; and
 \texttt{internship} for axioms taken over from the author's earlier project and not
 re-derived from the benchmark data. The field \texttt{train} holds the statistics of
@@ -528,15 +539,15 @@ flow belongs to the target class. An equality is crisp. A comparison is graded, 
 degree $\sigma((v-\tau)/s)$ for ``greater than'' and the symmetric form for ``at
 most'', or crisp when the run asks for hard thresholds. The degree of the antecedent
 is the product of the degrees of its conditions. The width $s$ is fixed and not
-learned, as in \cref{ch:ltn}; a run can scale all widths by one factor, so the
+learned, as in that chapter; a run can scale all widths by one factor, so the
 widths in the file are starting values.
 
 \Cref{tab:kb-versions} in \cref{app:axioms} lists the knowledge bases of the thesis.
 Each variant contains its base and adds axioms. \texttt{\_r2l}, \texttt{\_slow} and
 \texttt{\_e9ssh} add one axiom each to \texttt{cicids2017\_v1}. \texttt{\_weak} adds to
-\texttt{nslkdd\_v1} one axiom for each term of the two disjunctions of
+\texttt{nslkdd\_v1} one axiom for each term of the R2L and U2R disjunctions of
 \cref{sec:axiom-set-internship}, since an axiom of the file is a conjunction; U2
-covers no U2R flow of the training part and is kept as the disjunction has it. Of
+covers no U2R record of the training file and is kept as the disjunction has it. Of
 the ten axioms of the other bases, four state a mechanism and six were found in the
 data. Only DoS and Probe are covered on NSL-KDD outside the weak variant, and only
 DDoS on CIC-DDoS2019, whose knowledge base has a single target class, so the
@@ -561,8 +572,8 @@ comparable. The experiments use the factor in five ways.
 \begin{itemize}
   \item E3 removes one axiom, or a whole group, from a version.
   \item E11 degrades the knowledge by moving every threshold of a version by a
-    level, measured in percentile points of the training column, or by swapping the
-    target of one axiom. An equality has no threshold and changes only through the
+    level, measured in percentile points of the training column, or, on NSL-KDD, by
+    swapping the target of one axiom. An equality has no threshold and changes only through the
     swap. We use levels and not a fraction of corrupted axioms, because the main
     bases hold two or three axioms and a fraction would take at most four values.
   \item E3 and E11 also use \texttt{nslkdd\_v1\_weak}, with broad axioms of low
@@ -578,8 +589,8 @@ comparable. The experiments use the factor in five ways.
 
 The settings of the logic belong to the run, not to the file: the weight of the
 domain axioms in the loss, the exponent $p$, the scale of the widths, and crisp or
-graded conditions. Experiment E4 varies the exponent $p$, graded against crisp
-conditions and the scale of the widths. The connectives, product and Reichenbach,
+graded conditions. Experiment E4 varies the exponent $p$, the weight of the domain
+axioms, graded against crisp conditions and the scale of the widths. The connectives, product and Reichenbach,
 and the stabilising constant $\epsilon$ of the aggregator are fixed
 (\cref{ch:ltn}). $\epsilon$ is a numerical guard with a small value, and changing
 it would alter the numerics more than the semantics.
@@ -610,8 +621,8 @@ one of the three axes.
 Two pipelines share a model, a feature definition and a knowledge base. In batch
 the symbolic component acts at training only, and at inference an LTN-trained
 network is a plain network; an optional post-check evaluates the axioms on the raw
-flow, to annotate or to enforce. The streaming pipeline is specified, and its
-measurement depends on infrastructure that is not yet ours. The knowledge base is a
+flow, to annotate or to enforce. The streaming pipeline is specified, and E14 and E15
+depend on its infrastructure. The knowledge base is a
 versioned file, and its versions and recorded edits are the levels of an
 experimental factor.
 
