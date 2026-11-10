@@ -8,7 +8,8 @@ import seed_tables as st  # noqa: E402
 def rec(seed, macro):
     return {"seed": seed, "metrics": {"test": {"macro_f1": macro, "accuracy": macro + 0.1, "mcc": macro - 0.1,
                                                "precision": [0.9, 0.5], "recall": [0.8, 0.4], "f1": [0.85, 0.45],
-                                               "class_names": ["Normal", "DDoS"]}}}
+                                               "class_names": ["Normal", "DDoS"],
+                                               "c5": {"axioms": {"A1": {"satisfaction": 0.9, "violation_rate": 0.1}}}}}}
 
 
 def test_tables_per_seed_and_class():
@@ -22,3 +23,5 @@ def test_tables_per_seed_and_class():
     classes = st.class_table("cicddos2019", arms)
     assert "Rule-only & P & 0.900 & 0.500" in classes and " & R & 0.800 & 0.400" in classes
     assert " & F1 & 0.850 & 0.450" in classes
+    c5 = st.c5_table("cicddos2019", arms)
+    assert "Rule-only & Sat. & 0.900" in c5 and " & Viol. & 0.100" in c5
