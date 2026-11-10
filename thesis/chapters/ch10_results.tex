@@ -548,18 +548,16 @@ The ratios hold for copies of one axiom on one machine. The epoch selected in th
 \cref{app:results}, is not a measure of cost, since an LTN epoch draws batches with quotas.
 
 \paragraph{Inference cost (E13 and E12).}
-Latency was taken for seed 0 of each arm on the CPU of the laptop. Every latency below is the median (p50), taken with the
-post-check, and \cref{tab:app-latency} gives the percentiles, rows per second and file sizes of the model alone, from a
-separate timing in the same report. Repeated measurements of one setting differ by up to about 0.5\,ms, so smaller
-differences are not read. The one larger gap is that of LTN-full on CIC-IDS2017 with one row, 2.39\,ms here against
-1.38\,ms in that table. The median latency of the four networks of the
-comparison is 1.3 to 2.4\,ms with one row per call, and 4.0 to 4.9\,ms with 1024 rows on NSL-KDD. LTN-full costs as an MLP, 2.00\,ms against 2.05 to 2.19\,ms on
-NSL-KDD with one row; this is a control, since the axioms act only in training, where the cost of LTN for RQ3 lies. The
-1D-CNN is the one neural arm that costs more at inference: 4.15\,ms with one row and 27.7\,ms with 1024 on NSL-KDD, about
-twice the MLP with one row and five to seven times with 1024 rows, and 4.2 to 5.3\,ms and 20.6 to 21.7\,ms on the CIC
-datasets. XGBoost takes 0.2 to 0.43\,ms per call and Random Forest 24 to 61\,ms. The post-check adds up to 2.2\,ms per
-call to the networks, on the CIC datasets less than the 0.5\,ms spread of the measurement, and annotate and enforce do not
-separate. These are times of one laptop.
+Latency was taken for seed 0 of each arm on the CPU of the laptop. Latencies are medians over 200 calls; those of the
+model alone are in \cref{tab:app-latency}, the cost of the post-check is measured within one run with it. Repeated
+measurements of one setting differ by up to about 0.5\,ms, so smaller differences are not read. With one row per call
+the four networks of the comparison take 1.3 to 2.2\,ms, and with 1024 rows they process 231\,000 to 248\,000 rows per
+second on NSL-KDD. LTN-full costs as an MLP, 2.07\,ms against 2.00 and 2.24\,ms on NSL-KDD with one row; this is a
+control, since the axioms act only in training, where the cost of LTN for RQ3 lies. The 1D-CNN is the one neural arm
+that costs more at inference: 4.01\,ms with one row on NSL-KDD and 4.0 to 5.1\,ms on the CIC datasets, about twice the
+MLP, and with 1024 rows a throughput six to eight times lower. XGBoost takes 0.2 to 0.4\,ms per call and Random Forest
+25 to 62\,ms. The post-check adds up to 2.2\,ms per call to the networks, on the CIC datasets less than the 0.5\,ms
+spread of the measurement, and annotate and enforce do not separate. These are times of one laptop.
 
 % ================================================================
 % 10.6 Real-time behaviour (E14, E15)
@@ -712,7 +710,7 @@ what matters is the exponent of the loss, for LTN-sup as for LTN-full, and more 
 
 \paragraph{RQ3, cost.}
 Partly open. Each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of a training epoch, with a
-growth close to linear, and at inference an LTN-trained network costs as an MLP, a median of 1.3 to 2.4\,ms per call with one row
+growth close to linear, and at inference an LTN-trained network costs as an MLP, a median of 1.3 to 2.2\,ms per call with one row
 on the CPU of the laptop; the post-check adds up to 2.2\,ms. Both halves of H7 agree with these runs. The one neural arm
 that costs more at inference is the 1D-CNN, which is not neurosymbolic. The total training cost of the arms is not
 compared, since the final runs shared the server, and the real-time half of RQ3 is open.
