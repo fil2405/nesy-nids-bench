@@ -15,7 +15,7 @@ The protocol exists to test nine hypotheses (\cref{tab:hypotheses}). The set was
 \centering
 \footnotesize
 \caption{Hypotheses by research question. The knowledge effect is LTN-full minus
-LTN-sup; the effect of the loss is LTN-sup minus MLP-CE.}
+LTN-sup, each with its own tuning; the effect of the loss is LTN-sup minus MLP-CE.}
 \label{tab:hypotheses}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}p{1.9cm}p{1.4cm}p{7.5cm}p{2.1cm}@{}}
@@ -47,7 +47,7 @@ H9 Classical ML & RQ5 & Random Forest and gradient boosting remain strong baseli
 
 H1 is read along two pairs of the confirmatory family (\cref{sec:wilcoxon}): MLP-CE with
 weights to LTN-sup, the effect of the loss, and LTN-sup to LTN-full, the effect of the
-knowledge. The direct difference between LTN-full and MLP-CE is read from the means, without a test. H2 cannot be tested on CIC-DDoS2019,
+knowledge together with its tuning (\cref{sec:threats}). The direct difference between LTN-full and MLP-CE is read from the means, without a test. H2 cannot be tested on CIC-DDoS2019,
 which has no rare class (\cref{sec:uc2}).
 
 % ================================================================
@@ -538,7 +538,7 @@ are dropped, while Dem{\v{s}}ar splits their ranks between the two signs. The $p
 from the exact null distribution, which ties among the differences make approximate. Five
 pairs are planned for each dataset and form the Holm family: MLP-CE without weights to with
 weights (balancing); with weights to LTN-sup (effect of the loss); LTN-sup to LTN-full (effect
-of the knowledge); LTN-full to Random Forest and LTN-full to XGBoost (H9). The primary metric
+of the knowledge, with its tuning); LTN-full to Random Forest and LTN-full to XGBoost (H9). The primary metric
 is the test macro-F1. The family and the pairs
 are fixed and are not changed after the data are seen. MLP-CE with weights to the 1D-CNN, the
 effect of the architecture, is tested in the same way and reported apart, outside the family; its

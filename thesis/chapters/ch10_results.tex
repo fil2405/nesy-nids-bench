@@ -162,8 +162,8 @@ every arm and axiom is in \cref{tab:app-c5-nslkdd,tab:app-c5-cicids2017,tab:app-
 0.809, 0.742 and 0.441 on A1, A2 and A3, against 0.778, 0.669 and 0.098 for LTN-sup; on A1 MLP-CE with weights is higher,
 0.829, and on A2 Random Forest, 0.823. On CIC-IDS2017 the two LTN arms differ by 0.003 at most and on CIC-DDoS2019 by
 0.004. On CIC-IDS2017 XGBoost has a satisfaction of 0.737 and 0.726 at the violation rate of the other arms, so the two
-measures do not order the arms alike. The one difference between arms beyond the
-deviation is A3, a rule that fails on the test file, so these runs do not support H8 as a merit of the knowledge arm.
+measures do not order the arms alike. The largest difference between the two LTN arms is on
+A3, a rule that fails on the test file, so these runs do not support H8 as a merit of the knowledge arm.
 
 \subsection{Statistical significance}
 \label{sec:res-significance}
@@ -728,8 +728,8 @@ eight to nine in ten on the CIC datasets, where they never contradict the predic
 lowers every learned arm, and it would help only with rules more precise than the model where they fire. The rule
 precision on the test part singles out the data axioms that fail outside the training data. The scorecard separates
 LTN-full by the cost of setup and of a change of rule, and no arm by explanation (\cref{tab:res-scorecard}). H8 is not
-supported as a merit of the knowledge arm: the one difference in violation beyond the deviation is on A3, a rule that
-fails on the test file.
+supported as a merit of the knowledge arm: the largest difference in violation is on A3, a rule that fails on the
+test file.
 
 \paragraph{RQ5, methodology.}
 The protocol produced the comparison with matched arms, a fixed family of tests and ten seeds, and several of its choices
