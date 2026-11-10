@@ -49,32 +49,41 @@ XGBoost & 0.7805 $\pm$ 0.0085 & 0.6840 $\pm$ 0.0121 \\
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{NSL-KDD, precision (P) and recall (R) per class on the test part, mean over the seeds.}
+\caption{NSL-KDD, precision (P), recall (R) and F1 per class on the test part, mean over the seeds.}
 \label{tab:app-classes-nslkdd}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}llrrrrr@{}}
 \toprule
-Arm & & Normal & DoS & Probe & R2L & U2R \\
+Arm &  & Normal & DoS & Probe & R2L & U2R \\
 \midrule
 Rule-only & P & 0.495 & 0.984 & 0.537 & 0.000 & 0.000 \\
  & R & 0.994 & 0.225 & 0.294 & 0.000 & 0.000 \\
+ & F1 & 0.660 & 0.366 & 0.380 & 0.000 & 0.000 \\
 MLP-CE, no weights & P & 0.681 & 0.951 & 0.811 & 0.912 & 0.806 \\
  & R & 0.964 & 0.833 & 0.660 & 0.083 & 0.170 \\
+ & F1 & 0.798 & 0.888 & 0.726 & 0.151 & 0.270 \\
 MLP-CE, weights & P & 0.685 & 0.943 & 0.809 & 0.967 & 0.669 \\
  & R & 0.955 & 0.836 & 0.672 & 0.109 & 0.313 \\
+ & F1 & 0.798 & 0.886 & 0.733 & 0.196 & 0.403 \\
 1D-CNN & P & 0.671 & 0.947 & 0.706 & 0.903 & 0.280 \\
  & R & 0.923 & 0.796 & 0.633 & 0.194 & 0.307 \\
+ & F1 & 0.777 & 0.865 & 0.666 & 0.315 & 0.273 \\
 LTN-sup & P & 0.687 & 0.959 & 0.812 & 0.965 & 0.149 \\
  & R & 0.965 & 0.825 & 0.647 & 0.122 & 0.381 \\
+ & F1 & 0.802 & 0.886 & 0.719 & 0.215 & 0.212 \\
 LTN-full & P & 0.692 & 0.954 & 0.778 & 0.941 & 0.173 \\
  & R & 0.961 & 0.825 & 0.672 & 0.111 & 0.379 \\
+ & F1 & 0.805 & 0.885 & 0.719 & 0.198 & 0.233 \\
 Random Forest & P & 0.684 & 0.963 & 0.804 & 0.961 & 0.482 \\
  & R & 0.971 & 0.820 & 0.733 & 0.058 & 0.199 \\
+ & F1 & 0.803 & 0.886 & 0.766 & 0.109 & 0.281 \\
 XGBoost & P & 0.684 & 0.964 & 0.847 & 0.924 & 0.355 \\
  & R & 0.972 & 0.831 & 0.767 & 0.034 & 0.063 \\
+ & F1 & 0.803 & 0.893 & 0.805 & 0.064 & 0.102 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
 \begin{table}[htbp]
 \centering
 \scriptsize
@@ -124,32 +133,41 @@ XGBoost & 0.9993 $\pm$ 0.0003 & 0.9974 $\pm$ 0.0011 \\
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{CIC-IDS2017, precision (P) and recall (R) per class on the test part, mean over the seeds.}
+\caption{CIC-IDS2017, precision (P), recall (R) and F1 per class on the test part, mean over the seeds.}
 \label{tab:app-classes-cicids2017}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}llrrrrrrr@{}}
 \toprule
-Arm & & Normal & DoS & DDoS & Probe & R2L & U2R & Botnet \\
+Arm &  & Normal & DoS & DDoS & Probe & R2L & U2R & Botnet \\
 \midrule
 Rule-only & P & 0.985 & 0.996 & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
  & R & 1.000 & 0.964 & 0.994 & 0.000 & 0.000 & 0.000 & 0.000 \\
+ & F1 & 0.992 & 0.980 & 0.997 & 0.000 & 0.000 & 0.000 & 0.000 \\
 MLP-CE, no weights & P & 1.000 & 1.000 & 1.000 & 0.990 & 0.998 & 0.890 & 0.948 \\
  & R & 1.000 & 1.000 & 1.000 & 0.988 & 0.996 & 0.586 & 0.965 \\
+ & F1 & 1.000 & 1.000 & 1.000 & 0.989 & 0.997 & 0.695 & 0.956 \\
 MLP-CE, weights & P & 1.000 & 1.000 & 1.000 & 0.979 & 0.995 & 0.829 & 0.932 \\
  & R & 1.000 & 1.000 & 1.000 & 0.991 & 0.997 & 0.686 & 0.986 \\
+ & F1 & 1.000 & 1.000 & 1.000 & 0.985 & 0.996 & 0.741 & 0.958 \\
 1D-CNN & P & 1.000 & 1.000 & 1.000 & 0.979 & 0.997 & 0.840 & 0.950 \\
  & R & 1.000 & 1.000 & 1.000 & 0.992 & 1.000 & 0.686 & 0.999 \\
+ & F1 & 1.000 & 1.000 & 1.000 & 0.985 & 0.998 & 0.748 & 0.974 \\
 LTN-sup & P & 1.000 & 0.999 & 1.000 & 0.962 & 0.994 & 0.603 & 0.861 \\
  & R & 1.000 & 0.999 & 1.000 & 0.990 & 0.997 & 0.671 & 1.000 \\
+ & F1 & 1.000 & 0.999 & 1.000 & 0.976 & 0.996 & 0.632 & 0.924 \\
 LTN-full & P & 1.000 & 0.999 & 1.000 & 0.964 & 0.995 & 0.697 & 0.886 \\
  & R & 1.000 & 0.999 & 1.000 & 0.992 & 0.997 & 0.700 & 1.000 \\
+ & F1 & 1.000 & 0.999 & 1.000 & 0.978 & 0.996 & 0.689 & 0.939 \\
 Random Forest & P & 1.000 & 1.000 & 1.000 & 0.992 & 1.000 & 1.000 & 1.000 \\
  & R & 1.000 & 1.000 & 1.000 & 0.997 & 0.998 & 0.714 & 0.993 \\
+ & F1 & 1.000 & 1.000 & 1.000 & 0.995 & 0.999 & 0.833 & 0.997 \\
 XGBoost & P & 1.000 & 1.000 & 1.000 & 0.876 & 1.000 & 1.000 & 0.999 \\
  & R & 0.999 & 1.000 & 1.000 & 0.997 & 0.996 & 0.714 & 0.994 \\
+ & F1 & 1.000 & 1.000 & 1.000 & 0.932 & 0.998 & 0.833 & 0.997 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
 \begin{table}[htbp]
 \centering
 \scriptsize
@@ -199,29 +217,37 @@ XGBoost & 0.9698 $\pm$ 0.0093 & 0.9389 $\pm$ 0.0193 \\
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{CIC-DDoS2019, precision (P) and recall (R) per class on the test part, mean over the seeds.}
+\caption{CIC-DDoS2019, precision (P), recall (R) and F1 per class on the test part, mean over the seeds.}
 \label{tab:app-classes-cicddos2019}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}llrr@{}}
 \toprule
-Arm & & Normal & DDoS \\
+Arm &  & Normal & DDoS \\
 \midrule
 Rule-only & P & 0.894 & 0.974 \\
  & R & 0.983 & 0.845 \\
+ & F1 & 0.936 & 0.905 \\
 MLP-CE, no weights & P & 0.998 & 0.977 \\
  & R & 0.983 & 0.997 \\
+ & F1 & 0.990 & 0.987 \\
 MLP-CE, weights & P & 0.998 & 0.983 \\
  & R & 0.987 & 0.997 \\
+ & F1 & 0.992 & 0.990 \\
 1D-CNN & P & 0.995 & 0.985 \\
  & R & 0.988 & 0.993 \\
+ & F1 & 0.992 & 0.989 \\
 LTN-sup & P & 0.997 & 0.984 \\
  & R & 0.988 & 0.996 \\
+ & F1 & 0.993 & 0.990 \\
 LTN-full & P & 0.997 & 0.989 \\
  & R & 0.991 & 0.996 \\
+ & F1 & 0.994 & 0.992 \\
 Random Forest & P & 0.992 & 0.983 \\
  & R & 0.987 & 0.990 \\
+ & F1 & 0.990 & 0.986 \\
 XGBoost & P & 0.983 & 0.953 \\
  & R & 0.964 & 0.978 \\
+ & F1 & 0.973 & 0.965 \\
 \bottomrule
 \end{tabular}
 \end{table}

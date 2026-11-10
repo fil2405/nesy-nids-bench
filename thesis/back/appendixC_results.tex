@@ -6,30 +6,9 @@ This appendix gives in full the tables that \cref{ch:results} summarises. Unless
 the mean over seeds 0 to 9 of the test part, or the median of the paired differences over the same seeds, and a
 difference is B minus A. Arms, datasets and experiments are those of \cref{ch:benchmarking-methodology}.
 The last section gives the macro-F1 of every seed of the final runs, their accuracy and MCC, and
-their precision and recall per class. The confusion matrices of every run are in its result file.
+their precision, recall and F1 per class. The confusion matrices of every run are in its result file.
 
 \section{Final runs}
-
-\begin{table}[htbp]
-\centering
-\footnotesize
-\caption{NSL-KDD, test F1 per class, mean over seeds 0 to 9.}
-\label{tab:app-nslkdd-classes}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-Arm & Normal & DoS & Probe & R2L & U2R \\
-\midrule
-Rule-only          & 0.660 & 0.366 & 0.380 & 0     & 0     \\
-MLP-CE, no weights & 0.798 & 0.888 & 0.726 & 0.151 & 0.270 \\
-MLP-CE, weights    & 0.798 & 0.886 & 0.733 & 0.196 & 0.403 \\
-LTN-sup            & 0.802 & 0.886 & 0.719 & 0.215 & 0.212 \\
-LTN-full           & 0.805 & 0.885 & 0.719 & 0.198 & 0.233 \\
-Random Forest      & 0.803 & 0.886 & 0.766 & 0.109 & 0.281 \\
-XGBoost            & 0.803 & 0.893 & 0.805 & 0.064 & 0.102 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \begin{table}[htbp]
 \centering
@@ -240,6 +219,8 @@ Copies & s/epoch & ratio & s/epoch & ratio & s/epoch & ratio \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\input{back/appendixC_latency}
 
 \begin{table}[htbp]
 \centering

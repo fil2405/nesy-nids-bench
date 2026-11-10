@@ -71,7 +71,7 @@ XGBoost            & 0.5333 $\pm$ 0.0209 & 0.9656 $\pm$ 0.0045 & 0.9693 $\pm$ 0.
 MLP-CE with weights is first (0.6033). The 1D-CNN follows (0.5791), then Random Forest, LTN-full,
 LTN-sup and MLP-CE without weights within 0.0026 of one another, and XGBoost last (0.5333). The
 rule-only classifier reaches 0.2813: its axioms cover DoS and Probe only, so R2L and U2R are never
-predicted and its macro-F1 cannot exceed three fifths. The per-class F1 is in \cref{app:results}. On
+predicted and its macro-F1 cannot exceed three fifths. Precision, recall and F1 per class are in \cref{tab:app-classes-nslkdd}. On
 R2L the recall lies between 0.03 and 0.19 for every arm, whatever the loss or the family. On U2R the precision is
 0.669 for MLP-CE with weights and 0.173 for LTN-full.
 
@@ -548,8 +548,11 @@ The ratios hold for copies of one axiom on one machine. The epoch selected in th
 \cref{app:results}, is not a measure of cost, since an LTN epoch draws batches with quotas.
 
 \paragraph{Inference cost (E13 and E12).}
-Latency was taken for seed 0 of each arm on the CPU of the laptop. Repeated measurements of one setting differ by up to
-about 0.5\,ms, so smaller differences are not read. Every latency below is the median (p50). The median latency of the four networks of the
+Latency was taken for seed 0 of each arm on the CPU of the laptop. Every latency below is the median (p50), taken with the
+post-check, and \cref{tab:app-latency} gives the percentiles, rows per second and file sizes of the model alone, from a
+separate timing in the same report. Repeated measurements of one setting differ by up to about 0.5\,ms, so smaller
+differences are not read. The one larger gap is that of LTN-full on CIC-IDS2017 with one row, 2.39\,ms here against
+1.38\,ms in that table. The median latency of the four networks of the
 comparison is 1.3 to 2.4\,ms with one row per call, and 4.0 to 4.9\,ms with 1024 rows on NSL-KDD. LTN-full costs as an MLP, 2.00\,ms against 2.05 to 2.19\,ms on
 NSL-KDD with one row; this is a control, since the axioms act only in training, where the cost of LTN for RQ3 lies. The
 1D-CNN is the one neural arm that costs more at inference: 4.15\,ms with one row and 27.7\,ms with 1024 on NSL-KDD, about
