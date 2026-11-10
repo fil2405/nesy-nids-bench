@@ -157,7 +157,12 @@ The violation is defined against the rule and not the label, so a low rate is no
 file against a confidence of 0.900 on the training file. LTN-full violates it on 0.641 of the flows it covers and LTN-sup
 on 0.815, and for most of these flows not predicting Probe is right. On CIC-IDS2017 the measures saturate, with a rule
 precision of 1.000 and 0.996. On CIC-DDoS2019 A2 has a rule precision of 0.547 on 887 rows of the test day, against a
-confidence of 0.967, and every arm violates it on about 0.45 of them. The one difference between arms beyond the
+confidence of 0.967, and every arm violates it on about 0.45 of them, XGBoost on 0.49. The axiom-level satisfaction of
+every arm and axiom is in \cref{tab:app-c5-nslkdd,tab:app-c5-cicids2017,tab:app-c5-cicddos2019}. On NSL-KDD LTN-full has
+0.809, 0.742 and 0.441 on A1, A2 and A3, against 0.778, 0.669 and 0.098 for LTN-sup; on A1 MLP-CE with weights is higher,
+0.829, and on A2 Random Forest, 0.823. On CIC-IDS2017 the two LTN arms differ by 0.003 at most and on CIC-DDoS2019 by
+0.004. On CIC-IDS2017 XGBoost has a satisfaction of 0.737 and 0.726 at the violation rate of the other arms, so the two
+measures do not order the arms alike. The one difference between arms beyond the
 deviation is A3, a rule that fails on the test file, so these runs do not support H8 as a merit of the knowledge arm.
 
 \subsection{Statistical significance}
@@ -185,7 +190,8 @@ LTN-full to XGBoost          & $-$0.0425 (0.0234)* & $+$0.0233 (0.0117)* & $-$0.
 \end{table}
 
 \paragraph{The knowledge pair (RQ1).}
-LTN-sup to LTN-full isolates the effect of the axioms. The sign is positive on the three datasets, and after
+LTN-sup to LTN-full measures the axioms together with their tuning, since each arm has its own 20 trials
+(\cref{sec:threats}). The sign is positive on the three datasets, and after
 Holm the pair is significant on none (\cref{tab:res-pairs}); the raw $p$-values are 0.77 on NSL-KDD and
 0.037 on each CIC dataset. On CIC-IDS2017 the median difference is $+0.0151$, interval
 $[+0.0013;\,+0.0216]$, with LTN-full better in 8 of 10 seeds; on CIC-DDoS2019 it is $+0.0017$,
@@ -716,7 +722,7 @@ that costs more at inference is the 1D-CNN, which is not neurosymbolic. The tota
 compared, since the final runs shared the server, and the real-time half of RQ3 is open.
 
 \paragraph{RQ4, usability.}
-One axiom is estimated at hours of work, a knowledge base at one or two days and the change of a rule at less than an hour;
+One axiom is estimated at hours of work, a knowledge base at one or two days and the change of a rule at an hour at most;
 the dearest part is the search for axioms that do not exist (E16). The explanations cover one alert in three on NSL-KDD and
 eight to nine in ten on the CIC datasets, where they never contradict the prediction (E17). In enforce mode the post-check
 lowers every learned arm, and it would help only with rules more precise than the model where they fire. The rule

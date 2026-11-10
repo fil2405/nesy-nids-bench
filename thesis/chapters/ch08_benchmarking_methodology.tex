@@ -610,7 +610,8 @@ and the saved models are not in the repository; they are available from the auth
 
 \paragraph{Internal.}
 The common network is not optimal for every arm, the arms balance classes with different
-levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). The 1D-CNN
+levers, and equal trials mean unequal density of search (\cref{sec:matched-tuning}). LTN-sup and LTN-full
+were tuned separately, so their difference holds the knowledge together with its tuning. The 1D-CNN
 has more parameters than the common network. The tuning of CIC-IDS2017 used a thinned Normal
 class, and its validation part held labels later held out in E9. Validation has few rare examples,
 and the moving mean only damps this. The thresholds of the knowledge bases were calibrated on

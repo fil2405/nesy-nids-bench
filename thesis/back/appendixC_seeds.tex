@@ -87,6 +87,36 @@ XGBoost & P & 0.684 & 0.964 & 0.847 & 0.924 & 0.355 \\
 \begin{table}[htbp]
 \centering
 \scriptsize
+\caption{NSL-KDD, C5 on the test part per axiom of the main base, mean over the seeds: axiom-level satisfaction (Sat.) and domain-rule violation rate (Viol.) on the flows that the axiom covers.}
+\label{tab:app-c5-nslkdd}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Arm &  & A1 & A2 & A3 \\
+\midrule
+Rule-only & Sat. & 1.000 & 1.000 & 1.000 \\
+ & Viol. & 0.000 & 0.000 & 0.000 \\
+MLP-CE, no weights & Sat. & 0.735 & 0.643 & 0.098 \\
+ & Viol. & 0.074 & 0.132 & 0.814 \\
+MLP-CE, weights & Sat. & 0.829 & 0.687 & 0.097 \\
+ & Viol. & 0.036 & 0.105 & 0.816 \\
+1D-CNN & Sat. & 0.736 & 0.641 & 0.098 \\
+ & Viol. & 0.083 & 0.130 & 0.814 \\
+LTN-sup & Sat. & 0.778 & 0.669 & 0.098 \\
+ & Viol. & 0.069 & 0.123 & 0.815 \\
+LTN-full & Sat. & 0.809 & 0.742 & 0.441 \\
+ & Viol. & 0.054 & 0.094 & 0.641 \\
+Random Forest & Sat. & 0.717 & 0.823 & 0.133 \\
+ & Viol. & 0.104 & 0.035 & 0.816 \\
+XGBoost & Sat. & 0.731 & 0.750 & 0.138 \\
+ & Viol. & 0.046 & 0.036 & 0.817 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\scriptsize
 \caption{CIC-IDS2017, test macro-F1 of every seed of the final runs. The rule-only classifier has one value, repeated.}
 \label{tab:app-seeds-cicids2017}
 \setlength{\tabcolsep}{3pt}
@@ -171,6 +201,36 @@ XGBoost & P & 1.000 & 1.000 & 1.000 & 0.876 & 1.000 & 1.000 & 0.999 \\
 \begin{table}[htbp]
 \centering
 \scriptsize
+\caption{CIC-IDS2017, C5 on the test part per axiom of the main base, mean over the seeds: axiom-level satisfaction (Sat.) and domain-rule violation rate (Viol.) on the flows that the axiom covers.}
+\label{tab:app-c5-cicids2017}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Arm &  & A1 & A2 \\
+\midrule
+Rule-only & Sat. & 1.000 & 1.000 \\
+ & Viol. & 0.000 & 0.000 \\
+MLP-CE, no weights & Sat. & 1.000 & 0.941 \\
+ & Viol. & 0.000 & 0.004 \\
+MLP-CE, weights & Sat. & 1.000 & 0.941 \\
+ & Viol. & 0.000 & 0.004 \\
+1D-CNN & Sat. & 1.000 & 0.941 \\
+ & Viol. & 0.000 & 0.004 \\
+LTN-sup & Sat. & 1.000 & 0.942 \\
+ & Viol. & 0.000 & 0.003 \\
+LTN-full & Sat. & 1.000 & 0.945 \\
+ & Viol. & 0.000 & 0.003 \\
+Random Forest & Sat. & 0.999 & 0.943 \\
+ & Viol. & 0.000 & 0.004 \\
+XGBoost & Sat. & 0.737 & 0.726 \\
+ & Viol. & 0.000 & 0.004 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\scriptsize
 \caption{CIC-DDoS2019, test macro-F1 of every seed of the final runs. The rule-only classifier has one value, repeated.}
 \label{tab:app-seeds-cicddos2019}
 \setlength{\tabcolsep}{3pt}
@@ -248,6 +308,36 @@ Random Forest & P & 0.992 & 0.983 \\
 XGBoost & P & 0.983 & 0.953 \\
  & R & 0.964 & 0.978 \\
  & F1 & 0.973 & 0.965 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{CIC-DDoS2019, C5 on the test part per axiom of the main base, mean over the seeds: axiom-level satisfaction (Sat.) and domain-rule violation rate (Viol.) on the flows that the axiom covers.}
+\label{tab:app-c5-cicddos2019}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Arm &  & A1 & A2 \\
+\midrule
+Rule-only & Sat. & 1.000 & 1.000 \\
+ & Viol. & 0.000 & 0.000 \\
+MLP-CE, no weights & Sat. & 0.902 & 0.333 \\
+ & Viol. & 0.011 & 0.447 \\
+MLP-CE, weights & Sat. & 0.899 & 0.330 \\
+ & Viol. & 0.013 & 0.450 \\
+1D-CNN & Sat. & 0.890 & 0.333 \\
+ & Viol. & 0.014 & 0.445 \\
+LTN-sup & Sat. & 0.910 & 0.328 \\
+ & Viol. & 0.008 & 0.452 \\
+LTN-full & Sat. & 0.906 & 0.331 \\
+ & Viol. & 0.010 & 0.448 \\
+Random Forest & Sat. & 0.881 & 0.329 \\
+ & Viol. & 0.015 & 0.451 \\
+XGBoost & Sat. & 0.882 & 0.308 \\
+ & Viol. & 0.015 & 0.492 \\
 \bottomrule
 \end{tabular}
 \end{table}

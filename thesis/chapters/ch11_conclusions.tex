@@ -18,13 +18,13 @@ CIC-IDS2017 and CIC-DDoS2019. LTN-full, a network trained with domain axioms, fa
 trained without them, LTN-sup, and with cross-entropy, MLP-CE with and without class weights. Random
 Forest, XGBoost, the axioms alone and a 1D-CNN complete the arms. Each arm with hyperparameters had
 20 tuning trials, the learning arms ran on ten seeds, and five paired comparisons per dataset form
-the confirmatory family. Stress experiments changed the labels, the rare classes, the attacks seen
+the confirmatory family. Stress experiments changed the number of labels, the rare classes, the attacks seen
 in training, the dataset and the knowledge.
 
 Of the contributions of \cref{sec:contributions}, C1 is delivered for the batch setting, and its
 usability axis rests on an estimated effort and a scorecard. C2 and C3 are delivered, and most
-of the results of C3 are negative. C4 has no measurements yet. C5 was measured for every arm: a low
-violation rate proved not to be a merit, and the rule precision read beside it was the informative
+of the results of C3 are negative. C4 has no measurements yet. C5, axiom-level satisfaction and the
+domain-rule violation rate, was measured for every arm: a low violation rate proved not to be a merit, and the rule precision read beside it was the informative
 figure.
 
 % ================================================================
@@ -47,18 +47,13 @@ The advantage does not appear under the conditions tested, with one partial exce
 labels the knowledge never helps: where the effect stands out of the seeds it is negative and at
 most 1.5 points, so H4 is not supported (\cref{sec:res-scarcity}). With thinned rare classes it
 gains nothing systematic, so neither is H2, and on attacks held out of training it changes nothing.
-A larger weight on the axioms does not help: it lowers the macro-F1 by 0.015 to 0.023 on NSL-KDD and
-stays within 0.004 on CIC-IDS2017. Shifted thresholds and a swapped target change LTN-full by at most
+A larger weight on the axioms does not help: on NSL-KDD it lowers the macro-F1 by 0.015 to 0.023.
+On CIC-IDS2017 every other weight stays within 0.004. Shifted thresholds and a swapped target change LTN-full by at most
 about a point, on a grid that does not test H6 as written. Under noise LTN-full and LTN-sup lose
 the same. What moves the macro-F1 is the exponent of the loss, for LTN-sup as for LTN-full.
 
-Rules extracted from the data do not hold outside the training data: A3 of NSL-KDD goes from a
-confidence of 0.900 to a precision of 0.130 on the test file and A2 of CIC-DDoS2019 from 0.967 to
-0.547, while the mechanism axioms keep 0.950 to 0.984. Seven axioms do not make a rate, and the
-statement holds for these.
-
 The exception is the transfer from CIC-IDS2017 to CIC-DDoS2019 (\cref{sec:res-unseen}). The learned
-models detect 0 to 13\,\% of the attacks, with a best macro-F1 of 0.4812, and the rules extracted
+models detect 0 to 13\,\% of the attacks, with a best mean macro-F1 of 0.4812, and the rules extracted
 from the source never help. The mechanism axiom of the UDP flood lifts LTN-full by about ten points
 in training, only to the level of MLP-CE with weights. Read alone at inference it reaches 0.918, and
 no model with the post-check goes beyond it. The knowledge that transfers is that of a mechanism,
@@ -67,22 +62,22 @@ mostly at inference, for this pair of datasets, this direction and this axiom.
 \paragraph{RQ3, cost.}
 Partly answered. Each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of a
 training epoch, with a growth close to linear. At inference an LTN-trained network costs as an MLP,
-1.3 to 2.2\,ms per call with one row on the CPU of the laptop, and the post-check adds 0.3 to
-2.2\,ms (\cref{sec:res-cost}). Both halves of H7 agree with these runs. The total training cost of
-the arms is not compared, since the final runs shared a server. The streaming half of the question
+1.3 to 2.2\,ms per call with one row on the CPU of the laptop, and the post-check adds up to
+2.2\,ms, on the CIC datasets less than the spread of the measurement (\cref{sec:res-cost}). Both halves of H7 agree with these runs. The total training cost of
+the arms is not compared, since the final runs ran as parallel processes. The streaming half of the question
 has no result yet.
 % FIXME(open): E14 and E15 have no results; when they arrive, answer the real-time half of RQ3 here and update C4 in Sec. 11.1, the last item of Sec. 11.4 and Sec. 11.5.6.
 
 \paragraph{RQ4, usability.}
 One axiom is estimated at hours of work, a knowledge base at one or two days and the change of a rule
-at less than an hour. The dearest part is the search for axioms that do not exist, which the
+at an hour at most. The dearest part is the search for axioms that do not exist, which the
 baselines do not pay. In return, the explanations cover one alert in three on NSL-KDD and eight to
 nine in ten on the CIC datasets, where they never contradict the prediction
 (\cref{sec:res-usability}). In enforce mode with the main bases the post-check lowers every learned
 arm on the three datasets. It helps only where the rule is more precise than the model on the rows
-where it fires, as in the transfer. On the scorecard LTN-full costs most to set up and to change, a
-rule change needing a new training run, and explains no better than any other arm, since the
-explanation comes from the post-check that every arm shares (\cref{tab:res-scorecard}).
+where it fires, as in the transfer. On the scorecard LTN-full shares the lowest setup
+score with the rule-only classifier and is the only arm that needs a new training run to change a
+rule. It explains no better than the other learned arms, since the explanation comes from the post-check that every arm shares (\cref{tab:res-scorecard}).
 
 \paragraph{RQ5, methodology.}
 A fair benchmark here needs one network for the neural arms, equal tuning trials, selection on
@@ -108,22 +103,19 @@ from the results above and share their limits.
   \item \textbf{Is a baseline already enough?} Train a Random Forest and a plain network first. On
     CIC-IDS2017 the trees beat every network, and on the CIC datasets no rule beat the models on its
     rows. If a baseline meets the need, stop here.
-  \item \textbf{Is the rule a mechanism, or was it extracted from data?} An extracted rule fires
-    almost only where the model is already right, as on CIC-IDS2017, and outside the training data
-    such rules fell to 0.130 and 0.547. Prefer a mechanism. A training confidence of 0.90 is no
-    guarantee: A3 had it.
-  \item \textbf{Can the mechanism be read in your features?} On single flows of CIC-IDS2017 a slow
-    DoS axiom reached a precision of 0.008. Measure the precision on labelled data first, and drop a
-    rule that fails.
+  \item \textbf{Is the rule a mechanism, and can it be read in your features?} An extracted rule
+    fires almost only where the model is already right, as on CIC-IDS2017, and on the two datasets
+    with a separate test part such rules fell to 0.130 and 0.547. A training confidence of 0.90 is no
+    guarantee: A3 had it. Prefer a mechanism, and measure its precision on labelled data first: on
+    single flows of CIC-IDS2017 a slow DoS axiom reached 0.008. Drop a rule that fails.
   \item \textbf{Is the rule more precise than the model where it fires?} Compare the two on those
     rows and count the overrides that correct and break a prediction. If the rule wins, it may change
     decisions. If not, use it to annotate alerts.
   \item \textbf{Do you need explanations, or transfer to new data?} The post-check gives
-    explanations to any model, at 0.3 to 2.2\,ms per call, with no LTN training. A mechanism rule is
-    worth most on new data: in the transfer it reached 0.918 alone, and the models detected at most
-    13\,\% of the attacks. Keep such a rule at inference.
+    explanations to any model, with no LTN training. A mechanism rule is worth most on new data, as
+    in the transfer. Keep such a rule at inference.
   \item \textbf{Is a constraint in training justified?} On these runs, not for detection. Its cost
-    is small, 2 to 4\,\% of an epoch per axiom, but LTN training without axioms lost to MLP-CE with
+    per axiom is small, but LTN training without axioms lost to MLP-CE with
     weights on two datasets, and the one gain of the axioms only reached the best arm without
     knowledge. If you train with LTN, tune the exponent $p$.
   \item \textbf{Is the work justified?} Count hours per axiom, a day or two per base and the search
@@ -147,15 +139,16 @@ The limits of \cref{sec:threats,sec:res-threats} bound every statement of this c
     effect of the knowledge is that of rules distilled from the labels the network also sees. The
     thresholds of the mechanism axioms were calibrated on training labels, except that of the UDP
     axiom of CIC-DDoS2019, which means no backward packet. That axiom entered the transfer from the
-    training day of the target dataset.
+    training day of the target dataset. On NSL-KDD the axioms cover DoS and Probe only, and no usable
+    axiom was found for R2L and U2R.
   \item \emph{Features.} On the CIC datasets every feature describes one flow, with no window or
     source statistic, so most candidate axioms of \cref{ch:attacks-ddos} could not be written there.
   \item \emph{Datasets.} NSL-KDD is old and synthetic, and its test file does not follow its
-    training file. The test part of CIC-IDS2017 is in-distribution and holds 7 U2R flows.
-    CIC-DDoS2019 has two classes and is close to saturation. The transfer changes attacks and flow
-    extractor at once, in one direction.
+    training file. The test part of CIC-IDS2017 is in-distribution, CIC-DDoS2019 is close to
+    saturation, and the transfer runs in one direction.
   \item \emph{Method.} Only LTN is tested. The other families of \cref{ch:learning-paradigms} are not
-    run on traffic, and the maturity of their tools was not compared.
+    run on traffic, and the maturity of their tools was not compared. LTN-sup and LTN-full were tuned
+    separately, so their difference holds the knowledge together with its tuning.
   \item \emph{Measures.} The effort of E16 is an estimate. The times of E12 and E13 come from one
     laptop. Ten seeds speak of the randomness of training on one dataset. E14 and E15 have no results.
 \end{itemize}
@@ -172,33 +165,33 @@ The limits of \cref{sec:threats,sec:res-threats} bound every statement of this c
 Mechanism axioms did not hold on single flows of CIC-IDS2017: the slow DoS axiom reached a precision
 of 0.008 and the scan axiom 0.092 (\cref{sec:res-knowledge}). A scan or a flood is a pattern over
 many flows, so the next step is window statistics, with one definition for training and streaming,
-and axioms over sequences of flows and relations between sources and destinations. Windows will not
-cure everything: in our reading the half-open axiom describes the attempt, while the corrected labels
-mark as Normal every attempt that had no effect.
+and axioms over sequences of flows and relations between sources and destinations.
 
 \subsection{Learning the rules instead of writing them (ILP, rule extraction)}
 \label{sec:fw-learning-rules}
 
-The extracted rules of this thesis are the ones that failed outside the training data. A3 of NSL-KDD
-met the bar of acceptance with a confidence of 0.900 and fell to 0.130. Inductive logic programming
-or a better extractor would need another criterion. We would keep a learned rule only if it holds on data its search did not see, from another day or
-dataset, and would not learn it from the labels that train the detector.
+The rules that failed outside the training data are extracted ones, two of the four of this thesis.
+A3 of NSL-KDD entered the base with a training confidence of 0.900 and fell to 0.130 on the test
+file. Inductive logic programming or a better extractor would need another criterion. We would keep
+a learned rule only if it holds on data its search did not see, from another day or dataset, and
+would not learn it from the labels that train the detector.
 
 \subsection{Other NeSy frameworks under the same benchmark}
 \label{sec:fw-frameworks}
 
 The negative result on training may belong to LTN, to its loss or to logic as a loss in general, and
 one framework cannot separate them. Semantic Loss and DL2 would change the loss and keep the setting.
-DeepProbLog and NeurASP keep the logic in the decision, where the knowledge acted in these runs, so
-in our view they are the more interesting arms. A new arm needs only the interface of a model
+DeepProbLog and NeurASP place the network inside a logic program. In our reading the logic then
+stays in the decision, where the knowledge acted in these runs, and they are the more interesting
+arms. A new arm needs only the interface of a model
 (\cref{sec:impl-models}) and inherits the splits, the tuning budget and the tests.
 
 \subsection{Knowledge from MITRE ATT\&CK / threat-intel feeds, automatically}
 \label{sec:fw-attack}
 
 The search for axioms by hand is the dearest part of the knowledge, and \cref{sec:alert-formats}
-names ATT\&CK and threat-intelligence feeds as a possible source. They describe the behaviour of
-attacks and not thresholds on columns, so the open step is the map from a technique to a condition on
+names ATT\&CK and threat-intelligence feeds as a possible source. As we read them, they describe the
+behaviour of attacks and not thresholds on columns, so the open step is the map from a technique to a condition on
 flow features. Such knowledge exists before the dataset, unlike the base of CIC-IDS2017, and the
 transfer is ready as its test.
 
@@ -206,7 +199,7 @@ transfer is ready as its test.
 \label{sec:fw-adversarial}
 
 E10 assumes an adversary who knows the thresholds. It broke the rule-only classifier on the three
-datasets, from 0.9205 to 0.3594 on CIC-DDoS2019, while no network reacted (\cref{sec:res-noise}). The
+datasets, while no network reacted (\cref{sec:res-noise}). The
 knowledge that helps at inference is therefore the part exposed to evasion. E10 does not ask whether
 a moved flow still works as an attack. A study of an adaptive adversary, left out by
 \cref{sec:scope-limitations}, would limit the perturbation to what keeps the attack alive, test model
@@ -216,7 +209,7 @@ and post-check together, and compare mechanism rules with extracted ones.
 \label{sec:fw-line-rate}
 
 The times of E12 are calls on the CPU of a laptop and say nothing on line rate. An LTN-trained
-network is a plain network at inference, so quantization applies as to any MLP, and the rules,
-comparisons on raw columns, could move closest to the traffic, in an eBPF or DPDK front end. The
+network is a plain network at inference, so quantization applies as to any MLP, and the rules
+could move to an eBPF or DPDK front end. The
 features come from closed flows, however, so such a front end needs rules on packets or on partial
 flows. The end-to-end measurements of E14 and E15 have to come first.

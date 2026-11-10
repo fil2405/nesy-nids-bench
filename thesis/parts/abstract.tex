@@ -17,11 +17,12 @@ either: where the effect stands out of the seeds it is negative, at most 1.5 poi
 extracted from the data do not hold outside training: on the two datasets with a separate test part
 their precision falls to 0.130 and 0.547, while the mechanism rules of the same bases keep 0.950 to
 0.984. Mechanism rules matter at inference in one case, the transfer from CIC-IDS2017 to
-CIC-DDoS2019: the learned models reach a macro-F1 of at most 0.4812, while the UDP-flood rule of the
-target dataset, read alone, reaches 0.918; in training the same rule only lifts the logic-trained network to the
-level of the best neural baseline. Within each dataset, letting the full knowledge base override the
+CIC-DDoS2019: the learned models reach a mean macro-F1 of at most 0.4812, while the UDP-flood rule of the
+target dataset, read alone, reaches 0.918; in training the same rule only lifts the logic-trained
+network to the level of the best neural baseline. Within each dataset, letting the full knowledge base override the
 predictions lowers every learned model. At inference a network trained with logic costs the same as
-a plain one, and each axiom adds 2 to 4\,\% to the time of a training epoch. On CIC-IDS2017 both tree ensembles
-beat every network. The practical contribution of the thesis is a decision checklist for when a
+a plain one, and each axiom adds 2 to 4\,\% to the time of a training epoch. On CIC-IDS2017 both
+tree ensembles beat every network. The thesis closes with a decision checklist for when a
 neurosymbolic approach is worth using and when it is not.
+% FIXME(open): E14 and E15 have no results; when they arrive, add the streaming pipeline (C4) and its latency and throughput here.
 \end{spacing}
