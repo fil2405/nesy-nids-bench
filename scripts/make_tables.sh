@@ -48,6 +48,7 @@ for DS in nslkdd cicids2017 cicddos2019; do
             $( [ $E = threshold ] && echo --dir "$RES/operating" || echo --dir "$RES/saved_eval" )
     done
     run "${DS}_e12" "$PY" $A/saved_tables.py e12 --dataset "$DS" --dir "$RES/latency" --tex "$OUT/${DS}_e12.tex"
+    [ "$DS" = nslkdd ] && run latency "$PY" $A/saved_tables.py latency --dir "$RES/latency" --tex "$OUT/latency.tex"
     run "${DS}_cost" "$PY" $A/saved_tables.py cost --dataset "$DS" --dir "$RES/operating" \
         --tex "$OUT/${DS}_cost.tex" --fig "$OUT/${DS}_cost.pdf"
 done

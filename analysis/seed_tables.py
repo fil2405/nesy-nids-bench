@@ -2,7 +2,7 @@
 
     python analysis/seed_tables.py [--results-dir results] [--out thesis/back/appendixC_seeds.tex]
 
-Per dataset: macro-F1 of every seed and arm; accuracy and MCC; precision and recall per class.
+Per dataset: macro-F1 of every seed and arm; accuracy and MCC; precision, recall and F1 per class.
 Means and sample deviations are over the seeds of each arm.
 """
 import argparse
@@ -73,11 +73,11 @@ def class_table(ds, arms):
     classes = next(iter(arms[0][3].values()))["class_names"]
     rows = []
     for _, name, _, t in arms:
-        for key, tag in (("precision", "P"), ("recall", "R")):
+        for key, tag in (("precision", "P"), ("recall", "R"), ("f1", "F1")):
             vals = [np.mean([t[s][key][i] for s in t]) for i in range(len(classes))]
             rows.append([name if tag == "P" else "", tag] + [f"{v:.3f}" for v in vals])
     return table(["Arm", ""] + list(classes), rows,
-                 f"{DATASETS[ds]}, precision (P) and recall (R) per class on the test part, mean over the seeds.",
+                 f"{DATASETS[ds]}, precision (P), recall (R) and F1 per class on the test part, mean over the seeds.",
                  f"tab:app-classes-{ds}", "ll" + "r" * len(classes))
 
 

@@ -62,3 +62,14 @@ def test_postcheck_without_annotate(tmp_path):
     (tmp_path / "x.json").write_text(json.dumps(rep))
     (row,) = st.postcheck_rows(st.load_reports(tmp_path, "nslkdd"))
     assert row[4][0] == pytest.approx(0.62)
+
+
+def test_latency_detail_and_tex(tmp_path):
+    b = {s: {"p50_ms": 1.5, "p95_ms": 2.0, "p99_ms": 3.0, "rows_per_second": 12345.6} for s in ("1", "64", "1024")}
+    for name in ("nslkdd_mlp_noweights_tuned", "cicddos2019_xgb_tuned"):
+        (tmp_path / f"{name}.json").write_text(json.dumps({"batches": b, "size_bytes": {"m": 2**20, "x": 2**20}}))
+    rows = st.latency_detail(tmp_path)
+    assert [(r[0], r[1]) for r in rows] == [("nslkdd", "mlp_noweights"), ("cicddos2019", "xgb")]
+    assert rows[0][6] == 2.0
+    tex = st.latency_tex(rows)
+    assert "NSL-KDD & MLP-CE, no weights & 1.50 & 2.00 & 3.00 & 12\\,346 & 2.00" in tex
