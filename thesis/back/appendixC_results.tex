@@ -10,6 +10,10 @@ their precision, recall and F1 per class, and the C5 measures per axiom. The con
 
 \section{Final runs}
 
+\Cref{tab:app-ranks} gives the mean Friedman ranks behind the comparison of \cref{sec:res-significance},
+and \cref{tab:app-epochs} the epoch that the selection rule kept in the final runs of the four neural arms.
+
+
 \begin{table}[htbp]
 \centering
 \footnotesize
@@ -52,7 +56,13 @@ LTN-full           & 25--84 & 16--53 & 13--42 \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Sensitivity to the knowledge and to the semantics}
+
+These tables give every level of the checks that \cref{tab:res-sensitivity} summarises: the removal of
+one axiom or group in E3 (\cref{tab:app-e3}), the settings of the logic in E4 (\cref{tab:app-e4}) and the
+thinning of the rare classes in E8 (\cref{tab:app-e8}).
+
 
 \begin{table}[htbp]
 \centering
@@ -131,7 +141,12 @@ CIC-DDoS2019 & $-$0.000 & $-$0.001 & $-$0.001 (2/10, $p$ 0.08) \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Unseen attacks and transfer}
+
+\Cref{tab:app-e9} gives the held-out labels of CIC-IDS2017 in E9, and \cref{tab:app-transfer-postcheck}
+the transfer to CIC-DDoS2019 with the post-check in enforce mode (\cref{sec:res-unseen}).
+
 
 \begin{table}[htbp]
 \centering
@@ -174,7 +189,14 @@ LTN-sup              & 0.3201 & 0.7248 $\pm$ 0.1670 & 25\,899 & 478 \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Perturbations, cost, effort and explanations}
+
+This section gives the noise of E10 (\cref{tab:app-e10}), the time per epoch of E13 (\cref{tab:app-e13}),
+the latency of E12 (\cref{tab:app-latency}), the effort estimates of E16 (\cref{tab:app-e16}), the
+explanation measures of E17 (\cref{tab:app-e17}) and the post-check in enforce mode on NSL-KDD
+(\cref{tab:app-postcheck}).
+
 
 \begin{table}[htbp]
 \centering
@@ -287,6 +309,7 @@ XGBoost            & 0.5333 & 0.5094 \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Every seed of the final runs}
 
 The tables of this section are written by \texttt{analysis/seed\_tables.py} from the result files

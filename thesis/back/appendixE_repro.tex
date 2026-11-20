@@ -9,6 +9,8 @@ one seed and writes one result file, and every table is computed from the result
 
 \section{Layout}
 
+\Cref{tab:app-layout} lists the directories of the repository and what each holds.
+
 \begin{table}[htbp]
 \centering
 \footnotesize
@@ -35,6 +37,7 @@ Directory & Content \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Machines}
 \label{app:machines}
 
@@ -43,6 +46,8 @@ The runs of the thesis used two machines, named L1 and S1 in the text. Their sof
 
 \subsection{Laptop L1}
 \label{app:machine-l1}
+
+L1 is the laptop of the author; \cref{tab:app-machine-l1} gives its build.
 
 \begin{table}[htbp]
 \centering
@@ -68,6 +73,7 @@ S1 is a shared machine with one GPU, on which the seeds of a run and the trials 
 parallel processes (\cref{sec:impl-environment}).
 % FIXME(open): provider and components of S1 (CPU, GPU, memory, storage), when the co-supervisor sends them.
 
+\FloatBarrier
 \section{Environment and data}
 
 The code needs Python 3.11 or later. The packages are listed in \texttt{requirements.txt}, and
