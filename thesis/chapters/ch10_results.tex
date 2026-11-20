@@ -151,7 +151,7 @@ every cost. On CIC-IDS2017 Random Forest is lowest over the whole range, and all
 CIC-DDoS2019, where LTN-full is first at the argmax, the two MLP arms are lowest up to a probability cost of 0.89, with an
 area of 0.0033 against 0.0044 and 0.0046 for the LTN arms, and Random Forest only above it.
 
-\paragraph{Domain rules (C5).}
+\paragraph{Domain rules.}
 The violation is defined against the rule and not the label, so a low rate is not a merit
 (\cref{sec:rule-violation-rate}). On NSL-KDD A3, the flag RSTR implies Probe, has a rule precision of 0.130 on the test
 file against a confidence of 0.900 on the training file. LTN-full violates it on 0.641 of the flows it covers and LTN-sup
@@ -189,7 +189,7 @@ LTN-full to XGBoost          & $-$0.0425 (0.0234)* & $+$0.0233 (0.0117)* & $-$0.
 \end{tabular}
 \end{table}
 
-\paragraph{The knowledge pair (RQ1).}
+\paragraph{The knowledge pair.}
 LTN-sup to LTN-full measures the axioms together with their tuning, since each arm has its own 20 trials
 (\cref{sec:threats}). The sign is positive on the three datasets, and after
 Holm the pair is significant on none (\cref{tab:res-pairs}); the raw $p$-values are 0.77 on NSL-KDD and
@@ -204,7 +204,7 @@ seeds) and on CIC-IDS2017 ($-0.0206$, $[-0.0337;\,-0.0112]$, 0 of 10), and equal
 training without any domain axiom is not neutral on two datasets, and the epoch cap does not explain it
 (\cref{sec:res-threats}). Class weights help MLP-CE on NSL-KDD ($+0.0366$) and on CIC-DDoS2019 ($+0.0014$).
 
-\paragraph{Classical baselines (H9).}
+\paragraph{Classical baselines.}
 The picture is mixed. On NSL-KDD LTN-full and Random Forest are tied ($+0.0004$, 5 of 10 seeds) and XGBoost
 is worse ($-0.0425$). On CIC-IDS2017 both trees are better, Random Forest by $0.0335$ in 10 of 10 seeds and
 XGBoost by $0.0233$ in 9 of 10. On CIC-DDoS2019 LTN-full is better than both, by $0.0050$ and $0.0224$, and
@@ -313,7 +313,7 @@ CIC-DDoS2019 & A1, DDoS  & mechanism & 0.999 & 28\,692 & 0.983 \\
 \end{tabular}
 \end{table}
 
-\paragraph{Mechanism axioms on single flows of CIC-IDS2017.}
+\paragraph{Mechanism axioms on single flows.}
 The base of CIC-IDS2017 is extracted from the data because axioms built on an attack mechanism did not hold on
 single flows of that dataset. Three were written with thresholds set before the measurement, with a precision of
 0.90 as the criterion of acceptance, and measured on the training and validation parts of seed 0, 1\,372\,272
@@ -433,7 +433,7 @@ is detected by no arm in any seed, while its failed attempts, labelled Normal, r
 scenarios, $p$ 0.56 and 0.19, also with the slow DoS axiom, and zero in the SSH scenarios, also with an R2L axiom
 extracted without SSH-Patator (\cref{app:results}).
 
-\paragraph{Labels found only in the test day of CIC-DDoS2019.}
+\paragraph{Labels new to the test day.}
 LDAP, MSSQL, NetBIOS and UDP are not new attacks: the training day holds them under the names with the prefix
 \texttt{DrDoS\_}, and every learned arm detects 99 to 100\,\% of them. Portmap, with 588 flows, has no counterpart in
 training. Every learned arm detects 95 to 99\,\% of it, and LTN-full (0.961) does not exceed LTN-sup (0.963): here an
@@ -553,7 +553,7 @@ the differences are of the order of the spread of the measurement. The times per
 The ratios hold for copies of one axiom on one machine. The epoch selected in the final runs, also in
 \cref{app:results}, is not a measure of cost, since an LTN epoch draws batches with quotas.
 
-\paragraph{Inference cost (E13 and E12).}
+\paragraph{Inference cost.}
 Latency was taken for seed 0 of each arm on the CPU of L1. Latencies are medians over 200 calls; those of the
 model alone are in \cref{tab:app-latency}, the cost of the post-check is measured within one run with it. Repeated
 measurements of one setting differ by up to about 0.5\,ms, so smaller differences are not read. With one row per call
@@ -582,13 +582,13 @@ C4. No result of E14 or E15 is reported here yet.
 \section{Usability and explainability}
 \label{sec:res-usability}
 
-\paragraph{Effort (E16).}
+\paragraph{Effort.}
 The effort is an estimate, an order of magnitude: 3 to 3.5 hours for one axiom, 20 to 21 hours for the three main bases,
 31 to 34.5 hours with the variants and the bases of the transfer, and 0.5 to 1 hour to change one rule
 (\cref{app:results}). The dearest part is the search for axioms that are not found, as for R2L and U2R on NSL-KDD and
 the slow DoS attacks on CIC-IDS2017. The baselines do not pay this cost.
 
-\paragraph{Explanations (E17).}
+\paragraph{Explanations.}
 In annotate mode the post-check attaches to each alert the rules that fire (\cref{sec:explanation-quality}). On NSL-KDD
 it covers 0.31 to 0.32 of the alerts, 0.281 for the 1D-CNN, since the base has axioms for DoS and Probe only, with a
 faithfulness of 0.80 to 0.88. On the CIC datasets it covers 0.82 to 0.92 of the alerts, and no firing rule ever
@@ -596,7 +596,7 @@ contradicts the prediction, as expected on CIC-IDS2017, whose rules were distill
 between arms lie within the deviations (\cref{app:results}). Conciseness is 1.000 or 1.001: with two or three axioms
 the measure says nothing.
 
-\paragraph{The post-check in enforce mode (E12).}
+\paragraph{The post-check in enforce mode.}
 Enforce replaces the prediction by the target of the rule that fires. It lowers the macro-F1 of every learned arm on
 the three datasets, the 1D-CNN included, and in no seed does it raise it. \Cref{tab:res-postcheck} gives the arms of
 NSL-KDD, where the loss is 0.013 to 0.025. On CIC-IDS2017 the loss is 0.0002 to 0.0003, with 1 to 3 overrides that
@@ -644,7 +644,7 @@ of 0.983. A data axiom whose precision falls outside the training data harms mos
 and A2 about half of it on CIC-DDoS2019. On these datasets the post-check is more useful to explain an alert than to
 change it.
 
-\paragraph{Rule-level measures as a signal on the knowledge.}
+\paragraph{Rule-level measures as a signal.}
 The rule precision on the test part flags the two data axioms that fail on new data, without reference to the macro-F1
 and before a rule is used to change a decision; both carry the harm of enforce.
 

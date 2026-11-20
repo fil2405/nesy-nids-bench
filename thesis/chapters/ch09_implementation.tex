@@ -168,7 +168,7 @@ is a rough estimate. LDAP, MSSQL, NetBIOS and UDP occur only in the test day und
 and in the training day with the prefix \texttt{DrDoS\_}. The names with and without the prefix
 are not merged.
 
-\subsection{Common feature schema for cross-dataset experiments}
+\subsection{Common feature schema}
 \label{sec:impl-schema}
 
 NSL-KDD shares no feature space with the CIC datasets and takes no part in a transfer. The two
@@ -504,7 +504,7 @@ the streaming protocol. The mandatory topology is one inference process, and a
 distributed engine is an extension.
 % FIXME(open): choice of the broker, size of the queue, the two backpressure conditions, number of consumers, and whether DDL is used (if so, amend the scope paragraph of Ch. 1, Sec. 1.6).
 
-\subsection{Inference service and optional symbolic post-check}
+\subsection{Inference service and post-check}
 \label{sec:impl-service}
 
 A final run saves, per seed, the network as a \texttt{.keras} file, the 1D-CNN included, a
