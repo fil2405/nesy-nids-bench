@@ -99,7 +99,7 @@ grounding.
 % ================================================================
 % 5.2 Grounding
 % ================================================================
-\section{Grounding (semantics in the tensor domain)}
+\section{Grounding}
 \label{sec:grounding}
 
 A grounding maps every symbol of the language to a real tensor or to an
@@ -123,7 +123,7 @@ units is grounded as a batch of feature vectors, and the size of the batch
 is the number of individuals over which a quantifier will range. The batch
 size is therefore a design choice and not a detail of the implementation.
 
-\subsection{Grounding of predicates into neural networks with output in [0,1]}
+\subsection{Predicates as neural networks}
 \label{sec:grounding-predicates}
 
 A predicate is grounded as a function from the tensors of its input domains to
@@ -193,7 +193,7 @@ take up their results and recommend one configuration
 gradient problems that decide between them. The configuration that the thesis
 adopts is a design choice, and it can change the learning dynamics.
 
-\subsection{T-norms and t-conorms: G\"odel, {\L}ukasiewicz, Product}
+\subsection{T-norms and t-conorms}
 \label{sec:t-norms}
 
 A fuzzy conjunction maps two degrees to one degree. It agrees with the Boolean
@@ -227,7 +227,7 @@ distributive \citep{badreddine2022ltn}. For degrees in $\{0,1\}$ all three
 return the Boolean value, so they differ only on graded degrees. This remark
 is ours, and it matters because some conditions of our axioms may be crisp.
 
-\subsection{Fuzzy implications: Kleene-Dienes, Goguen, {\L}ukasiewicz, Reichenbach}
+\subsection{Fuzzy implications}
 \label{sec:fuzzy-implications}
 
 Two classes of implication are built from the operators above
@@ -262,7 +262,7 @@ acts mostly where its condition holds. We derive this from the formula. {\L}ukas
 antecedent is crisp. Both return $b$ for $a=1$ and $1$ for $a=0$. They differ
 only when the condition is graded, which is the case that the thesis adds.
 
-\subsection{Aggregators for quantifiers: mean, min, generalised p-mean, pMeanError}
+\subsection{Aggregators for quantifiers}
 \label{sec:aggregators}
 
 An aggregation operator maps any number of degrees to one degree. It is
@@ -290,7 +290,7 @@ degrees. The exponent is a hyperparameter, and it can differ from formula to
 formula \citep{badreddine2022ltn}. A formula $\forall x\,P(x)$ with a low $p$
 says that $P$ holds for some $x$, and a higher $p$ says that it holds for most.
 
-\subsection{Vanishing and exploding gradients, and the choice of p}
+\subsection{Gradients and the choice of p}
 \label{sec:gradient-problems}
 
 Three gradient problems arise in fuzzy operators \citep{badreddine2022ltn}. An
@@ -404,7 +404,7 @@ only this case. The knowledge base has two groups of axioms. The supervised
 axioms state the labels. The domain axioms are those of
 \cref{ch:attacks-ddos}.
 
-\subsection{Supervised axioms vs domain axioms; weighting the two groups}
+\subsection{Supervised and domain axioms}
 \label{sec:supervised-domain-axioms}
 
 In the multi-class example of Badreddine et al. the labels enter as axioms. A
@@ -429,7 +429,7 @@ these. The weighting of the two groups is a design decision of the thesis.
 The benchmark aggregates the two groups separately and combines the two numbers
 with a weight that is tuned (\cref{sec:matched-tuning}).
 
-\subsection{Optimisation loop, batching and the role of the guarded quantifier}
+\subsection{Optimisation loop and batching}
 \label{sec:optimisation-loop}
 
 In practice the optimiser minimises
@@ -473,7 +473,7 @@ supervised axioms of the previous subsection are built.
 The sections so far describe how the framework works. This section says what it
 gives the thesis and where it stops.
 
-\subsection{Querying: satisfaction of a formula as a first-class output}
+\subsection{Querying the satisfaction of a formula}
 \label{sec:querying}
 
 A trained theory can be queried \citep{badreddine2022ltn}. A truth query
@@ -503,7 +503,7 @@ in the loss cannot guarantee that the constraints are satisfied, although they
 can generalise from less data or use unlabelled data \citep{giunchiglia2022deep}.
 The thesis therefore measures satisfaction and does not assume it.
 
-\subsection{Reasoning at training time vs reasoning at inference time}
+\subsection{Reasoning in training and in inference}
 \label{sec:inference-vs-training}
 
 In a constraint-based model the logic acts in the loss. At each training step
@@ -529,7 +529,7 @@ example a rule check after the prediction. The thesis does not make it one of
 the compared arms, and measures it as an optional post-check in the second part
 of E12.
 
-\subsection{Scalability limits with many axioms and large batches}
+\subsection{Scalability limits}
 \label{sec:scalability-limits}
 
 The authors report that training and test times of LTN are of the same order
@@ -561,7 +561,7 @@ implementation.
 \section{Alternatives and why LTN is chosen here}
 \label{sec:ltn-alternatives}
 
-\subsection{LTN vs Semantic Loss vs DeepProbLog vs NeurASP: criteria and trade-offs}
+\subsection{Criteria for the choice}
 \label{sec:ltn-vs-alternatives}
 
 We compare the four systems on three criteria. The first is the semantics of
@@ -680,7 +680,7 @@ degree. The class predicates are the outputs of the network, as in
 features of each dataset belongs to the implementation and is listed in
 \cref{app:axioms}.
 
-\subsection{Discretisation and fuzzification of continuous features: thresholds vs sigmoids}
+\subsection{Thresholds and graded conditions}
 \label{sec:fuzzification}
 
 A condition such as a high rate needs a threshold. Two forms are possible. A
@@ -703,7 +703,7 @@ an axiom by moving the threshold until the condition never holds. The
 satisfaction degree rises and the axiom no longer says anything. This risk is
 ours, and it is one more reason to fix the thresholds.
 
-\subsection{The axiom set inherited from the internship, restated formally}
+\subsection{The axiom set of the internship}
 \label{sec:axiom-set-internship}
 
 The thesis builds on the internship of its author, whose report is not
@@ -737,7 +737,7 @@ one model on the training data. They are tuned to that model and dataset, and
 they are not independent knowledge like those of \cref{ch:attacks-ddos}. The
 results of the report are not used in this thesis.
 
-\subsection{Extending it: DDoS-specific axioms, mutual exclusivity, hierarchy axioms}
+\subsection{Extending the axiom set}
 \label{sec:ddos-axioms}
 
 The seven axioms of \cref{tab:candidate-axioms} are the DDoS-specific group,

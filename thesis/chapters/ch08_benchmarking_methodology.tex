@@ -59,7 +59,7 @@ them. Five requirements follow, answering the pitfalls of \citet{arp2022dosdonts
 sources of variance of \citet{bouthillier2021variance} (split, initialisation, hyperparameter
 choice); \citet{raschka2018model} survey evaluation and selection.
 
-\subsection{Matched capacity: same architecture, same features, same preprocessing}
+\subsection{Matched capacity}
 \label{sec:matched-capacity}
 
 The four neural arms share one network: hidden layers of 256 and 128 units, ReLU, dropout
@@ -84,7 +84,7 @@ same loss, and it takes no part in the comparison of loss and knowledge.
 Imbalance is handled by different levers (class weights for MLP-CE, the 1D-CNN and the trees,
 per-class aggregation and batch quotas for LTN), each searched inside the same budget.
 
-\subsection{Matched tuning budget: same search space and same number of trials}
+\subsection{Matched tuning budget}
 \label{sec:matched-tuning}
 
 Every arm with hyperparameters gets 20 trials. A trial is one draw from the space of the arm
@@ -111,7 +111,7 @@ tuned; supervised and domain axioms are aggregated separately and combined with 
 $w$ (the second option left open by \cref{sec:supervised-domain-axioms}); the widths $s$ are
 scaled by one tuned factor. Crisp conditions appear only in E4.
 
-\subsection{No test-set leakage: the validation set is never the test set}
+\subsection{No test-set leakage}
 \label{sec:no-leakage}
 
 Every decision that could use the test part is fixed on training or validation data: scaler
@@ -137,7 +137,7 @@ read: on NSL-KDD on the whole training file, on CIC-IDS2017 on the union of trai
 validation, which the fixed test cut makes the same for every seed, and on CIC-DDoS2019 on the
 training day. Validation is therefore not independent of the axioms.
 
-\subsection{Repetition: $n$ independent seeds, report mean and dispersion}
+\subsection{Repetition over seeds}
 \label{sec:repetition}
 
 Every arm runs on the same seeds 0 to 9. A seed fixes the initial weights, the batches, the
@@ -147,7 +147,7 @@ variation of the test set, and says nothing on other datasets. Arms share seeds,
 are paired. We report mean and sample standard deviation per measure and arm. Ten seeds is a
 budget set by cost, not a power analysis.
 
-\subsection{Reproducibility: pinned environment, fixed seeds, published artefacts}
+\subsection{Reproducibility}
 \label{sec:reproducibility}
 
 The laptop environment is pinned in a lock file; the server has none, and its versions are those
@@ -173,7 +173,7 @@ versions of the packages and the configuration stored in each file. The package 
 \texttt{TF\_ENABLE\_ONEDNN\_OPTS} to 0, and no log of the runs reports it switched on.
 
 % ================================================================
-\section{Dimension 1 -- Detection quality}
+\section{Detection quality}
 \label{sec:detection-quality-dimension}
 
 \subsection{Metric set and why each one is included}
@@ -197,7 +197,7 @@ every class in every part, so the case does not arise there. E9 holds out fine l
 classes, and every test part holds every class (\cref{tab:impl-splits}), so the zero is a rule
 for safety and changes no figure of \cref{ch:results}.
 
-\subsection{Threshold-free vs threshold-dependent metrics; choosing an operating point}
+\subsection{Thresholds and the operating point}
 \label{sec:operating-point}
 
 Macro-F1, MCC, precision and recall are read at the argmax, which is what a detector does when
@@ -264,10 +264,10 @@ violations at equal quality, never for fewer violations alone. C5 extends the sa
 features to a class, one rule at a time and for every arm; the violation rate and rule precision are ours.
 
 % ================================================================
-\section{Dimension 2 -- Computational performance}
+\section{Computational performance}
 \label{sec:cost-dimension}
 
-\subsection{Training cost: wall-clock/epoch, epochs to convergence, total cost, peak RAM/VRAM}
+\subsection{Training cost}
 \label{sec:training-cost}
 
 Every run records the time of each epoch (round for XGBoost), the epochs run, the epoch
@@ -291,7 +291,7 @@ of axioms. The first epoch is excluded as warm-up. For each number of axioms we 
 time per epoch and its ratio to the base. A line fitted to the five levels describes the trend
 and proves no form. Copies measure cost, not knowledge.
 
-\subsection{Inference cost: throughput, latency distribution, model size, memory footprint}
+\subsection{Inference cost}
 \label{sec:inference-cost}
 
 Inference is measured on the saved model of seed 0 of each arm, on preprocessed rows, on the CPU.
@@ -314,7 +314,7 @@ end-to-end latency.
 
 Energy is an extension and is not measured. Training time and model size stand as proxies.
 
-\subsection{Measurement hygiene: warm-up, repetitions, isolation, reporting percentiles}
+\subsection{Measurement hygiene}
 \label{sec:measurement-hygiene}
 
 Times use a monotonic wall clock. Latency runs discard 20 warm-up calls and keep 200
@@ -325,10 +325,10 @@ repeated measurements of one setting are not reported as different. Fit times ar
 mean and deviation over seeds, E13 by the median, and latency is taken on one seed.
 
 % ================================================================
-\section{Dimension 3 -- Usability and operational fitness}
+\section{Usability and operational fitness}
 \label{sec:usability-dimension}
 
-\subsection{Knowledge engineering effort (time and LOC to add / change a rule)}
+\subsection{Knowledge engineering effort}
 \label{sec:effort}
 
 The main cost of a knowledge arm, which the baselines do not pay, is writing and tuning the
@@ -398,7 +398,7 @@ post-check in enforce mode with the second base is applied to the saved models. 
 come from different versions of CICFlowMeter, so part of the difficulty is a drift of the features
 and not only of the attacks.
 
-\subsection{Explanation quality: coverage, faithfulness, conciseness}
+\subsection{Explanation quality}
 \label{sec:explanation-quality}
 
 The post-check evaluates the knowledge base on the raw flow after the model has decided,
@@ -423,7 +423,7 @@ We run no drift experiment. E11 degrades the axioms as a stand-in for domain shi
 retraining cost is the fit time of the final runs, and E13 gives its growth with the number of
 axioms; a claim about maintenance in production is outside the evidence.
 
-\subsection{Structured qualitative scorecard (define the rubric, avoid hand-waving)}
+\subsection{A qualitative scorecard}
 \label{sec:scorecard}
 
 Each arm scores 0, 1 or 2 on four criteria, with anchors written before the measurements and
@@ -509,7 +509,7 @@ how far the input of the learned models moves, so one level is run, $D = 0.1$. T
 who knows the rules, not a realistic evasion, and it measures the fragility of the symbolic part.
 Every arm, the rule-only one included, is scored with and without the post-check.
 
-\subsection{Streaming protocol: replay speed, backpressure, drop policy, detection latency}
+\subsection{Streaming protocol}
 \label{sec:streaming-protocol}
 
 The streaming protocol belongs to the co-supervisor's pipeline (\cref{sec:streaming-pipeline});
@@ -527,7 +527,7 @@ the exporter timeout, transport, inference and check (\cref{sec:uc2-latency}).
 \section{Statistical analysis plan}
 \label{sec:statistical-plan}
 
-\subsection{Paired tests on the same splits (Wilcoxon signed-rank)}
+\subsection{Paired tests on the same splits}
 \label{sec:wilcoxon}
 
 For two arms on the same dataset the seeds are the pairs, so the test is paired on the
@@ -545,7 +545,7 @@ effect of the architecture, is tested in the same way and reported apart, outsid
 three $p$-values, one per dataset, are corrected with Holm among themselves. Any other pair or measure is secondary and declared outside the
 family.
 
-\subsection{Multiple models over multiple datasets (Friedman + Nemenyi, CD diagram)}
+\subsection{Many models over many datasets}
 \label{sec:friedman}
 
 For all arms together on one dataset we use the Friedman test \citep{friedman1937use} with
@@ -560,7 +560,7 @@ drawn only if its sign is the same on the flow datasets, and a result on NSL-KDD
 for NSL-KDD. The test covers the six learning arms of the comparison; the 1D-CNN, outside
 matched capacity, is not in it and is compared through its own pair (\cref{sec:wilcoxon}).
 
-\subsection{Effect sizes and confidence intervals; multiple-comparison correction}
+\subsection{Effect sizes and correction}
 \label{sec:effect-sizes}
 
 A $p$-value alone says little, so each comparison reports the paired median of the
@@ -574,7 +574,7 @@ Stress experiments are read through effect size and intervals, not through new f
 \section{Benchmark harness design}
 \label{sec:harness}
 
-\subsection{Configuration-driven runs, result schema, artefact layout}
+\subsection{Configuration-driven runs}
 \label{sec:harness-config}
 
 One run is one YAML configuration and one seed, and writes one JSON result with configuration,
@@ -590,7 +590,7 @@ and its columns exist; if a check fails, no run starts. \texttt{saved\_eval.py} 
 models on the test part, clean or perturbed (E10), with the post-check in both modes (E17 and the
 post-check); \texttt{latency.py} times them (E12). Results are not committed.
 
-\subsection{How a third party reproduces a table of the thesis in one command}
+\subsection{Reproducing a table}
 \label{sec:harness-reproduce}
 
 Given the result files, a comparison table is rebuilt by one call of
@@ -605,7 +605,7 @@ the datasets (\cref{ch:implementation}). \Cref{app:repro} lists the commands. Th
 and the saved models are not in the repository; they are available from the author on request.
 
 % ================================================================
-\section{Threats to validity (internal, external, construct, conclusion)}
+\section{Threats to validity}
 \label{sec:threats}
 
 \paragraph{Internal.}

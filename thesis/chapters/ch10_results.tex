@@ -18,7 +18,7 @@ models and the timings of E13 (\cref{tab:impl-environments}); times are compared
 % ================================================================
 % 10.1 Baseline replication and corrected protocol (E1)
 % ================================================================
-\section{Baseline replication and corrected protocol (E1)}
+\section{Baseline replication}
 \label{sec:res-e1}
 
 E1 asks whether the corrected protocol of \cref{sec:no-leakage} changes what a reader of the usual NSL-KDD figures
@@ -31,7 +31,7 @@ Validation and test are therefore never compared as the same quantity here.
 % ================================================================
 % 10.2 Detection quality, batch (E2, E5, E6)
 % ================================================================
-\section{Detection quality, batch (E2, E5, E6)}
+\section{Detection quality in batch}
 \label{sec:res-detection}
 
 E2, E5 and E6 run every arm with the configuration chosen by tuning on NSL-KDD, CIC-IDS2017 and
@@ -237,7 +237,7 @@ every network.
 % ================================================================
 % 10.3 Where the knowledge acts: axiom ablation and semantics sensitivity (E3, E4)
 % ================================================================
-\section{Where the knowledge acts: axiom ablation and semantics sensitivity (E3, E4)}
+\section{Where the knowledge acts}
 \label{sec:res-knowledge}
 
 E3 removes one axiom or group from the training copy of the base of the tuned LTN-full, and E4 changes one
@@ -346,7 +346,7 @@ axiom that fails on the test file.
 % ================================================================
 % 10.4 Stress scenarios (E7-E11)
 % ================================================================
-\section{Stress scenarios (E7--E11)}
+\section{Stress scenarios}
 \label{sec:res-stress}
 
 The stress experiments change one condition of RQ2 at a time, with the hyperparameters of the tuned
@@ -499,7 +499,7 @@ For H5, the knowledge changes nothing on labels unseen inside one dataset. Acros
 is the mechanism axiom, far more when read at inference than as a constraint in training, while the rules extracted from
 the labels of the source never help. The result holds for this pair of datasets, this direction and this axiom.
 
-\subsection{Degraded / wrong knowledge}
+\subsection{Degraded or wrong knowledge}
 \label{sec:res-degraded}
 
 E11 moves all thresholds of the base by percentile points of the training column and swaps the target of A1 to Probe on
@@ -537,7 +537,7 @@ exposes it.
 % ================================================================
 % 10.5 Computational performance (E13)
 % ================================================================
-\section{Computational performance (E13)}
+\section{Computational performance}
 \label{sec:res-cost}
 
 RQ3 asks what the neurosymbolic approach costs in training and in inference (\cref{sec:cost-dimension}). Times are
@@ -568,7 +568,7 @@ spread of the measurement, and annotate and enforce do not separate. These are t
 % ================================================================
 % 10.6 Real-time behaviour (E14, E15)
 % ================================================================
-\section{Real-time behaviour (E14, E15)}
+\section{Real-time behaviour}
 \label{sec:res-realtime}
 
 The streaming experiments run on CIC-IDS2017 with the pipeline of the co-supervisor (\cref{sec:streaming-pipeline})
@@ -579,7 +579,7 @@ C4. No result of E14 or E15 is reported here yet.
 % ================================================================
 % 10.7 Usability and explainability (E16, E17)
 % ================================================================
-\section{Usability and explainability (E16, E17)}
+\section{Usability and explainability}
 \label{sec:res-usability}
 
 \paragraph{Effort (E16).}
@@ -693,7 +693,7 @@ RF, XGBoost & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 This discussion rests on every experiment except the streaming runs of E14 and E15. The reading is descriptive and
 holds for the three datasets.
 
-\subsection{Answering RQ1--RQ5}
+\subsection{Answers to the research questions}
 \label{sec:res-rqs}
 
 \paragraph{RQ1, detection quality.}
@@ -779,7 +779,7 @@ shifted and above it on the in-distribution test of CIC-IDS2017, confounds split
   \item On NSL-KDD the exponent chosen on validation is three to four points below $p=1$ on the test file.
 \end{itemize}
 
-\subsection{Comparison with the figures claimed in related work}
+\subsection{Comparison with related work}
 \label{sec:res-related}
 
 The figures of \cref{ch:related-work} are not on the scale of ours. The two detectors with logic in the loss report

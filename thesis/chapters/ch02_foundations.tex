@@ -19,7 +19,7 @@ limits of classical detection in \cref{ch:introduction} to the feature sets
 used in the benchmark. This section introduces the levels of observation and
 then places them on the TCP/IP stack, as seen by a passive monitor.
 
-\subsection{Packet level, flow level, session level, host level}
+\subsection{Levels of observation}
 \label{sec:levels-packet-flow-session-host}
 
 Four levels of observation recur in the monitoring and intrusion-detection
@@ -117,7 +117,7 @@ domain rules, motivates the formalisation of host- and flow-level conditions
 of each attack family as candidate logical axioms in
 \cref{ch:attacks-ddos}.
 
-\subsection{The TCP/IP stack from the point of view of a monitor}
+\subsection{The TCP/IP stack seen by a monitor}
 \label{sec:tcpip-stack-monitor-view}
 
 The four levels of observation follow the layering of the protocol suite
@@ -185,7 +185,7 @@ covers how a monitor is attached to the network, which standards export the
 traffic as flow records, and how sampling at the point of capture trades
 completeness for lower load.
 
-\subsection{Full packet capture (pcap), SPAN ports, TAPs}
+\subsection{Packet capture, SPAN ports and TAPs}
 \label{sec:packet-capture-mechanisms}
 
 \emph{Full packet capture} records every packet crossing an Observation
@@ -210,7 +210,7 @@ the copy is not always complete. Placement does not change what encrypted
 payload reveals. A copy taken at a SPAN port or a tap carries the same
 ciphertext as the original link.
 
-\subsection{Flow export standards: NetFlow v5/v9, IPFIX (RFC 7011), sFlow}
+\subsection{Flow export: NetFlow, IPFIX and sFlow}
 \label{sec:flow-export-standards}
 
 Once packets are captured, turning them into flow records requires an export
@@ -280,7 +280,7 @@ families of such representations: statistics of a single flow, aggregates
 over a time or connection window, features that require inspecting payload,
 and the effect of widespread encryption on all of them.
 
-\subsection{Flow statistics (CICFlowMeter-style feature sets)}
+\subsection{Flow statistics}
 \label{sec:flow-statistics-cicflowmeter}
 
 The most direct family works on a single flow. \citet{sharafaldin2018cicids2017}
@@ -297,7 +297,7 @@ feature set is a clear example of the payload-free, flow-level
 representation to which the detectors of this thesis are restricted on the
 flow datasets, as fixed in \cref{sec:scope-limitations}.
 
-\subsection{Time-window and connection-window aggregates (the NSL-KDD ``traffic'' features)}
+\subsection{Time-window and connection-window aggregates}
 \label{sec:time-window-connection-aggregates}
 
 A second family looks at the connections around the current one.
@@ -310,7 +310,7 @@ uses a window of 100 connections. Both are second-order features. They
 assume that connection records already exist and compute statistics across
 them, and they say nothing about a connection in isolation.
 
-\subsection{Content / host-based features}
+\subsection{Content and host-based features}
 \label{sec:content-host-based-features}
 
 A third family departs from header statistics altogether.
@@ -354,7 +354,7 @@ techniques adapt to encrypted traffic, see \citet{papadogiannaki2021encryptedsur
 % ================================================================
 % 2.4 Classical approaches to traffic analysis and intrusion detection
 % ================================================================
-\section{Classical approaches to traffic analysis and intrusion detection}
+\section{Classical approaches to intrusion detection}
 \label{sec:classical-approaches}
 
 Before learning-based detectors, network monitoring relied on a small set of
@@ -366,7 +366,7 @@ on attack patterns. Each family makes a different assumption about what an
 attack looks like, and the differences show what later chapters try to
 improve.
 
-\subsection{Signature-based detection: Snort, Suricata, Zeek rule sets}
+\subsection{Signature-based detection}
 \label{sec:signature-rulesets}
 
 Signature-based detection was defined in \cref{sec:signature-not-enough}.
@@ -417,7 +417,7 @@ used by the detector may conflict with the way the protocol is implemented
 written by experts, which makes it close in spirit to the domain knowledge
 that later chapters encode as logical axioms.
 
-\subsection{Statistical anomaly detection (entropy, CUSUM, EWMA, PCA-based)}
+\subsection{Statistical anomaly detection}
 \label{sec:statistical-anomaly-detection}
 
 NIST defines anomaly-based detection as the comparison of a profile of normal
@@ -508,7 +508,7 @@ how do its alerts reach other tools? Standards and taxonomies answer them.
 They detect nothing themselves. This section covers the ones a reader meets
 next to the detectors of this thesis.
 
-\subsection{NIST SP 800-94 (IDPS), ISO/IEC 27033}
+\subsection{NIST SP 800-94 and ISO/IEC 27033}
 \label{sec:nist-iso-architectures}
 
 NIST SP 800-94 is the source of the detection methodologies used so far. It
@@ -530,7 +530,7 @@ the other parts. The catalogue description speaks of risks, controls and
 network security architecture \citep{iso2015iec27033}. The thesis does not
 use it further.
 
-\subsection{MITRE ATT\&CK as a semantic vocabulary for attack behaviour}
+\subsection{MITRE ATT\&CK as a vocabulary of behaviour}
 \label{sec:mitre-attack-vocabulary}
 
 \citet{strom2020attack} describe ATT\&CK as a knowledge base of adversary
@@ -553,7 +553,7 @@ ATT\&CK therefore gives the attack families of \cref{ch:attacks-ddos} a name
 in a shared vocabulary, but it gives no flow-level conditions that a network
 detector could test. In this thesis it is a label space and not a rule set.
 
-\subsection{Alert formats and exchange: IDMEF, STIX/\allowbreak TAXII, CEF}
+\subsection{Alert formats and exchange}
 \label{sec:alert-formats}
 
 Once a detector raises an alert, it has to be passed on. NIST lists e-mail,
@@ -594,7 +594,7 @@ as future work in \cref{ch:conclusions}.
 % ================================================================
 % 2.6 Evaluation practice in NIDS and its recurring flaws
 % ================================================================
-\section{Evaluation practice in NIDS and its recurring flaws}
+\section{Recurring flaws in NIDS evaluation}
 \label{sec:evaluation-practice}
 
 Every method in this chapter is judged on labelled traffic, and the way that
@@ -653,7 +653,7 @@ curves for the detection of rare events. A benchmark that reports accuracy
 alone would repeat the flaw. The metric set of the benchmark is fixed in
 \cref{ch:benchmarking-methodology}.
 
-\subsection{Class imbalance, temporal leakage, in-distribution bias}
+\subsection{Imbalance, leakage and in-distribution bias}
 \label{sec:imbalance-leakage-bias}
 
 Three flaws concern the data and the way it is split. They are separate, and
@@ -697,7 +697,7 @@ building several estimates of the true distribution, analysing each one
 separately and not mixing data from incompatible sources. Cross-dataset
 transfer, one of the stress scenarios of the benchmark, follows from this.
 
-\subsection{Discussion of ``Outside the Closed World'' and ``Dos and Don'ts'' critiques}
+\subsection{Two critiques of learning-based detection}
 \label{sec:closed-world-dos-donts}
 
 The two papers are twelve years apart and ask different questions.

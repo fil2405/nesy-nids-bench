@@ -93,7 +93,7 @@ holds on the test part of CIC-IDS2017 and breaks on the other two datasets
 % ================================================================
 % 11.3 Practical guidelines
 % ================================================================
-\section{Practical guidelines: a decision checklist for ``should I use NeSy here?''}
+\section{A decision checklist}
 \label{sec:conc-checklist}
 
 The questions below are for an engineer who holds a detection task and some rules. They come only
@@ -159,7 +159,7 @@ The limits of \cref{sec:threats,sec:res-threats} bound every statement of this c
 \section{Future work}
 \label{sec:future-work}
 
-\subsection{Richer logics: temporal and relational axioms over flow sequences}
+\subsection{Temporal and relational axioms}
 \label{sec:fw-logics}
 
 Mechanism axioms did not hold on single flows of CIC-IDS2017: the slow DoS axiom reached a precision
@@ -167,7 +167,7 @@ of 0.008 and the scan axiom 0.092 (\cref{sec:res-knowledge}). A scan or a flood 
 many flows, so the next step is window statistics, with one definition for training and streaming,
 and axioms over sequences of flows and relations between sources and destinations.
 
-\subsection{Learning the rules instead of writing them (ILP, rule extraction)}
+\subsection{Learning the rules}
 \label{sec:fw-learning-rules}
 
 The rules that failed outside the training data are extracted ones, two of the four of this thesis.
@@ -186,7 +186,7 @@ stays in the decision, where the knowledge acted in these runs, and they are the
 arms. A new arm needs only the interface of a model
 (\cref{sec:impl-models}) and inherits the splits, the tuning budget and the tests.
 
-\subsection{Knowledge from MITRE ATT\&CK / threat-intel feeds, automatically}
+\subsection{Knowledge from threat intelligence}
 \label{sec:fw-attack}
 
 The search for axioms by hand is the dearest part of the knowledge, and \cref{sec:alert-formats}
@@ -195,7 +195,7 @@ behaviour of attacks and not thresholds on columns, so the open step is the map 
 flow features. Such knowledge exists before the dataset, unlike the base of CIC-IDS2017, and the
 transfer is ready as its test.
 
-\subsection{Adversarial robustness of knowledge-constrained detectors}
+\subsection{Adversarial robustness}
 \label{sec:fw-adversarial}
 
 E10 assumes an adversary who knows the thresholds. It broke the rule-only classifier on the three
@@ -205,7 +205,7 @@ a moved flow still works as an attack. A study of an adaptive adversary, left ou
 \cref{sec:scope-limitations}, would limit the perturbation to what keeps the attack alive, test model
 and post-check together, and compare mechanism rules with extracted ones.
 
-\subsection{Deployment at line rate: quantization, eBPF/\allowbreak DPDK front end}
+\subsection{Deployment at line rate}
 \label{sec:fw-line-rate}
 
 The times of E12 are calls on the CPU of a laptop and say nothing on line rate. An LTN-trained

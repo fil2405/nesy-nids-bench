@@ -43,7 +43,7 @@ benchmark are trained on such labels. One stress scenario reduces the number
 of labelled examples available for training. It tests how a supervised
 detector behaves under label scarcity.
 
-\subsection{Classical models used in NIDS: decision trees, Random Forest, XGBoost, SVM, kNN}
+\subsection{Classical models used in NIDS}
 \label{sec:classical-models}
 
 This subsection describes five classical models. How they were used on
@@ -121,7 +121,7 @@ There is also a hypothesis to test. Domain axioms restrict what a model may
 learn, and they may therefore act like a regularizer. This is a hypothesis of
 the thesis and not a result, and the experiments test it.
 
-\subsection{Handling imbalance: resampling (SMOTE, SMOTE-NC), class weighting, focal loss}
+\subsection{Handling class imbalance}
 \label{sec:imbalance-handling}
 
 The effect of imbalance on evaluation was covered in \cref{sec:imbalance-leakage-bias}.
@@ -187,7 +187,7 @@ the networks of the deep baselines, how they are trained, which architectures
 exist for sequential and unlabelled data, and where the paradigm is strong and
 weak.
 
-\subsection{MLP, backpropagation, optimizers, dropout, early stopping}
+\subsection{Multilayer perceptrons and their training}
 \label{sec:mlp-training}
 
 A multilayer perceptron is a feedforward network. Each layer applies an affine
@@ -225,7 +225,7 @@ number of training steps works as a control on capacity
 \citep{goodfellow2016deep}. It needs a validation set separate from the test
 set, which is one reason why the benchmark keeps three splits.
 
-\subsection{Architectures relevant to traffic: 1D-CNN, LSTM/GRU, autoencoders, transformers}
+\subsection{Deep architectures for traffic}
 \label{sec:dl-architectures}
 
 This subsection describes four families of architecture. \Cref{ch:related-work}
@@ -271,7 +271,7 @@ convolution. They report that it parallelizes better and trains faster than
 the recurrent and convolutional models of the time on machine translation
 \citep{vaswani2017attention}.
 
-\subsection{Strengths (representation learning, scale) and weaknesses (data hunger, opacity, brittleness under shift, no constraint guarantees)}
+\subsection{Strengths and weaknesses of deep learning}
 \label{sec:dl-strengths-weaknesses}
 
 Two strengths stand out. The first is representation learning. The hidden
@@ -329,7 +329,7 @@ name DENDRAL and MYCIN among the early systems of this kind. In this thesis a
 symbolic system is one whose knowledge is stated as formulas that a program
 can reason over.
 
-\subsection{Propositional and first-order logic, Horn clauses, inference}
+\subsection{Propositional and first-order logic}
 \label{sec:logic-inference}
 
 Propositional logic builds formulas from atoms, each true or false, and from
@@ -354,7 +354,7 @@ they are true or false, and the chapter left the thresholds open. This gap,
 as we see it, is the reason why \cref{ch:ltn} replaces truth values by degrees
 of truth.
 
-\subsection{Rule-based expert systems, description logics, ontologies, knowledge graphs}
+\subsection{Expert systems, ontologies and knowledge graphs}
 \label{sec:rules-ontologies-kg}
 
 A rule-based system keeps its rules in a knowledge base and applies them with
@@ -377,7 +377,7 @@ security the nodes could be hosts, services or ATT\&CK techniques. The
 thesis uses ATT\&CK only as a label space. How a graph can enter a model is
 discussed later in this chapter.
 
-\subsection{Answer Set Programming and probabilistic logic programming}
+\subsection{Answer set and probabilistic logic programming}
 \label{sec:asp-plp}
 
 Answer Set Programming describes a problem by rules and asks for the sets of
@@ -393,7 +393,7 @@ summary, a query to such a program returns a probability and not only true
 or false. Both families return later in this chapter as the symbolic half of
 neurosymbolic systems.
 
-\subsection{Strengths (interpretability, data efficiency, verifiability) and weaknesses (brittleness, knowledge acquisition bottleneck, no perception)}
+\subsection{Strengths and weaknesses of symbolic AI}
 \label{sec:symbolic-strengths-weaknesses}
 
 Garcez and Lamb list the strengths of symbolic AI. It reasons in a
@@ -426,7 +426,7 @@ read raw input. This contrast is ours, and the next section builds on it.
 \section{Neurosymbolic AI}
 \label{sec:neurosymbolic-ai}
 
-\subsection{Motivation: the complementarity argument (System 1 / System 2)}
+\subsection{Why combine the two}
 \label{sec:complementarity}
 
 The usual argument for combining the two paradigms draws on Kahneman. System 1
@@ -445,7 +445,7 @@ The analogy has a limit. It says what each part does well and not how the two
 are joined. It is a motivation and not evidence that a combined system
 detects better. The benchmark tests that question.
 
-\subsection{Kautz's taxonomy of neurosymbolic architectures (Type 1 \ldots{} Type 6)}
+\subsection{Kautz's taxonomy of architectures}
 \label{sec:kautz-taxonomy}
 
 Kautz describes six designs for joining neural and symbolic parts, and he
@@ -508,7 +508,7 @@ The systems below differ in where the logic acts. It can act on the loss, inside
 a logic program, on a graph, on the structure of the network or on the
 output. The order of the subsections is not a ranking.
 
-\subsubsection{Logic as a loss / differentiable logic (LTN, Semantic Loss, DL2)}
+\subsubsection{Logic as a loss}
 \label{sec:logic-as-loss}
 
 Logic Tensor Networks use Real Logic, a many-valued and end-to-end
@@ -532,7 +532,7 @@ costly but does not forbid it, so the fourth weakness of
 \cref{sec:dl-strengths-weaknesses} is not removed. \Cref{ch:ltn}
 states why the thesis takes this family.
 
-\subsubsection{Neural predicates inside a probabilistic logic program (DeepProbLog, DeepStochLog, NeurASP)}
+\subsubsection{Neural predicates in a logic program}
 \label{sec:neural-predicates}
 
 In DeepProbLog a neural predicate takes its probabilities from the softmax
@@ -595,7 +595,7 @@ violation rate of \cref{sec:contributions} is such a check, applied to the
 outputs of every model, in our interpretation. The check measures a model and
 does not change how it is trained.
 
-\subsection{Comparative discussion: expressiveness, scalability, training cost, explainability, tooling maturity}
+\subsection{Comparison of the families}
 \label{sec:integration-comparison}
 
 \Cref{tab:integration-systems} puts the systems side by side. It lists only
@@ -708,7 +708,7 @@ The two learning paradigms need retraining when the data change, and
 \section{Explainable AI in this context}
 \label{sec:xai}
 
-\subsection{Post-hoc methods (SHAP, LIME) vs intrinsically structured explanations}
+\subsection{Post-hoc and intrinsic explanations}
 \label{sec:posthoc-vs-intrinsic}
 
 Post-hoc methods explain a model that is already trained. LIME explains the

@@ -71,7 +71,7 @@ Each dataset has a loader that returns the raw table with the fine label and the
 scaler and a one-hot coding are fitted on the training part only. The raw rows travel with the
 transformed ones, so the rules read the units of the data.
 
-\subsection{NSL-KDD pipeline (inherited, corrected)}
+\subsection{NSL-KDD pipeline}
 \label{sec:impl-nslkdd}
 
 NSL-KDD is the version of KDD Cup 99 that Tavallaee et al. \citep{tavallaee2009kddcup99} built
@@ -94,7 +94,7 @@ them by convention:
 R2L changes its composition: 890 of its 995 training records are \texttt{warezclient}, which the
 test file does not contain.
 
-\subsection{CIC-IDS2017 / CIC-DDoS2019 pipeline and the corrected-label variant}
+\subsection{CIC-IDS2017 and CIC-DDoS2019 pipeline}
 \label{sec:impl-cic}
 
 \paragraph{CIC-IDS2017.}
@@ -242,7 +242,7 @@ numeric flow features and the four values of the protocol, and that of CIC-DDoS2
 numeric features and three values. No window or source statistic is
 computed, as \cref{ch:usecases-design} states.
 
-\subsection{Split strategy: train / validation / test, temporal and random variants}
+\subsection{Split strategy}
 \label{sec:impl-splits}
 
 Two strategies exist, both stratified by class. On NSL-KDD a random validation cut is the only one possible: the
@@ -313,7 +313,7 @@ matrix and the same seed, and the final runs use the configuration written by th
 \cref{sec:impl-tuning}. The LSTM and the semantic-loss variant are not implemented, since the
 registry has no entry for them.
 
-\subsection{Rule-only symbolic classifier (knowledge without learning)}
+\subsection{Rule-only classifier}
 \label{sec:impl-rules}
 
 The arm reads a knowledge base in the format of \cref{sec:kb-format} and learns nothing. An axiom
@@ -389,7 +389,7 @@ The antecedents are computed once on the raw training rows and indexed with each
 crisp setting replaces every graded condition by a threshold and is used only in E4. At
 inference both LTN arms run the network alone, so the knowledge is not evaluated.
 
-\subsection{[EXT] Semantic-loss variant and/or post-hoc symbolic filter, as NeSy controls}
+\subsection{Post-hoc symbolic filter}
 \label{sec:impl-controls}
 
 The semantic-loss variant is not implemented, and no result of this thesis comes from it. The
@@ -514,7 +514,7 @@ the model; E12 measures its cost on batches of 1, 64 and 1024 rows. The rule-onl
 knowledge base file and no model. The service itself does not exist.
 % FIXME(open): the service, its input format, the micro-batch size and the check of FR9 are not written.
 
-\subsection{Instrumentation: timestamps, metric collection, dashboard}
+\subsection{Instrumentation}
 \label{sec:impl-instrumentation}
 
 Four stamps per flow, when it is closed, reaches the broker, is decided and is alerted, give the
@@ -561,7 +561,7 @@ Random Forest, six for XGBoost and LTN-full.
 % ================================================================
 % 9.7 Reproducibility package
 % ================================================================
-\section{Reproducibility package (repository structure, seeds, environment file, run scripts)}
+\section{Reproducibility package}
 \label{sec:impl-repro}
 
 The package is the repository \texttt{fil2405/nesy-nids-bench}. The library is in

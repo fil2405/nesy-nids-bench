@@ -120,7 +120,7 @@ and DDoS for many. The attacks of this section differ above all in what they
 exhaust: link capacity, protocol state or application resources. The
 subsections follow this grouping, which is ours.
 
-\subsection{Volumetric attacks: UDP flood, ICMP flood, amplification/\allowbreak reflection (DNS, NTP, memcached, LDAP, SSDP)}
+\subsection{Volumetric and reflection attacks}
 \label{sec:volumetric-attacks}
 
 The simplest attack sends enough traffic that does not slow down under
@@ -143,7 +143,7 @@ February 2018 the factor was up to 51{,}000 and the traffic peaked at
 1.35~Tbps \citep{kottler2018github}. DNS, LDAP, NTP and SSDP are among the
 reflection attacks of the CIC-DDoS2019 dataset \citep{cic2019ddos}.
 
-\subsection{Protocol / state-exhaustion attacks: SYN flood, ACK flood, fragmentation (teardrop), Slowloris and low-and-slow variants}
+\subsection{Protocol and state-exhaustion attacks}
 \label{sec:state-exhaustion-attacks}
 
 A SYN flood does not try to fill the link. It exhausts the backlog of
@@ -166,7 +166,7 @@ bringing down a well-equipped server with a small bandwidth
 \citep{cambiaso2013slow}. Like a SYN flood, they work on the resources of the
 server and not on the capacity of the link. This inference is ours.
 
-\subsection{Application-layer attacks: HTTP flood, HTTP/2 rapid reset style attacks}
+\subsection{Application-layer attacks}
 \label{sec:application-layer-attacks}
 
 An HTTP flood sends requests that look like normal use of a web service.
@@ -196,7 +196,7 @@ They are websites that offer DDoS attacks as a paid service, with prices
 starting at one dollar, and they remove the need for technical skills
 \citep{santanna2015inside}.
 
-\subsection{Observable signatures at flow level (the features that actually move)}
+\subsection{What a DDoS changes at flow level}
 \label{sec:flow-signatures}
 
 The attacks above act on different resources, but a flow-based detector sees
@@ -249,10 +249,10 @@ formalise.
 % ================================================================
 % 3.3 Reconnaissance and scanning (Probe)
 % ================================================================
-\section{Reconnaissance and scanning (Probe)}
+\section{Reconnaissance and scanning}
 \label{sec:recon-scanning}
 
-\subsection{Horizontal, vertical and stealth scanning; nmap/\allowbreak satan/\allowbreak ipsweep patterns}
+\subsection{Horizontal, vertical and stealth scanning}
 \label{sec:scan-types}
 
 A scan maps the target before other attacks. The review of Pittman reports
@@ -285,7 +285,7 @@ volume metrics \citep{lakhina2005mining}.
 \section{Remote-to-Local and User-to-Root}
 \label{sec:r2l-u2r}
 
-\subsection{Credential attacks, guessed passwords, FTP/\allowbreak IMAP exploitation}
+\subsection{Credential and service attacks}
 \label{sec:credential-attacks}
 
 R2L attacks give a remote adversary access to a local account. Password
@@ -314,7 +314,7 @@ intercepting and modifying operating system calls, and ATT\&CK files them
 under the tactic Stealth \citep{mitre2026t1014}. They act on the host, so the
 hiding itself leaves no trace in flow records. This conclusion is ours.
 
-\subsection{Why these classes are the hard ones for data-driven detectors}
+\subsection{Why these classes are hard to learn}
 \label{sec:r2l-u2r-hard}
 
 Three reasons make R2L and U2R hard for a detector built on flow features.
@@ -337,7 +337,7 @@ our expectation, and the experiments test it.
 \section{Defence mechanisms and where detection sits}
 \label{sec:defences}
 
-\subsection{Scrubbing centres, anycast, rate limiting, BGP flowspec}
+\subsection{Mitigation in the network}
 \label{sec:mitigation-mechanisms}
 
 A flood that saturates the link of the victim cannot be stopped at the
@@ -363,7 +363,7 @@ flow record. We note this because it is the point where a detector enters.
 Since a subtle attack cannot in principle be told from a flash crowd
 \citep{handley2006rfc4732}, a rule that is too broad blocks real users.
 
-\subsection{Detection - mitigation - response loop and its timing constraints}
+\subsection{The detection and mitigation loop}
 \label{sec:detection-mitigation-loop}
 
 The defences form a loop. In the orchestration use case of DDoS Open Threat
@@ -389,7 +389,7 @@ mitigation, as stated in \cref{sec:scope-limitations}.
 \section{Domain knowledge that can be formalised}
 \label{sec:domain-knowledge-formalisation}
 
-\subsection{From informal expert heuristics to first-order logic predicates}
+\subsection{From heuristics to logic predicates}
 \label{sec:heuristics-to-predicates}
 
 An expert heuristic names a condition on observable quantities and the class
@@ -400,7 +400,7 @@ detector computes, such as a packet rate or a count of distinct sources. This
 chapter does not fix their thresholds. \Cref{ch:ltn} turns the predicates into
 degrees of truth, and \cref{ch:usecases-design} collects the rules in a knowledge base.
 
-\subsection{Table: attack family $\rightarrow$ observable condition $\rightarrow$ candidate axiom}
+\subsection{From attack family to candidate axiom}
 \label{sec:family-condition-axiom}
 
 \Cref{tab:candidate-axioms} restates the traces of the previous sections as

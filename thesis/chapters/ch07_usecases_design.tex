@@ -15,7 +15,7 @@ human can read.
 % ================================================================
 % 7.1 UC1
 % ================================================================
-\section{Use case UC1 -- Batch multi-class traffic classification}
+\section{UC1: batch multi-class classification}
 \label{sec:uc1}
 
 In UC1 a security analyst holds a set of flows from a capture and wants each one
@@ -60,7 +60,7 @@ the same families plus DDoS and Botnet, in E5.
 % ================================================================
 % 7.2 UC2
 % ================================================================
-\section{Use case UC2 -- DDoS detection in near real time}
+\section{UC2: DDoS detection in near real time}
 \label{sec:uc2}
 
 In UC2 an operator watches a link and wants to know, as flows complete, whether an
@@ -93,7 +93,7 @@ offer is a test day with an attack type, Portmap, absent from the training day,
 the scenario of UC4. The experiments of UC2 are E6 in batch, and E14 and E15 in
 streaming.
 
-\subsection{Latency and throughput requirements, alert semantics}
+\subsection{Latency, throughput and alert semantics}
 \label{sec:uc2-latency}
 
 We fix no absolute latency or throughput target: there is no deployment to take
@@ -113,7 +113,7 @@ has begun, while the alert budget counts every false alarm.
 % ================================================================
 % 7.3 UC3
 % ================================================================
-\section{Use case UC3 -- Rare and low-footprint attack detection (R2L / U2R)}
+\section{UC3: rare and low-footprint attacks}
 \label{sec:uc3}
 
 R2L and U2R attacks leave little in flow-level features: the evidence is in the
@@ -142,7 +142,7 @@ imbalance.
 % ================================================================
 % 7.4 UC4
 % ================================================================
-\section{Use case UC4 -- Detection of previously unseen attack variants}
+\section{UC4: unseen attack variants}
 \label{sec:uc4}
 
 In UC4 the analyst meets an attack that was not in the training data and wants an
@@ -163,7 +163,7 @@ training data may not. This is why each axiom is tagged with its origin
 % ================================================================
 % 7.5 UC5
 % ================================================================
-\section{Use case UC5 -- Explainable alert generation for a human analyst}
+\section{UC5: explained alerts for an analyst}
 \label{sec:uc5}
 
 In UC5 the analyst triages alerts and needs, for each, a reason that can be read
@@ -205,7 +205,7 @@ experiment has run and its measure is reported with the spread over seeds, again
 baseline of matched capacity where the outcome is a comparison. A requirement that
 the knowledge arms fail is a result, and the thesis reports it (contribution C3).
 
-\subsection{Requirement table with IDs, traceable to experiments and benchmarks}
+\subsection{Requirements traced to experiments}
 \label{sec:requirement-table}
 
 \Cref{tab:functional-requirements} lists the functional requirements and
@@ -328,7 +328,7 @@ only in the variants that ask for it (\cref{sec:symbolic-placement}).}
 \label{fig:pipelines}
 \end{figure}
 
-\subsection{Batch pipeline: capture $\rightarrow$ flow extraction $\rightarrow$ preprocessing $\rightarrow$ model $\rightarrow$ report}
+\subsection{Batch pipeline}
 \label{sec:batch-pipeline}
 
 A capture, or a dataset that already holds flows, is turned into a table of
@@ -347,7 +347,7 @@ features that the network receives. This keeps their thresholds in the units of
 the traffic, where an analyst can read them, and it means the report step needs
 both the raw table and the scaled features.
 
-\subsection{Streaming pipeline: capture/\allowbreak replay $\rightarrow$ flow assembly $\rightarrow$ feature vector $\rightarrow$ broker $\rightarrow$ inference service $\rightarrow$ (symbolic check) $\rightarrow$ alert sink $\rightarrow$ dashboard}
+\subsection{Streaming pipeline}
 \label{sec:streaming-pipeline}
 
 The source is a live capture or the replay of a captured dataset, at its
@@ -499,7 +499,7 @@ attack flows of the training day. It is
 still a column of the flow table that every arm sees, and not an artefact of the
 capture, so we keep it; E3, which removes the axiom, shows how much it matters.
 
-\subsection{Versioned knowledge base format, so that axiom sets are an experiment factor}
+\subsection{A versioned knowledge base format}
 \label{sec:kb-format}
 
 A knowledge base is one YAML file for one dataset and one version.

@@ -22,7 +22,7 @@ already covers neurosymbolic AI in cybersecurity
 intrusion detection \citep{bizzarri2025survey}. We use them as maps, and we check a paper before we
 report its figures.
 
-\subsection{Sources, queries, inclusion and exclusion criteria, time window}
+\subsection{Sources and selection criteria}
 \label{sec:review-sources}
 
 The search ran in September and October 2026 and had two sources. The first is
@@ -73,7 +73,7 @@ of the next sections, and the datasets they use are those of the benchmark.
 The section relies on surveys and on a few primary papers. The review
 protocol is applied to the neurosymbolic detectors and not to this section.
 
-\subsection{Shallow models on NSL-KDD / UNSW-NB15 / CIC-IDS}
+\subsection{Shallow models on the public datasets}
 \label{sec:shallow-nids}
 
 Surveys of learning-based intrusion detection cover the models that
@@ -385,7 +385,7 @@ experts set thresholds in a graph that acts only after the detection.
 This classification is ours. It means that the benchmark of the thesis matches the
 first group, and it does not match the others.
 
-\subsection{Critical reading: what is actually measured, what is not}
+\subsection{What the studies measure}
 \label{sec:critical-reading}
 
 We start with the two detectors that put formulas in the loss.
@@ -477,7 +477,7 @@ and it does not tell when it pays.
 % ================================================================
 % 6.5 Benchmarking methodology for learning-based security systems
 % ================================================================
-\section{Benchmarking methodology for learning-based security systems}
+\section{Benchmarking learning-based security systems}
 \label{sec:benchmarking-practice}
 
 The studies above differ in protocol, in metric and in rigour. This section
@@ -486,7 +486,7 @@ security, from the evaluation of classifiers and from the benchmarking of
 machine learning systems. The thesis fixes its own choices in
 \cref{ch:benchmarking-methodology}.
 
-\subsection{Evaluation protocols: temporal splits, cross-attack, leave-one-attack-out}
+\subsection{Evaluation protocols}
 \label{sec:evaluation-protocols}
 
 \citet{pendlebury2019tesseract} show how a split inflates results. They name
@@ -510,7 +510,7 @@ The detector of \citet{bizzarri2024nsaids} holds out several classes at once. Th
 stress scenarios of the thesis for unseen attacks and for transfer between
 datasets follow these protocols.
 
-\subsection{Metrics beyond accuracy: MCC, PR-AUC, FPR@TPR, alert budget, cost curves}
+\subsection{Metrics beyond accuracy}
 \label{sec:metrics-beyond-accuracy}
 
 \citet{chicco2020mcc} argue that the Matthews correlation coefficient is high
@@ -535,7 +535,7 @@ curves, among them confidence intervals and the comparison of classifiers.
 Prevalence in traffic is not fixed, and a cost curve shows how a ranking of
 detectors changes with it. We propose this use for the benchmark.
 
-\subsection{Systems-benchmarking practice (MLPerf-style methodology) transplanted here}
+\subsection{Practice from systems benchmarking}
 \label{sec:mlperf-practice}
 
 \citet{reddi2020mlperf} present MLPerf Inference as a set of rules and best
