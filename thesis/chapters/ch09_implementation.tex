@@ -329,7 +329,7 @@ knowledge bases this holds for R2L and U2R on NSL-KDD, for Probe, R2L, U2R and B
 CIC-IDS2017. The variants of \cref{app:axioms}
 add axioms for some of these classes.
 
-\subsection{Classical ML: Random Forest, XGBoost}
+\subsection{Tree ensembles}
 \label{sec:impl-trees}
 
 Random Forest is the scikit-learn classifier, with all cores and the seed of the run. It has no
@@ -342,7 +342,7 @@ so that the mean weight over the training rows is 1. The power is searched, and 
 weights. The validation part is not weighted. Both trees read the same standardised and one-hot
 matrix as the networks.
 
-\subsection{DL baselines: MLP, 1D-CNN, [EXT] LSTM}
+\subsection{Neural baselines}
 \label{sec:impl-mlp}
 
 The baseline is a multilayer perceptron: dense layers of 256 and 128 units with ReLU, each
@@ -367,7 +367,7 @@ architecture, not a model of the traffic.
 The LSTM is an extension and is not implemented. It needs flows ordered in windows, which the
 repository does not build.
 
-\subsection{NeSy: LTN with the domain knowledge base}
+\subsection{LTN with the domain knowledge base}
 \label{sec:impl-ltn}
 
 LTN-sup trains the same network with one axiom $\forall x\in C_c\; P_c(x)$ per class, whose
@@ -480,7 +480,7 @@ those of \cref{sec:streaming-pipeline} and \cref{sec:streaming-protocol}. This s
 the batch side hands over and what is still open; no measurement of E14 or E15 exists.
 % FIXME(open): the stack of the co-supervisor (Kafka and Spark Structured Streaming with the inference inside Spark, as reported orally) is in no file of the thesis and conflicts with the single-process pipeline of Ch. 7, Sec. 7.7.2, which is the mandatory part. Get the decision in writing and align this section, Ch. 7 and Ch. 8.
 
-\subsection{Traffic source: pcap replay with rate control}
+\subsection{Traffic source}
 \label{sec:impl-source}
 
 The source replays a captured dataset at its recorded rate and at multiples of it, and the

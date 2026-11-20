@@ -176,7 +176,10 @@ versions of the packages and the configuration stored in each file. The package 
 \section{Detection quality}
 \label{sec:detection-quality-dimension}
 
-\subsection{Metric set and why each one is included}
+The first dimension is detection quality. This section fixes the metric set, how the
+operating point is chosen, the cost-sensitive view and the rule-violation rate of C5.
+
+\subsection{Metric set}
 \label{sec:metric-set}
 
 The primary measure is the macro-F1, the mean of the per-class F1: classes differ greatly in
@@ -234,7 +237,7 @@ benign flows after cleaning, those a model scores; for CIC-DDoS2019, whose days 
 counts the benign rows of the files. The figure per day describes a day of a laboratory network.
 KDDTest+ has 9\,711 benign records, so FPR levels below about $10^{-4}$ cannot be resolved.
 
-\subsection{Rule-violation rate: definition and rationale}
+\subsection{Rule-violation rate}
 \label{sec:rule-violation-rate}
 
 This section defines contribution C5. For axiom $j$ with target $c_j$, evaluated crisp, the
@@ -266,6 +269,9 @@ features to a class, one rule at a time and for every arm; the violation rate an
 % ================================================================
 \section{Computational performance}
 \label{sec:cost-dimension}
+
+The second dimension is cost. This section fixes what is measured in training and in
+inference, how energy is treated, and the rules that make a time comparable.
 
 \subsection{Training cost}
 \label{sec:training-cost}
@@ -309,7 +315,7 @@ rule-only arm has no model file and is not timed alone; the cost of its rules is
 difference. The modes are not summed with the other parts of the detection delay into an
 end-to-end latency.
 
-\subsection{Energy proxy measurement [EXT]}
+\subsection{Energy proxy}
 \label{sec:energy}
 
 Energy is an extension and is not measured. Training time and model size stand as proxies.
@@ -327,6 +333,10 @@ mean and deviation over seeds, E13 by the median, and latency is taken on one se
 % ================================================================
 \section{Usability and operational fitness}
 \label{sec:usability-dimension}
+
+The third dimension is usability. This section fixes how the effort of writing knowledge,
+the sensitivity to its quality, the explanations, the maintenance and the qualitative
+scorecard are measured.
 
 \subsection{Knowledge engineering effort}
 \label{sec:effort}
@@ -416,7 +426,7 @@ on a flow, enforce replaces a correct prediction, so with imprecise rules it can
 macro-F1 (\cref{sec:rule-violation-rate}); this is reported as a result. E12 reports the cost of
 both modes.
 
-\subsection{Maintainability under drift; retraining cost}
+\subsection{Maintainability and retraining cost}
 \label{sec:drift}
 
 We run no drift experiment. E11 degrades the axioms as a stand-in for domain shift. The
@@ -436,8 +446,11 @@ own macro-F1 when its rules are evaded (E10), and its setup counts as written ax
 scored on the arm with its post-check.
 
 % ================================================================
-\section{Batch vs real-time evaluation protocols}
+\section{Batch and real-time protocols}
 \label{sec:protocols}
+
+The same arms are evaluated in two regimes. This section gives the batch protocol, which
+every experiment with results follows, and the streaming protocol.
 
 \subsection{Batch protocol}
 \label{sec:batch-protocol}
@@ -527,6 +540,10 @@ the exporter timeout, transport, inference and check (\cref{sec:uc2-latency}).
 \section{Statistical analysis plan}
 \label{sec:statistical-plan}
 
+The statistics are fixed before the results. This section gives the paired test for two
+arms, the test for many arms on one dataset, and the effect sizes and correction that go with
+them.
+
 \subsection{Paired tests on the same splits}
 \label{sec:wilcoxon}
 
@@ -573,6 +590,9 @@ Stress experiments are read through effect size and intervals, not through new f
 % ================================================================
 \section{Benchmark harness design}
 \label{sec:harness}
+
+The harness turns the protocol into runs and tables. This section describes how a run is
+configured and recorded, and how a table of the thesis is rebuilt from the result files.
 
 \subsection{Configuration-driven runs}
 \label{sec:harness-config}

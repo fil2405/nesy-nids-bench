@@ -22,7 +22,7 @@ ATT\&CK, so that later chapters can refer to attacks in a shared vocabulary.
 The two taxonomies are built on different principles. This section shows
 where they agree and where they do not.
 
-\subsection{The classic KDD families: DoS, Probe, R2L, U2R}
+\subsection{The four KDD families}
 \label{sec:kdd-families}
 
 The task description of the KDD Cup 1999 groups the attacks in four
@@ -252,6 +252,9 @@ formalise.
 \section{Reconnaissance and scanning}
 \label{sec:recon-scanning}
 
+Scanning maps a target before other attacks and forms the Probe family of NSL-KDD. This
+section describes the kinds of scan and what we expect them to look like in flow records.
+
 \subsection{Horizontal, vertical and stealth scanning}
 \label{sec:scan-types}
 
@@ -284,6 +287,9 @@ volume metrics \citep{lakhina2005mining}.
 % ================================================================
 \section{Remote-to-Local and User-to-Root}
 \label{sec:r2l-u2r}
+
+R2L and U2R are the two rare families of NSL-KDD. This section describes how each gains
+access or rights, and why both are hard for a detector built on flow features.
 
 \subsection{Credential and service attacks}
 \label{sec:credential-attacks}
@@ -334,8 +340,12 @@ our expectation, and the experiments test it.
 % ================================================================
 % 3.5 Defence mechanisms and where detection sits
 % ================================================================
-\section{Defence mechanisms and where detection sits}
+\section{Defence mechanisms}
 \label{sec:defences}
+
+A detector is one part of a defence. This section describes the mitigation that acts in the
+network and the loop that links detection to mitigation, which fixes where a detector enters
+and what it is asked to deliver.
 
 \subsection{Mitigation in the network}
 \label{sec:mitigation-mechanisms}
@@ -388,6 +398,10 @@ mitigation, as stated in \cref{sec:scope-limitations}.
 % ================================================================
 \section{Domain knowledge that can be formalised}
 \label{sec:domain-knowledge-formalisation}
+
+The traces described in this chapter can be written as rules. This section shows how an
+expert heuristic becomes a logic predicate and restates the traces of each attack family as
+candidate axioms.
 
 \subsection{From heuristics to logic predicates}
 \label{sec:heuristics-to-predicates}
