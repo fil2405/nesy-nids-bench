@@ -196,7 +196,7 @@ def latency_detail(folder):
 
 def latency_tex(rows):
     lines = [r"\begin{table}[htbp]", r"\centering", r"\footnotesize",
-             r"\caption{E12, the model alone on the CPU of the laptop, saved model of seed 0: latency percentiles "
+             r"\caption{E12, the model alone on the CPU of L1, saved model of seed 0: latency percentiles "
              r"with one row per call, rows per second with 1024 rows per call, and the size of the saved files.}",
              r"\label{tab:app-latency}", r"\setlength{\tabcolsep}{4pt}", r"\begin{tabular}{@{}llrrrrr@{}}",
              r"\toprule", r"Dataset & Arm & p50 ms & p95 ms & p99 ms & rows/s & MB \\", r"\midrule"]

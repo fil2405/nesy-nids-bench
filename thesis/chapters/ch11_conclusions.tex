@@ -62,7 +62,7 @@ mostly at inference, for this pair of datasets, this direction and this axiom.
 \paragraph{RQ3, cost.}
 Partly answered. Each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of a
 training epoch, with a growth close to linear. At inference an LTN-trained network costs as an MLP,
-1.3 to 2.2\,ms per call with one row on the CPU of the laptop, and the post-check adds up to
+1.3 to 2.2\,ms per call with one row on the CPU of the laptop L1, and the post-check adds up to
 2.2\,ms, on the CIC datasets less than the spread of the measurement (\cref{sec:res-cost}). Both halves of H7 agree with these runs. The total training cost of
 the arms is not compared, since the final runs ran as parallel processes. The streaming half of the question
 has no result yet.
@@ -149,8 +149,8 @@ The limits of \cref{sec:threats,sec:res-threats} bound every statement of this c
   \item \emph{Method.} Only LTN is tested. The other families of \cref{ch:learning-paradigms} are not
     run on traffic, and the maturity of their tools was not compared. LTN-sup and LTN-full were tuned
     separately, so their difference holds the knowledge together with its tuning.
-  \item \emph{Measures.} The effort of E16 is an estimate. The times of E12 and E13 come from one
-    laptop. Ten seeds speak of the randomness of training on one dataset. E14 and E15 have no results.
+  \item \emph{Measures.} The effort of E16 is an estimate. The times of E12 and E13 come from
+    L1. Ten seeds speak of the randomness of training on one dataset. E14 and E15 have no results.
 \end{itemize}
 
 % ================================================================
@@ -208,7 +208,7 @@ and post-check together, and compare mechanism rules with extracted ones.
 \subsection{Deployment at line rate}
 \label{sec:fw-line-rate}
 
-The times of E12 are calls on the CPU of a laptop and say nothing on line rate. An LTN-trained
+The times of E12 are calls on the CPU of L1 and say nothing on line rate. An LTN-trained
 network is a plain network at inference, so quantization applies as to any MLP, and the rules
 could move to an eBPF or DPDK front end. The
 features come from closed flows, however, so such a front end needs rules on packets or on partial

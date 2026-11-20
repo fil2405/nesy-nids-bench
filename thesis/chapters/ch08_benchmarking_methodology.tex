@@ -150,7 +150,7 @@ budget set by cost, not a power analysis.
 \subsection{Reproducibility}
 \label{sec:reproducibility}
 
-The laptop environment is pinned in a lock file; the server has none, and its versions are those
+The environment of the laptop L1 is pinned in a lock file; the server S1 has none, and its versions are those
 its result files record. A run seeds Python, NumPy and TensorFlow and enables the
 deterministic operations of TensorFlow; its result file records configuration, seed, package versions,
 platform, commit, whether the tree was modified, timings and metrics, and in the stress runs also the
@@ -160,14 +160,14 @@ configuration and seed give the same macro-F1 and select the same epoch in our c
 and XGBoost. Across
 machines and library versions we claim nothing.
 
-Two environments are used. The runs that train a model, final and stress, ran on a server
+Two environments are used. The runs that train a model, final and stress, ran on S1
 (Python 3.14, TensorFlow 2.22.0-rc0, a release candidate), and so did the searches, except that of
 the two trees on NSL-KDD (\cref{sec:impl-environment}). The evaluations of saved models (E10,
-E12, E17 and the post-check) and the timings of E13 ran on a laptop under WSL2 (Python 3.11,
-TensorFlow 2.21), the latency on its CPU. An evaluation on the laptop recomputes the macro-F1 stored by
+E12, E17 and the post-check) and the timings of E13 ran on L1 under WSL2 (Python 3.11,
+TensorFlow 2.21), the latency on its CPU. An evaluation on L1 recomputes the macro-F1 stored by
 the run, in our checks to within $10^{-4}$. The cells of one table come from one environment,
 each table of results states it, and times are compared only within one. Code and configurations are in
-\texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}). The copy of the code on the server was not
+\texttt{fil2405/nesy-nids-bench} (\cref{sec:harness}). The copy of the code on S1 was not
 a repository, so its runs record the commit as unknown; a series is identified by its date, the
 versions of the packages and the configuration stored in each file. The package sets
 \texttt{TF\_ENABLE\_ONEDNN\_OPTS} to 0, and no log of the runs reports it switched on.
@@ -272,7 +272,7 @@ features to a class, one rule at a time and for every arm; the violation rate an
 
 Every run records the time of each epoch (round for XGBoost), the epochs run, the epoch
 selected and the total fit time, with validation scoring timed apart. Peak RAM and VRAM are not
-recorded. The final runs ran as parallel processes on a shared server, so their fit times are not
+recorded. The final runs ran as parallel processes on the shared S1, so their fit times are not
 those of an idle machine and are not compared across arms; the cost of the knowledge
 is timed in E13 instead. An LTN epoch and an MLP epoch have the same number
 of steps but not the same distinct examples, since LTN draws batches with quotas. An MLP epoch
@@ -622,7 +622,7 @@ of the target dataset. The weak knowledge base was a planned variant, and its ax
 U2R row of training. The protocol is an input of every arm, and on CIC-IDS2017 it separates
 most attack flows from Normal, so a result there can rest on it rather than on the knowledge
 (\cref{sec:impl-schema}). Training and evaluation of saved models ran in two environments, and the
-server runs record no commit.
+runs of S1 record no commit.
 
 \paragraph{External.}
 CIC-IDS2017 is cut by a random stratified split, so training and test come from the same capture

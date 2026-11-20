@@ -22,28 +22,29 @@ Random Forest comes from scikit-learn \citep{pedregosa2011scikit} and boosting f
 \citep{chen2016xgboost}. Tables are pandas frames, and the cleaned CIC datasets are cached as
 Parquet files.
 
-Two environments were used (\cref{tab:impl-environments}). The server ran every run that
-trains a model: the searches of hyperparameters, the final runs and the stress runs. The laptop
+Two machines were used: the server S1 (\cref{app:machine-s1}) and the laptop L1
+(\cref{app:machine-l1}); \cref{tab:impl-environments} gives their software. S1 ran every run that
+trains a model: the searches of hyperparameters, the final runs and the stress runs. L1
 ran the development, the evaluations of saved models (E10, E12, E17 and the post-check) and the
-timings of E13. The latency of E12 is timed on its CPU. One search ran on the laptop,
+timings of E13. The latency of E12 is timed on its CPU. One search ran on L1,
 that of Random Forest and XGBoost on NSL-KDD, with the protocol of \cref{sec:impl-tuning}; the
 final runs of the two trees use its configurations. The searches of the four neural arms ran on
-the server with the common network.
+S1 with the common network.
 
 
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{The two environments. The versions of the server are those recorded in its result files.}
+\caption{The two environments. The versions of S1 are those recorded in its result files; the builds are in \cref{app:machines}.}
 \label{tab:impl-environments}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}p{2.4cm}p{5.2cm}p{5.4cm}@{}}
 \toprule
- & Server & Laptop \\
+ & Server S1 & Laptop L1 \\
 \midrule
 Used for & Tuning, final and stress runs & Development; evaluations of saved models; E13 timings \\
 System & Linux, kernel 7.0.0-30 & Debian under WSL2 on Windows 11 \\
-Hardware & not recorded & Core i7-12650H, RTX 3050 Laptop with 4 GB, 12 GB of RAM for WSL2 \\
+Build & \cref{app:machine-s1} & \cref{app:machine-l1} \\
 Python & 3.14.4 & 3.11.2 \\
 TensorFlow & 2.22.0-rc0 & 2.21.0 \\
 NumPy, scikit-learn & 2.5.4, 1.9.1 & 2.4.6, 1.9.1 \\
@@ -53,7 +54,7 @@ Processes & seeds and trials in parallel & one at a time \\
 \end{tabular}
 \end{table}
 
-The neural arms train on the GPU and Random Forest on all cores. On the server the seeds of a
+The neural arms train on the GPU and Random Forest on all cores. On S1 the seeds of a
 run and the trials of a search are parallel processes sharing the GPU; no model is trained across
 processes or nodes. The deterministic operations of \cref{sec:reproducibility} were checked on
 the MLP, the two LTN arms and XGBoost, not on the Random Forest, and every training time was taken
@@ -122,7 +123,7 @@ two labels are kept.
 that remain. A day is a day of a laboratory network.}
 \label{tab:impl-benign-day}
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lrrp{5.6cm}@{}}
+\begin{tabular}{@{}lrrp{4.4cm}@{}}
 \toprule
 Day & Normal, as read & Normal, cleaned & Attack flows after cleaning \\
 \midrule
@@ -577,15 +578,15 @@ for the test cut of CIC-IDS2017. A seed sets Python, NumPy and TensorFlow and sw
 deterministic operations, and the package sets \texttt{TF\_ENABLE\_ONEDNN\_OPTS} to 0 unless the
 shell exports another value. A second run of the same identifier and seed is refused unless the
 caller asks to overwrite. Every table is produced from the result files by the scripts of
-\texttt{analysis}. The environment file pins the versions of the laptop; those of the server are
+\texttt{analysis}. The environment file pins the versions of L1; those of S1 are
 known from the result files (\cref{tab:impl-environments}).
 
-Two limits apply to the runs of the thesis. On the server the code was not a repository, so
+Two limits apply to the runs of the thesis. On S1 the code was not a repository, so
 the tuning files, the final runs and the stress runs record the commit as \texttt{unknown} and
 leave the flag of the modified tree empty. A series is identified by its date and by the
 configuration stored in each file, which also records the versions of the packages. No log of
 the runs reports the custom operations of oneDNN as switched on. The second limit is the
-environment: determinism holds within one, as \cref{sec:reproducibility} says. The server has
+environment: determinism holds within one, as \cref{sec:reproducibility} says. S1 has
 no lock file in the repository; its versions are those its result files record. The result files
 and the saved models are kept by the author and not published with the repository.
 % FIXME(open): the streaming pipeline has no code, no configuration and no test in the repository; add its directory and its launch script when the co-supervisor delivers them.

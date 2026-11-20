@@ -12,7 +12,7 @@ deviation and interval, are in \cref{app:results}.
 The primary measure is the test macro-F1, as mean and sample deviation over seeds 0 to 9. A difference is B minus A. The
 five pairs of \cref{sec:wilcoxon} are confirmatory, with Holm within one dataset; every other comparison is descriptive,
 as the median of the paired differences with a bootstrap interval, optimistic with ten seeds, and the seeds out of ten in
-which B is better (\cref{sec:effect-sizes}). The server trained the models, and the laptop ran the evaluations of saved
+which B is better (\cref{sec:effect-sizes}). The server S1 (\cref{app:machine-s1}) trained the models, and the laptop L1 (\cref{app:machine-l1}) ran the evaluations of saved
 models and the timings of E13 (\cref{tab:impl-environments}); times are compared only within one of them.
 
 % ================================================================
@@ -542,10 +542,10 @@ exposes it.
 
 RQ3 asks what the neurosymbolic approach costs in training and in inference (\cref{sec:cost-dimension}). Times are
 compared only within one environment, and the energy proxy is not measured. The final runs ran as parallel processes
-on a shared server, so their fit times are not compared across arms (\cref{sec:training-cost}).
+on the shared S1, so their fit times are not compared across arms (\cref{sec:training-cost}).
 
 \paragraph{Training cost.}
-E13 times LTN-full in one process on the laptop with 2, 4, 6 or 8 copies of one axiom added to its base. The copies
+E13 times LTN-full in one process on L1 with 2, 4, 6 or 8 copies of one axiom added to its base. The copies
 do not change the model (\cref{tab:res-sensitivity}). A line fitted to the five levels gives 1.9\,\% of the base epoch per added axiom on CIC-IDS2017, 2.5\,\% on NSL-KDD and
 4.3\,\% on CIC-DDoS2019, so that eight copies cost 15 to 29\,\% more. On NSL-KDD the base epoch takes 2.897\,s, on CIC-IDS2017 43.926\,s and on CIC-DDoS2019 7.548\,s. The
 growth is small and close to linear, which is what H7 predicts for training. It is not monotone in two places, where
@@ -554,7 +554,7 @@ The ratios hold for copies of one axiom on one machine. The epoch selected in th
 \cref{app:results}, is not a measure of cost, since an LTN epoch draws batches with quotas.
 
 \paragraph{Inference cost (E13 and E12).}
-Latency was taken for seed 0 of each arm on the CPU of the laptop. Latencies are medians over 200 calls; those of the
+Latency was taken for seed 0 of each arm on the CPU of L1. Latencies are medians over 200 calls; those of the
 model alone are in \cref{tab:app-latency}, the cost of the post-check is measured within one run with it. Repeated
 measurements of one setting differ by up to about 0.5\,ms, so smaller differences are not read. With one row per call
 the four networks of the comparison take 1.3 to 2.2\,ms, and with 1024 rows they process 231\,000 to 248\,000 rows per
@@ -563,7 +563,7 @@ control, since the axioms act only in training, where the cost of LTN for RQ3 li
 that costs more at inference: 4.01\,ms with one row on NSL-KDD and 4.0 to 5.1\,ms on the CIC datasets, about twice the
 MLP, and with 1024 rows a throughput six to eight times lower. XGBoost takes 0.2 to 0.4\,ms per call and Random Forest
 25 to 62\,ms. The post-check adds up to 2.2\,ms per call to the networks, on the CIC datasets less than the 0.5\,ms
-spread of the measurement, and annotate and enforce do not separate. These are times of one laptop.
+spread of the measurement, and annotate and enforce do not separate. These are times of L1.
 
 % ================================================================
 % 10.6 Real-time behaviour (E14, E15)
@@ -717,9 +717,9 @@ what matters is the exponent of the loss, for LTN-sup as for LTN-full, and more 
 \paragraph{RQ3, cost.}
 Partly open. Each axiom added to the base of LTN-full costs about 2 to 4\,\% of the time of a training epoch, with a
 growth close to linear, and at inference an LTN-trained network costs as an MLP, a median of 1.3 to 2.2\,ms per call with one row
-on the CPU of the laptop; the post-check adds up to 2.2\,ms. Both halves of H7 agree with these runs. The one neural arm
+on the CPU of L1; the post-check adds up to 2.2\,ms. Both halves of H7 agree with these runs. The one neural arm
 that costs more at inference is the 1D-CNN, which is not neurosymbolic. The total training cost of the arms is not
-compared, since the final runs shared the server, and the real-time half of RQ3 is open.
+compared, since the final runs shared S1, and the real-time half of RQ3 is open.
 
 \paragraph{RQ4, usability.}
 One axiom is estimated at hours of work, a knowledge base at one or two days and the change of a rule at an hour at most;
@@ -829,9 +829,9 @@ family are confirmatory; the pair of the 1D-CNN has its own correction, and the 
 $p$-values as description.
 
 \paragraph{Reproducibility.}
-The server runs record the commit as unknown, so a series is identified by its date, and the server ran TensorFlow
+The runs of S1 record the commit as unknown, so a series is identified by its date, and S1 ran TensorFlow
 2.22.0-rc0, a release candidate. Determinism holds within one machine (\cref{sec:reproducibility}), and the evaluations on
-the laptop recompute the stored macro-F1 to within $10^{-4}$.
+L1 recompute the stored macro-F1 to within $10^{-4}$.
 
 % ================================================================
 % 10.10 Summary
