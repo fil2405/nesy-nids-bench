@@ -22,8 +22,7 @@ Random Forest comes from scikit-learn \citep{pedregosa2011scikit} and boosting f
 \citep{chen2016xgboost}. Tables are pandas frames, and the cleaned CIC datasets are cached as
 Parquet files.
 
-Two machines were used: the server S1 (\cref{app:machine-s1}) and the laptop L1
-(\cref{app:machine-l1}); \cref{tab:impl-environments} gives their software. S1 ran every run that
+Two environments were used. S1 is the rented servers from Hetzner and Runpod with an AMD EPYC CPU of 48 vCPU, 192\,GB of RAM and an NVIDIA RTX A6000 GPU with 48\,GB of VRAM. L1 is an ASUS TUF Dash F15 laptop (model FX517ZC) with an Intel Core i7-12650H, 16\,GB of RAM and an NVIDIA GeForce RTX 3050 Laptop GPU with 4\,GB of VRAM. \Cref{tab:impl-environments} gives their hardware and software. S1 ran every run that
 trains a model: the searches of hyperparameters, the final runs and the stress runs. L1
 ran the development, the evaluations of saved models (E10, E12, E17 and the post-check) and the
 timings of E13. The latency of E12 is timed on its CPU. One search ran on L1,
@@ -35,7 +34,7 @@ S1 with the common network.
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{The two environments. The versions of S1 are those recorded in its result files; the builds are in \cref{app:machines}.}
+\caption{The two environments. The versions of S1 are those recorded in its result files; the full builds are in \cref{app:machines}.}
 \label{tab:impl-environments}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}p{2.4cm}p{5.2cm}p{5.4cm}@{}}
@@ -44,7 +43,10 @@ S1 with the common network.
 \midrule
 Used for & Tuning, final and stress runs & Development; evaluations of saved models; E13 timings \\
 System & Linux, kernel 7.0.0-30 & Debian under WSL2 on Windows 11 \\
-Build & \cref{app:machine-s1} & \cref{app:machine-l1} \\
+Machine & Hetzner and Runpod servers & ASUS TUF Dash F15, FX517ZC \\
+CPU & AMD EPYC, 48 vCPU & Intel Core i7-12650H \\
+RAM & 192\,GB & 16\,GB, 12\,GB for WSL2 \\
+GPU, VRAM & NVIDIA RTX A6000, 48\,GB & NVIDIA GeForce RTX 3050 Laptop, 4\,GB \\
 Python & 3.14.4 & 3.11.2 \\
 TensorFlow & 2.22.0-rc0 & 2.21.0 \\
 NumPy, scikit-learn & 2.5.4, 1.9.1 & 2.4.6, 1.9.1 \\
@@ -168,7 +170,7 @@ is a rough estimate. LDAP, MSSQL, NetBIOS and UDP occur only in the test day und
 and in the training day with the prefix \texttt{DrDoS\_}. The names with and without the prefix
 are not merged.
 
-\subsection{Common feature schema}
+\subsection{Common feature schema for the transfer}
 \label{sec:impl-schema}
 
 NSL-KDD shares no feature space with the CIC datasets and takes no part in a transfer. The two

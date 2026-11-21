@@ -15,7 +15,7 @@ human can read.
 % ================================================================
 % 7.1 UC1
 % ================================================================
-\section{UC1: batch multi-class classification}
+\section{Batch multi-class classification}
 \label{sec:uc1}
 
 In UC1 a security analyst holds a set of flows from a capture and wants each one
@@ -60,7 +60,7 @@ the same families plus DDoS and Botnet, in E5.
 % ================================================================
 % 7.2 UC2
 % ================================================================
-\section{UC2: DDoS detection in near real time}
+\section{DDoS detection in near real time}
 \label{sec:uc2}
 
 In UC2 an operator watches a link and wants to know, as flows complete, whether an
@@ -113,10 +113,10 @@ has begun, while the alert budget counts every false alarm.
 % ================================================================
 % 7.3 UC3
 % ================================================================
-\section{UC3: rare and low-footprint attacks}
+\section{Rare and low-footprint attacks}
 \label{sec:uc3}
 
-R2L and U2R attacks leave little in flow-level features: the evidence is in the
+UC3 concerns the rare classes. R2L and U2R attacks leave little in flow-level features: the evidence is in the
 data portion of a connection, which flow records do not carry
 (\cref{sec:r2l-u2r-hard}). The classes are also small: NSL-KDD has 52 U2R and 995
 R2L records in its training file, which the protocol divides into training and
@@ -142,7 +142,7 @@ imbalance.
 % ================================================================
 % 7.4 UC4
 % ================================================================
-\section{UC4: unseen attack variants}
+\section{Unseen attack variants}
 \label{sec:uc4}
 
 In UC4 the analyst meets an attack that was not in the training data and wants an
@@ -163,7 +163,7 @@ training data may not. This is why each axiom is tagged with its origin
 % ================================================================
 % 7.5 UC5
 % ================================================================
-\section{UC5: explained alerts for an analyst}
+\section{Explained alerts for the analyst}
 \label{sec:uc5}
 
 In UC5 the analyst triages alerts and needs, for each, a reason that can be read
@@ -446,7 +446,7 @@ The knowledge base holds the axioms that the knowledge arms use and that every a
 is scored against. It has a format, a way of being written and a version, so that
 the axiom set is a factor of the benchmark and not a hidden choice inside a model.
 
-\subsection{Elicitation of rules from Chapter 3}
+\subsection{Eliciting the rules}
 \label{sec:kb-elicitation}
 
 The source is \cref{sec:domain-knowledge-formalisation}, where each attack family is

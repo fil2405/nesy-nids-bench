@@ -41,7 +41,7 @@ Directory & Content \\
 \section{Machines}
 \label{app:machines}
 
-The runs of the thesis used two machines, named L1 and S1 in the text. Their software is in
+The runs of the thesis used two environments, named L1 and S1 in the text. Their software is in
 \cref{tab:impl-environments}; their build is below.
 
 \subsection{Laptop L1}
@@ -58,7 +58,7 @@ L1 is the laptop of the author; \cref{tab:app-machine-l1} gives its build.
 \toprule
 Model & ASUS TUF Dash F15, FX517ZC \\
 CPU & Intel Core i7-12650H \\
-GPU & NVIDIA GeForce RTX 3050 Laptop, 4\,GB \\
+GPU & NVIDIA GeForce RTX 3050 Laptop, 4\,GB of VRAM \\
 Memory & 16\,GB, of which 12\,GB assigned to WSL2 \\
 Storage & Intel SSDPEKNU512GZ, NVMe, 512\,GB \\
 System & Windows 11, Debian under WSL2 \\
@@ -69,9 +69,25 @@ System & Windows 11, Debian under WSL2 \\
 \subsection{Server S1}
 \label{app:machine-s1}
 
-S1 is a shared machine with one GPU, on which the seeds of a run and the trials of a search ran as
-parallel processes (\cref{sec:impl-environment}).
-% FIXME(open): provider and components of S1 (CPU, GPU, memory, storage), when the co-supervisor sends them.
+S1 denotes the rented GPU servers on which every run that trains a model ran, with the seeds of a run
+and the trials of a search as parallel processes (\cref{sec:impl-environment}). The providers are
+Hetzner and Runpod; \cref{tab:app-machine-s1} gives the configuration.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Configuration of S1.}
+\label{tab:app-machine-s1}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Providers & Hetzner, Runpod \\
+CPU & AMD EPYC, 48 vCPU \\
+GPU & NVIDIA RTX A6000, 48\,GB of VRAM \\
+Memory & 192\,GB \\
+System & Linux, kernel 7.0.0-30 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \FloatBarrier
 \section{Environment and data}

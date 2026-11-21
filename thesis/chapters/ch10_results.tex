@@ -12,13 +12,13 @@ deviation and interval, are in \cref{app:results}.
 The primary measure is the test macro-F1, as mean and sample deviation over seeds 0 to 9. A difference is B minus A. The
 five pairs of \cref{sec:wilcoxon} are confirmatory, with Holm within one dataset; every other comparison is descriptive,
 as the median of the paired differences with a bootstrap interval, optimistic with ten seeds, and the seeds out of ten in
-which B is better (\cref{sec:effect-sizes}). The server S1 (\cref{app:machine-s1}) trained the models, and the laptop L1 (\cref{app:machine-l1}) ran the evaluations of saved
-models and the timings of E13 (\cref{tab:impl-environments}); times are compared only within one of them.
+which B is better (\cref{sec:effect-sizes}). The models were trained on S1, rented servers from Hetzner and Runpod with an AMD EPYC CPU of 48 vCPU, 192\,GB of RAM and an NVIDIA RTX A6000 GPU with 48\,GB of VRAM, and the evaluations of saved
+models ran on L1, an ASUS TUF Dash F15 laptop (model FX517ZC) with an Intel Core i7-12650H, 16\,GB of RAM and an NVIDIA GeForce RTX 3050 Laptop GPU with 4\,GB of VRAM, and the timings of E13 (\cref{tab:impl-environments}); times are compared only within one of them.
 
 % ================================================================
 % 10.1 Baseline replication and corrected protocol (E1)
 % ================================================================
-\section{Baseline replication}
+\section{NSL-KDD under the corrected protocol}
 \label{sec:res-e1}
 
 E1 asks whether the corrected protocol of \cref{sec:no-leakage} changes what a reader of the usual NSL-KDD figures
@@ -237,7 +237,7 @@ every network.
 % ================================================================
 % 10.3 Where the knowledge acts: axiom ablation and semantics sensitivity (E3, E4)
 % ================================================================
-\section{Where the knowledge acts}
+\section{Axiom ablation and logic settings}
 \label{sec:res-knowledge}
 
 E3 removes one axiom or group from the training copy of the base of the tuned LTN-full, and E4 changes one
@@ -554,7 +554,7 @@ The ratios hold for copies of one axiom on one machine. The epoch selected in th
 \cref{app:results}, is not a measure of cost, since an LTN epoch draws batches with quotas.
 
 \paragraph{Inference cost.}
-Latency was taken for seed 0 of each arm on the CPU of L1. Latencies are medians over 200 calls; those of the
+Latency was taken for seed 0 of each arm on the CPU of L1, the Intel Core i7-12650H of the laptop. Latencies are medians over 200 calls; those of the
 model alone are in \cref{tab:app-latency}, the cost of the post-check is measured within one run with it. Repeated
 measurements of one setting differ by up to about 0.5\,ms, so smaller differences are not read. With one row per call
 the four networks of the comparison take 1.3 to 2.2\,ms, and with 1024 rows they process 231\,000 to 248\,000 rows per
@@ -693,7 +693,7 @@ RF, XGBoost & 1 & -- & 1 / 2 & 2 & tuning, E17 \\
 This discussion rests on every experiment except the streaming runs of E14 and E15. The reading is descriptive and
 holds for the three datasets.
 
-\subsection{Answers to the research questions}
+\subsection{Evidence for each research question}
 \label{sec:res-rqs}
 
 \paragraph{RQ1, detection quality.}
@@ -741,7 +741,7 @@ E7), and it is reported, not corrected on the test file. The threshold fixed on 
 alert budget holds on CIC-IDS2017 and breaks by 2.5 to 67 times on the other two datasets. For H9 the trees are ahead on
 CIC-IDS2017 only, and their training cost is not compared.
 
-\subsection{When does NeSy win, when does it not, and why}
+\subsection{When neurosymbolic training pays}
 \label{sec:res-when}
 
 LTN-full has the highest macro-F1 on CIC-DDoS2019 only, a nearly saturated dataset, and there its false alarms at a true
@@ -765,7 +765,7 @@ inference brings every model to 0.72 to 0.92. In the neurosymbolic arm the axiom
 read them later, and there the same axiom gives far less. The pattern of H9, trees below LTN-full where the test is
 shifted and above it on the in-distribution test of CIC-IDS2017, confounds split and dataset and stays a conjecture.
 
-\subsection{Negative results, honestly reported}
+\subsection{Negative results}
 \label{sec:res-negative}
 
 \begin{itemize}
