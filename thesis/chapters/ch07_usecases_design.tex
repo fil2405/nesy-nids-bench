@@ -358,7 +358,7 @@ decouples producer and consumer, absorbs bursts and lets the inference service r
 at its own rate. The service loads the exported model and calls it on micro-batches.
 An optional symbolic check follows; the alert sink collects the decisions that
 reach the operating point, and a dashboard shows them.
-% FIXME(open): the choice of the broker and the implementation of each stage are open in Ch. 9, \cref{sec:realtime-pipeline}, and belong to the co-supervisor.
+% FIXME(open): broker and implementation of each stage, Ch. 9, Sec. 9.5.
 
 Three points need a decision or a caution. The first is the extractor.
 \Citet{engelen2021troubleshooting} regenerate CIC-IDS2017 with a corrected CICFlowMeter,
@@ -377,7 +377,7 @@ The inference service can run in one process or on a distributed engine through 
 distributed deep learning (DDL) framework, which needs a cluster and a framework that
 runs the exported model. The reference pipeline is the single-process one, the setting
 of the scope in \cref{ch:introduction}; distributed inference would change that scope.
-% FIXME(open): the co-supervisor's stack (Kafka, Spark Structured Streaming, inference inside Spark) is not the single-process pipeline of this section; align after his written decision (Ch. 9, Sec. 9.5).
+% FIXME(open): align with the streaming stack (Kafka, Spark Structured Streaming) once it is fixed, Ch. 9, Sec. 9.5.
 % FIXME(open): DDL is undecided (cluster access and a framework that runs the exported model); if used, amend the scope paragraph of Ch. 1, Sec. 1.6.
 The mandatory part is the single-process pipeline: design, assumptions and method
 of measurement. Measurements on a cluster are an extension.
